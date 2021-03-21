@@ -14,100 +14,158 @@ import Lex
 %monad { ParseResult } { >>= } { Right }
 
 %token
-  VARS   { TokenVARS   _ }
-  LAW    { TokenLAW    _ }
-  OBS    { TokenOBS    _ }
-  TRUEQ  { TokenTRUEQ  _ }
-  VALIDQ { TokenVALIDQ _ }
-  WHEREQ { TokenWHEREQ _ }
-  COLON  { TokenColon  _ }
-  COMMA  { TokenComma  _ }
-  TOP    { TokenTop    _ }
-  BOT    { TokenBot    _ }
-  '('    { TokenOB     _ }
-  ')'    { TokenCB     _ }
-  '['    { TokenCOB    _ }
-  ']'    { TokenCCB    _ }
-  '{'    { TokenSOB    _ }
-  '}'    { TokenSCB    _ }
-  '<'    { TokenLA     _ }
-  '>'    { TokenRA     _ }
-  '!'    { TokenExclam _ }
-  '?'    { TokenQuestm _ }
-  '&'    { TokenBinCon _ }
-  '|'    { TokenBinDis _ }
-  '~'    { TokenNeg    _ }
-  '->'   { TokenImpl   _ }
-  CON    { TokenCon    _ }
-  DIS    { TokenDis    _ }
-  XOR    { TokenXor    _ }
-  STR    { TokenStr $$ _ }
-  INT    { TokenInt $$ _ }
-  'iff'  { TokenEqui   _ }
-  KNOWSTHAT    { TokenInfixKnowThat     _ }
-  KNOWSWHETHER { TokenInfixKnowWhether  _ }
-  CKNOWTHAT    { TokenInfixCKnowThat    _ }
-  CKNOWWHETHER { TokenInfixCKnowWhether _ }
-  'Forall'     { TokenForall            _ }
-  'Exists'     { TokenExists            _ }
+  TOP          { TokenTop              _ }
+  BOT          { TokenBot              _ }
+  '('          { TokenOB               _ }
+  ')'          { TokenCB               _ }
+  '~'          { TokenNeg              _ }
+  '-'          { TokenDash             _ }
+  '->'         { TokenImpl             _ }
+  AND          { TokenCon              _ }
+  OR           { TokenDis              _ }
+  STR          { TokenStr         $$   _ }
+  VAR          { TokenVar         $$   _ }
+  'Forall'     { TokenForall           _ }
+  'Exists'     { TokenExists           _ }
+  'none'       { TokenNone             _ }
+  'full'       { TokenFull             _ }
+  DEF          { TokenDefine           _ }
+  AGENTS       { TokenAgents           _ }
+  PREDS        { TokenPredicates       _ }
+  EDES         { TokenEventDes         _ }
+  ENON         { TokenEventNonDes      _ }
+  WDES         { TokenWorldDes         _ }
+  WNON         { TokenWorldNonDes      _ }
+  INIT         { TokenInit             _ }
+  GOAL         { TokenGoal             _ }
+  REQS         { TokenRequirements     _ }
+  DOM          { TokenDomain           _ }
+  ACT          { TokenAction           _ }
+  OBS          { TokenObservability    _ }
+  PRECON       { TokenPrecondition     _ }
+  EFF          { TokenEffect           _ }
+  BYA          { TokenByagent          _ }
+  DOMNAME      { TokenDomainName       _ }
+  PROBLEMNAME  { TokenProblemName      _ }
+  KNOWS        { TokenKnows            _ }
+  PARTITION    { TokenPartition        _ }
+  PARAMS       { TokenParameters       _ }
+  TYPES        { TokenTypes            _ }
+  OBJ          { TokenObjects          _ }
+  WHEN         { TokenWhen             _ }
 
-%left '->' 'iff'
-%left '|' '&'
-%nonassoc '&' '|'
-%left KNOWSTHAT KNOWSWHETHER CKNOWTHAT CKNOWWHETHER
-%left '[' ']'
-%left '<' '>'
-%left '~'
 
 %%
 
-CheckInput : VARS IntList LAW Form OBS ObserveSpec JobList { CheckInput $2 $4 $6 $7 }
-           | VARS IntList LAW Form OBS ObserveSpec { CheckInput $2 $4 $6 [] }
-IntList : INT { [$1] }
-        | INT COMMA IntList { $1:$3 }
-Form : TOP { Top }
-     | BOT { Bot }
-     | '(' Form ')' { $2 }
-     | '~' Form { Neg $2 }
-     | CON '(' FormList ')' { Conj $3 }
-     | Form '&' Form { Conj [$1,$3] }
-     | Form '|' Form { Disj [$1,$3] }
-     | Form '->' Form { Impl $1 $3 }
-     | DIS '(' FormList ')' { Disj $3 }
-     | XOR '(' FormList ')' { Xor $3 }
-     | Form 'iff' Form { Equi $1 $3 }
-     | INT { PrpF (P $1) }
-     | String KNOWSTHAT Form { K $1 $3 }
-     | String KNOWSWHETHER Form { Kw $1 $3 }
-     | StringList CKNOWTHAT Form { Ck $1 $3 }
-     | StringList CKNOWWHETHER Form { Ckw $1 $3 }
-     | '(' StringList ')' CKNOWTHAT Form { Ck $2 $5 }
-     | '(' StringList ')' CKNOWWHETHER Form { Ckw $2 $5 }
-     | '[' '!' Form ']'     Form { PubAnnounce  $3 $5 }
-     | '[' '?' '!' Form ']' Form { PubAnnounceW $4 $6 }
-     | '<' '!' Form '>'     Form { Neg (PubAnnounce  $3 (Neg $5)) }
-     | '<' '?' '!' Form '>' Form { Neg (PubAnnounceW $4 (Neg $6)) }
-     -- announcements to a group:
-     | '[' StringList '!' Form ']'     Form { Announce $2 $4 $6 }
-     | '[' StringList '?' '!' Form ']' Form { AnnounceW $2 $5 $7 }
-     | '<' StringList '!' Form '>'     Form { Neg (Announce  $2 $4 (Neg $6)) }
-     | '<' StringList '?' '!' Form '>' Form { Neg (AnnounceW $2 $5 (Neg $7)) }
-     -- boolean quantifiers:
-     | 'Forall' IntList Form { Forall (map P $2) $3 }
-     | 'Exists' IntList Form { Exists (map P $2) $3 }
-FormList : Form { [$1] } | Form COMMA FormList { $1:$3 }
+CheckDomain : '(' DEF 
+                 '(' DomainName ')' 
+                 '(' REQS RequirementList ')'    
+                 '(' TYPES TypeList ')'    
+                 '(' PREDS PredicateList ')' 
+                 ActionList         
+             ')'  { CheckDomain $4 $8 $12 $16 $18 }
+
+RequirementList : '-' --TODO
+
+TypeList : String
+         | String StringList
+
+PredicateList : '(' Predicate ')'
+              | '(' Predicate ')' PredicateList
+
+Predicate : String 
+          | String VarTypeList
+
+ActionList : '(' ACT Action ')'  { [$3] }
+           | '(' ACT Action ')' ActionList { $3:$5 }
+
+Action : String Params ByAgent EventList ObsList { Action }
+       | String Params ByAgent Event 
+
+Params : PARAMS '(' VarTypeList ')'
+
+VarTypeList : Vars { [$1] }
+            | Vars VarTypeList { $1:$2 }
+
+Vars : VarName '-' String
+     | VarName Vars
+
+ByAgent : BYA VarName { $2 }
+
+Event : Precondition Effect { Event True "" $1 $2 }
+
+EventList : '(' IsEventDesignated String Precondition Effect ')' { [Event $2 $3 $4 $5] }
+          | '(' IsEventDesignated String Precondition Effect ')' EventList { (Event $2 $3 $4 $5):$7 }
+
+IsEventDesignated : EDES { True }
+                  | ENON { False }
+
+Precondition : PRECON Form 
+
+Effect : EFF Form
+
+DomainName : DOMNAME String { $2 }
+
+CheckProblem : '('
+                   '(' PROBLEMNAME String ')'
+                   '(' DOM String ')'
+                   '(' OBJ ObjList ')'
+                   '(' INIT StatementList ')'
+                   WorldList
+                   '(' ObsList ')' --TODO not sure about this
+                   '(' GOAL StatementList ')'
+                ')' 
+
+ObjList : String '-' String
+        | String ObjList
+
+WorldList : '(' IsWorldDesignated String StatementList ')'
+          | '(' IsWorldDesignated String StatementList ')' WorldList
+
+IsWorldDesignated : WDES { True }
+                  | WNON { False }
+
+StatementList : '(' Statement ')'
+         | '(' Statement ')' StatementList
+
+Statement : String 
+          | String StringList 
+
+ObsList : Observability Vars 
+        | Observability 
+
+Obs : OBS 'full'
+    | OBS 'none' 
+    | OBS '(' PARTITION PartList ')'
+
+PartList : '(' StringList ')' 
+         | '(' StringList ')' PartList
+
+StringList : String 
+     | String StringList 
+
+
+Form : '(' Predicate ')'
+     | '(' AND ')'
+     | '(' AND FormList ')'
+     | '(' OR FormList ')'
+     | '(' '~' Form ')'
+     | '(' '->' Form Form ')'
+     | '(' 'Forall' '(' Vars ')' Form ')'
+     | '(' 'Forall' '(' Vars ')' WHEN Form Form ')' --Use imply thing 
+     | '(' 'Exists' '(' Vars ')' Form ')'
+
+FormList : Form { [$1] } 
+         | Form FormList { $1:$2 }
+
 String : STR { $1 }
-StringList : String { [$1] } | String COMMA StringList { $1:$3 }
-ObserveLine : STR COLON IntList { ($1,$3) }
-ObserveSpec : ObserveLine { [$1] } | ObserveLine ObserveSpec { $1:$2 }
-JobList : Job { [$1] } | Job JobList { $1:$2 }
-State : '{' '}' { [] }
-      | '{' IntList '}' { $2 }
-Job : TRUEQ State Form { TrueQ $2 $3 }
-    | VALIDQ Form { ValidQ $2 }
-    | WHEREQ Form { WhereQ $2 }
+VarName : VAR { $1 }
+
 
 {
+
+data Event = Event Bool Form Form deriving (Show,Eq,Ord)
+
 data CheckInput = CheckInput [Int] Form [(String,[Int])] JobList deriving (Show,Eq,Ord)
 data Job = TrueQ IntList Form | ValidQ Form | WhereQ Form deriving (Show,Eq,Ord)
 type JobList = [Job]

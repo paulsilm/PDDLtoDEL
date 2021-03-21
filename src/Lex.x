@@ -16,7 +16,6 @@ tokens :-
 
   -- keywords:
   "define"                { \ p _ -> TokenDefine            p }
-  ":agents"               { \ p _ -> TokenAgents            p }
   ":predicates"           { \ p _ -> TokenPredicates        p }
   ":event-designated"     { \ p _ -> TokenEventDes          p }
   ":event-nondesignated"  { \ p _ -> TokenEventNonDes       p }
@@ -24,9 +23,6 @@ tokens :-
   ":world-nondesignated"  { \ p _ -> TokenWorldNonDes       p }
   ":init"                 { \ p _ -> TokenInit              p }
   ":goal"                 { \ p _ -> TokenGoal              p }
-  --":objects"              { \ p _ -> TokenObjects           p }
-  --":types"                { \ p _ -> TokenTypes             p }
-  --":parameters"           { \ p _ -> TokenParameters        p }
   ":requirements"         { \ p _ -> TokenRequirements      p }
   ":domain"               { \ p _ -> TokenDomain            p }
   ":action"               { \ p _ -> TokenAction            p }
@@ -34,12 +30,16 @@ tokens :-
   ":precondition"         { \ p _ -> TokenPrecondition      p }
   ":effect"               { \ p _ -> TokenEffect            p }
   ":byagent"              { \ p _ -> TokenByagent           p }
+  ":parameters"           { \ p _ -> TokenParameters        p }
+  ":types"                { \ p _ -> TokenTypes             p }
+  ":objects"              { \ p _ -> TokenObjects           p }
   "domain"                { \ p _ -> TokenDomainName        p }
   "problem"               { \ p _ -> TokenProblemName       p }
   "knows"                 { \ p _ -> TokenKnows             p }
   "partition"             { \ p _ -> TokenPartition         p }
   "none"                  { \ p _ -> TokenNone              p }
   "full"                  { \ p _ -> TokenFull              p }
+  "when"                  { \ p _ -> TokenWhen              p }
 
   -- punctuation:
   "-"                     { \ p _ -> TokenDash              p }
@@ -58,8 +58,7 @@ tokens :-
   "imply"                 { \ p _ -> TokenImpl              p }
 
   -- Integers and Strings:
-  $dig+                   { \ p s -> TokenInt (read s)      p }
-  $\? $alf [-$alf $dig]*  { \ p s -> TokenVar s             p }
+  $\? $alf [-$alf $dig]*  { \ p s -> TokenVar (tail s)      p }
   $alf [$alf $dig]*       { \ p s -> TokenStr s             p }
 
 {

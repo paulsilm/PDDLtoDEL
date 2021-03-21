@@ -23,20 +23,20 @@ data Token a -- == AlexPn
   | TokenNone              {apn :: a}
   | TokenFull              {apn :: a}
   | TokenDash              {apn :: a}
-  | TokenExists            {apn :: a}
   | TokenVar {fooV::String, apn :: a}
   | TokenStr {fooS::String, apn :: a}
-  | TokenInt {fooI::Int,    apn :: a}
+  | TokenParameters        {apn :: a}
+  | TokenTypes             {apn :: a}
+  | TokenObjects           {apn :: a}
   | TokenTop               {apn :: a}
   | TokenBot               {apn :: a}
   | TokenNeg               {apn :: a}
   | TokenOB                {apn :: a}
   | TokenCB                {apn :: a}
-  | TokenBinCon            {apn :: a}
-  | TokenBinDis            {apn :: a}
   | TokenCon               {apn :: a}
   | TokenDis               {apn :: a}
   | TokenImpl              {apn :: a}
   | TokenForall            {apn :: a}
   | TokenExists            {apn :: a}
+  | TokenWhen              {apn :: a}
   deriving (Eq,Show)
