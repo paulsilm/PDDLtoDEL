@@ -65,30 +65,33 @@ CheckDomain : '(' DEF
                  ActionList         
              ')'  { CheckDomain $4 $8 $12 $16 $18 }
 
-RequirementList : '-' --TODO
+RequirementList : STRIPS { Strips }
+                | TYPING { Typing }
 
-TypeList : String
-         | String StringList
+TypeList : String { [$1] }
+         | String StringList { $1:$2 }
 
-PredicateList : '(' Predicate ')'
-              | '(' Predicate ')' PredicateList
+PredicateList : '(' Predicate ')' { $2 }
+              | '(' Predicate ')' PredicateList { $2:$4 }
 
-Predicate : String 
-          | String VarTypeList
+Predicate : String { Pred $1 [] }
+          | String VarTypeList { Pred $1 $2 }
 
 ActionList : '(' ACT Action ')'  { [$3] }
            | '(' ACT Action ')' ActionList { $3:$5 }
 
-Action : String Params ByAgent EventList ObsList { Action }
-       | String Params ByAgent Event 
+Action : String Params ByAgent EventList ObsList { Action $1 $2 $3 $4 $5 }
+       | String Params ByAgent Event { Action $1 $2 $3 [$4] [] }
 
-Params : PARAMS '(' VarTypeList ')'
+Params : PARAMS '(' VarTypeList ')' { $3 }
 
-VarTypeList : Vars { [$1] }
-            | Vars VarTypeList { $1:$2 }
+VarTypeList : VarType { [$1] } 
+            | VarType VarTypeList { $1:$2 } 
 
-Vars : VarName '-' String
-     | VarName Vars
+VarType : Vars '-' String { VTL $1 $3 } 
+
+Vars : VarName { [$1] }
+     | VarName Vars { $1:$2 }
 
 ByAgent : BYA VarName { $2 }
 
@@ -100,9 +103,9 @@ EventList : '(' IsEventDesignated String Precondition Effect ')' { [Event $2 $3 
 IsEventDesignated : EDES { True }
                   | ENON { False }
 
-Precondition : PRECON Form 
+Precondition : PRECON Form { $2 }
 
-Effect : EFF Form
+Effect : EFF Form { $2 }
 
 DomainName : DOMNAME String { $2 }
 
@@ -113,47 +116,48 @@ CheckProblem : '('
                    '(' INIT StatementList ')'
                    WorldList
                    '(' ObsList ')' --TODO not sure about this
-                   '(' GOAL StatementList ')'
-                ')' 
+                   '(' GOAL Form ')'
+                ')' { CheckProblem $4 $8 $12 $16 $18 $20 $24 }
 
-ObjList : String '-' String
-        | String ObjList
+ObjList : String '-' String { $1:[$3] }
+        | String ObjList { $1:$2 }
 
-WorldList : '(' IsWorldDesignated String StatementList ')'
-          | '(' IsWorldDesignated String StatementList ')' WorldList
+WorldList : '(' IsWorldDesignated String StatementList ')' { World $2 $3 $4 }
+          | '(' IsWorldDesignated String StatementList ')' WorldList { (World $2 $3 $4):$6 }
 
 IsWorldDesignated : WDES { True }
                   | WNON { False }
 
-StatementList : '(' Statement ')'
-         | '(' Statement ')' StatementList
+StatementList : '(' Statement ')' { [$2] }
+         | '(' Statement ')' StatementList { $2:$4 }
 
-Statement : String 
-          | String StringList 
+Statement : String { [$1] }
+          | String StringList { $1:$2 }
 
-ObsList : Observability Vars 
-        | Observability 
+ObsList : Observability Vars { ObsSpec $1 $2 }
+        | Observability { ObsDef $1 }
 
-Obs : OBS 'full'
-    | OBS 'none' 
-    | OBS '(' PARTITION PartList ')'
+Obs : OBS 'full' { Full }
+    | OBS 'none' { None }
+    | OBS '(' PARTITION PartList ')' { Partition $4 }
 
-PartList : '(' StringList ')' 
-         | '(' StringList ')' PartList
+PartList : '(' StringList ')' { [$2] }
+         | '(' StringList ')' PartList { $2:$4 }
 
-StringList : String 
-     | String StringList 
+StringList : String { [$1] }
+     | String StringList { $1:$2 }
 
 
-Form : '(' Predicate ')'
-     | '(' AND ')'
-     | '(' AND FormList ')'
-     | '(' OR FormList ')'
-     | '(' '~' Form ')'
-     | '(' '->' Form Form ')'
-     | '(' 'Forall' '(' Vars ')' Form ')'
-     | '(' 'Forall' '(' Vars ')' WHEN Form Form ')' --Use imply thing 
-     | '(' 'Exists' '(' Vars ')' Form ')'
+Form : '(' Predicate ')' { Pred $2 }
+     | '(' AND ')' { And [] }
+     | '(' OR ')' { Or [] }
+     | '(' AND FormList ')' { And $3 }
+     | '(' OR FormList ')' { Or $3 }
+     | '(' '~' Form ')' { Not $3 }
+     | '(' '->' Form Form ')' { Imply $2 $3 }
+     | '(' 'Forall' '(' VarType ')' Form ')' { Forall $4 $6 }
+     | '(' 'Forall' '(' VarType ')' WHEN Form Form ')' { ForallWhen $4 $7 $8 } 
+     | '(' 'Exists' '(' VarType ')' Form ')' { Exists $4 $6 }
 
 FormList : Form { [$1] } 
          | Form FormList { $1:$2 }
@@ -164,15 +168,30 @@ VarName : VAR { $1 }
 
 {
 
-data Event = Event Bool Form Form deriving (Show,Eq,Ord)
+data Form = Pred Predicate 
+          | And [Form] 
+          | Or [Form]
+          | Not Form 
+          | Imply Form Form
+          | Forall VarType Form
+          | ForallWhen VarType Form Form
+          | Exists VarType Form
+data CheckDomain = CheckDomain String [Req] [String] [Predicate] [Action]
+data Req = Strips
+         | Typing
+data Predicate = Pred String [VarType]
+data VarType = VTL [String] String 
+data Action = Action String [VarType] String [Event] [Obs]
+data Event = Event Bool String Form Form 
+data Obs = ObsDef ObsType 
+         | ObsSpec ObsType [String]
+data ObsType = Full 
+             | None
+             | Partition [[String]]
+data CheckProblem = 
+     CheckProblem String String [String] [[String]] [World] [Obs] Form
+data World = World Bool String [[String]]
 
-data CheckInput = CheckInput [Int] Form [(String,[Int])] JobList deriving (Show,Eq,Ord)
-data Job = TrueQ IntList Form | ValidQ Form | WhereQ Form deriving (Show,Eq,Ord)
-type JobList = [Job]
-type IntList = [Int]
-type FormList = [Form]
-type ObserveLine = (String,IntList)
-type ObserveSpec = [ObserveLine]
 
 type ParseResult a = Either (Int,Int) a
 
