@@ -19,6 +19,8 @@ data Token a -- == AlexPn
   | TokenDomainName        {apn :: a}
   | TokenProblemName       {apn :: a}
   | TokenKnows             {apn :: a}
+  | TokenStrips            {apn :: a}
+  | TokenTyping            {apn :: a}
   | TokenPartition         {apn :: a}
   | TokenNone              {apn :: a}
   | TokenFull              {apn :: a}

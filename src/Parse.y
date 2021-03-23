@@ -1,4 +1,4 @@
-{ //{-# OPTIONS_GHC -w #-}
+{ {-# OPTIONS_GHC -w #-}
 module Parse where
 import Token
 import Lex
@@ -42,6 +42,8 @@ import Lex
   DOM          { TokenDomain           _ }
   ACT          { TokenAction           _ }
   OBS          { TokenObservability    _ }
+  STRIPS       { TokenStrips           _ }
+  TYPING       { TokenTyping           _ }
   PRECON       { TokenPrecondition     _ }
   EFF          { TokenEffect           _ }
   BYA          { TokenByagent          _ }
@@ -56,6 +58,7 @@ import Lex
 
 
 %%
+CheckInput : CheckDomain CheckProblem { CheckInput CheckDomain CheckProblem }
 
 CheckDomain : '(' DEF 
                  '(' DomainName ')' 
@@ -134,8 +137,8 @@ StatementList : '(' Statement ')' { [$2] }
 Statement : String { [$1] }
           | String StringList { $1:$2 }
 
-ObsList : Observability Vars { ObsSpec $1 $2 }
-        | Observability { ObsDef $1 }
+ObsList : Obs Vars { ObsSpec $1 $2 }
+        | Obs { ObsDef $1 }
 
 Obs : OBS 'full' { Full }
     | OBS 'none' { None }
@@ -163,7 +166,7 @@ FormList : Form { [$1] }
          | Form FormList { $1:$2 }
 
 String : STR { $1 }
-VarName : VAR { $1 }
+VarName : VAR { tail $1 }
 
 
 {
@@ -192,6 +195,7 @@ data CheckProblem =
      CheckProblem String String [String] [[String]] [World] [Obs] Form
 data World = World Bool String [[String]]
 
+data CheckInput = CheckInput CheckDomain CheckProblem
 
 type ParseResult a = Either (Int,Int) a
 
