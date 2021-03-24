@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c352921fbac91b7565f2a17781a01492b96aa3c736c90cba860fd517651339b7
+-- hash: e93922f5eb0c812f6a85e0200bdbecc55a9bb56a61ab3d0d02cce2b61c2bfdde
 
 name:           PDDL-DEL
 version:        0.1.0.0
@@ -37,7 +37,8 @@ library
   hs-source-dirs:
       src
   build-depends:
-      base >=4.7 && <5
+      array
+    , base >=4.7 && <5
     , smcdel
   default-language: Haskell2010
 
@@ -50,6 +51,7 @@ executable PDDL-DEL-exe
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       PDDL-DEL
+    , array
     , base >=4.7 && <5
     , smcdel
   default-language: Haskell2010
@@ -64,6 +66,7 @@ test-suite PDDL-DEL-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       PDDL-DEL
+    , array
     , base >=4.7 && <5
     , smcdel
   default-language: Haskell2010

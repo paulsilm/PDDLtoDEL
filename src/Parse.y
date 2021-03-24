@@ -58,7 +58,7 @@ import Lex
 
 
 %%
-CheckInput : CheckDomain CheckProblem { CheckInput CheckDomain CheckProblem }
+CheckInput : CheckDomain CheckProblem { CheckInput $1 $2 }
 
 CheckDomain : '(' DEF 
                  '(' DomainName ')' 
@@ -68,13 +68,16 @@ CheckDomain : '(' DEF
                  ActionList         
              ')'  { CheckDomain $4 $8 $12 $16 $18 }
 
-RequirementList : STRIPS { Strips }
-                | TYPING { Typing }
+RequirementList : Requirement { [$1] }
+                | Requirement RequirementList { $1:$2 }
+
+Requirement : STRIPS { Strips }
+            | TYPING { Typing }
 
 TypeList : String { [$1] }
          | String StringList { $1:$2 }
 
-PredicateList : '(' Predicate ')' { $2 }
+PredicateList : '(' Predicate ')' { [$2] }
               | '(' Predicate ')' PredicateList { $2:$4 }
 
 Predicate : String { Pred $1 [] }
@@ -125,7 +128,7 @@ CheckProblem : '('
 ObjList : String '-' String { $1:[$3] }
         | String ObjList { $1:$2 }
 
-WorldList : '(' IsWorldDesignated String StatementList ')' { World $2 $3 $4 }
+WorldList : '(' IsWorldDesignated String StatementList ')' { [World $2 $3 $4] }
           | '(' IsWorldDesignated String StatementList ')' WorldList { (World $2 $3 $4):$6 }
 
 IsWorldDesignated : WDES { True }
@@ -137,7 +140,10 @@ StatementList : '(' Statement ')' { [$2] }
 Statement : String { [$1] }
           | String StringList { $1:$2 }
 
-ObsList : Obs Vars { ObsSpec $1 $2 }
+ObsList : ObsType { [$1] }
+        | ObsType ObsList { $1:$2 }
+
+ObsType : Obs Vars { ObsSpec $1 $2 }
         | Obs { ObsDef $1 }
 
 Obs : OBS 'full' { Full }
@@ -151,13 +157,13 @@ StringList : String { [$1] }
      | String StringList { $1:$2 }
 
 
-Form : '(' Predicate ')' { Pred $2 }
+Form : '(' Predicate ')' { Atom $2 }
      | '(' AND ')' { And [] }
      | '(' OR ')' { Or [] }
      | '(' AND FormList ')' { And $3 }
      | '(' OR FormList ')' { Or $3 }
      | '(' '~' Form ')' { Not $3 }
-     | '(' '->' Form Form ')' { Imply $2 $3 }
+     | '(' '->' Form Form ')' { Imply $3 $4 }
      | '(' 'Forall' '(' VarType ')' Form ')' { Forall $4 $6 }
      | '(' 'Forall' '(' VarType ')' WHEN Form Form ')' { ForallWhen $4 $7 $8 } 
      | '(' 'Exists' '(' VarType ')' Form ')' { Exists $4 $6 }
@@ -171,7 +177,7 @@ VarName : VAR { tail $1 }
 
 {
 
-data Form = Pred Predicate 
+data Form = Atom Predicate 
           | And [Form] 
           | Or [Form]
           | Not Form 
