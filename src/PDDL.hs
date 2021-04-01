@@ -34,19 +34,23 @@ data Event = Event Bool String Form Form
 
 data Obs = ObsDef ObsType 
          | ObsSpec ObsType [String]
-          deriving (Show, Eq)
+         deriving (Show, Eq)
 
 data ObsType = Full 
              | None
              | Partition [[String]]
-          deriving (Show, Eq)
+             deriving (Show, Eq)
 
 data CheckProblem = 
-     CheckProblem String String [String] [[String]] [World] [Obs] Form
-          deriving (Show, Eq)
+     CheckProblem String String [ObjType] [[String]] [World] [Obs] Form
+     deriving (Show, Eq)
+
+data ObjType = OTL [String] String
+             deriving (Show, Eq)
+                  
 
 data World = World Bool String [[String]]
-          deriving (Show, Eq)
+           deriving (Show, Eq)
 
 data CheckInput = CheckInput CheckDomain CheckProblem
-          deriving (Show, Eq)
+                deriving (Show, Eq)

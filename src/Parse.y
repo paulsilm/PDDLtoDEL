@@ -120,15 +120,17 @@ DomainName : DOMNAME String { $2 }
 CheckProblem : '(' DEF
                    '(' PROBLEMNAME String ')'
                    '(' DOM String ')'
-                   '(' OBJ ObjList ')'
+                   '(' OBJ ObjTypeList ')'
                    '(' INIT StatementList ')'
                    '(' WorldList ')'
                    '(' ObsList ')' --TODO not sure about this
                    '(' GOAL Form ')'
                 ')' { CheckProblem $5 $9 $13 $17 $20 $23 $27 }
 
-ObjList : String '-' String { $1:[$3] }
-        | String ObjList { $1:$2 }
+ObjTypeList : ObjType { [$1] }
+            | ObjType ObjTypeList { $1:$2 }
+
+ObjType : StringList '-' String { OTL $1 $3 }
 
 WorldList : '(' IsWorldDesignated String StatementList ')' { [World $2 $3 $4] }
           | '(' IsWorldDesignated String StatementList ')' WorldList { (World $2 $3 $4):$6 }
