@@ -50,22 +50,24 @@
     (not-at L1 A2)
     (not-at L1 A3)
   )
-  (:world-nondesignated wto1
-    (destined L1 A1)
-    (not-destined L1 A2)
-    (not-destined L1 A3)
+  (
+    (:world-nondesignated wto1
+      (destined L1 A1)
+      (not-destined L1 A2)
+      (not-destined L1 A3)
+    )
+    (:world-nondesignated wto2
+      (destined L1 A2)
+      (not-destined L1 A1)
+      (not-destined L1 A3)
+    )
+    (:world-designated wto3des
+      (destined L1 A3)
+      (not-destined L1 A1)
+      (not-destined L1 A2)
+    )
   )
-  (:world-nondesignated wto2
-    (destined L1 A2)
-    (not-destined L1 A1)
-    (not-destined L1 A3)
-  )
-  (:world-designated wto3des
-    (destined L1 A3)
-    (not-destined L1 A1)
-    (not-destined L1 A2)
-  )
-  ( :observability none)
+  (:observability none)
   (:goal (forall (?l - letter)
   (received ?l - letter) ))
 )

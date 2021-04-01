@@ -121,10 +121,10 @@ CheckProblem : '(' DEF
                    '(' DOM String ')'
                    '(' OBJ ObjList ')'
                    '(' INIT StatementList ')'
-                   WorldList
+                   '(' WorldList ')'
                    '(' ObsList ')' --TODO not sure about this
                    '(' GOAL Form ')'
-                ')' { CheckProblem $5 $9 $13 $17 $19 $21 $25 }
+                ')' { CheckProblem $5 $9 $13 $17 $20 $23 $27 }
 
 ObjList : String '-' String { $1:[$3] }
         | String ObjList { $1:$2 }
