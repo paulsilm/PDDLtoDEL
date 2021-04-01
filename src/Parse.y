@@ -81,8 +81,9 @@ TypeList : String { [$1] }
 PredicateList : '(' Predicate ')' { [$2] }
               | '(' Predicate ')' PredicateList { $2:$4 }
 
-Predicate : String { Pred $1 [] }
-          | String VarTypeList { Pred $1 $2 }
+Predicate : String { PredAtom $1 }
+          | String Vars { PredSpec $1 $2 }
+          | String VarTypeList { PredDef $1 $2 }
 
 ActionList : '(' ACT Action ')'  { [$3] }
            | '(' ACT Action ')' ActionList { $3:$5 }

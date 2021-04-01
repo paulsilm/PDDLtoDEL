@@ -18,8 +18,10 @@ data Req = Strips
          | Typing
           deriving (Show, Eq)
 
-data Predicate = Pred String [VarType]
-          deriving (Show, Eq)
+data Predicate = PredAtom String
+               | PredDef String [VarType]
+               | PredSpec String [String]
+               deriving (Show, Eq)
 
 data VarType = VTL [String] String 
           deriving (Show, Eq)
