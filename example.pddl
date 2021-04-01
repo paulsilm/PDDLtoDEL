@@ -59,7 +59,7 @@
     (not-at L1 A2)
     (not-at L1 A3)
   )
-  (
+  (:worlds
     (:world-nondesignated wto1
       (destined L1 A1)
       (not-destined L1 A2)

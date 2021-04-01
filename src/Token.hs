@@ -30,6 +30,7 @@ data Token a -- == AlexPn
   | TokenParameters        {apn :: a}
   | TokenTypes             {apn :: a}
   | TokenObjects           {apn :: a}
+  | TokenWorlds            {apn :: a}
   | TokenTop               {apn :: a}
   | TokenBot               {apn :: a}
   | TokenNeg               {apn :: a}

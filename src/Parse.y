@@ -37,6 +37,7 @@ import PDDL
   ENON         { TokenEventNonDes      _ }
   WDES         { TokenWorldDes         _ }
   WNON         { TokenWorldNonDes      _ }
+  WORLDS       { TokenWorlds           _ }
   INIT         { TokenInit             _ }
   GOAL         { TokenGoal             _ }
   REQS         { TokenRequirements     _ }
@@ -122,10 +123,10 @@ CheckProblem : '(' DEF
                    '(' DOM String ')'
                    '(' OBJ ObjTypeList ')'
                    '(' INIT StatementList ')'
-                   '(' WorldList ')'
-                   '(' ObsList ')' --TODO not sure about this
+                   '(' WORLDS WorldList ')'
+                   '(' ObsList ')' 
                    '(' GOAL Form ')'
-                ')' { CheckProblem $5 $9 $13 $17 $20 $23 $27 }
+                ')' { CheckProblem $5 $9 $13 $17 $21 $24 $28 }
 
 ObjTypeList : ObjType { [$1] }
             | ObjType ObjTypeList { $1:$2 }

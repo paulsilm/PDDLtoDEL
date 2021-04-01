@@ -32,6 +32,7 @@ tokens :-
   ":parameters"           { \ p _ -> TokenParameters        p }
   ":types"                { \ p _ -> TokenTypes             p }
   ":objects"              { \ p _ -> TokenObjects           p }
+  ":worlds"               { \ p _ -> TokenWorlds            p }
   ":strips"               { \ p _ -> TokenStrips            p }
   ":typing"               { \ p _ -> TokenTyping            p }
   "domain"                { \ p _ -> TokenDomainName        p }
