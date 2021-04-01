@@ -41,7 +41,7 @@ packages:
 #
 extra-deps:
 - git: https://github.com/jrclogic/SMCDEL.git
-  commit: ade1911ba308e80412754c30f0b93079ddf1a065
+  commit: 10bd5ba2f1f3cc85e4b0f23d5eddbb26f05df5bf
 - HasCacBDD-0.1.0.3@sha256:74272b9dcd8a95141b241841b45a23e861d18973cfed436af3d4fff3344ba4dd,1700
 - git: https://github.com/m4lvin/cudd.git
   commit: 32f7d6b764a80bbf8f84c07e2c1d691469aaaba0

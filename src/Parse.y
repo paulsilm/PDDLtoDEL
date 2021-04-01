@@ -116,7 +116,7 @@ Effect : EFF Form { $2 }
 
 DomainName : DOMNAME String { $2 }
 
-CheckProblem : '('
+CheckProblem : '(' DEF
                    '(' PROBLEMNAME String ')'
                    '(' DOM String ')'
                    '(' OBJ ObjList ')'
@@ -124,7 +124,7 @@ CheckProblem : '('
                    WorldList
                    '(' ObsList ')' --TODO not sure about this
                    '(' GOAL Form ')'
-                ')' { CheckProblem $4 $8 $12 $16 $18 $20 $24 }
+                ')' { CheckProblem $5 $9 $13 $17 $19 $21 $25 }
 
 ObjList : String '-' String { $1:[$3] }
         | String ObjList { $1:$2 }
@@ -168,6 +168,7 @@ Form : '(' Predicate ')' { Atom $2 }
      | '(' 'Forall' '(' VarType ')' Form ')' { Forall $4 $6 }
      | '(' 'Forall' '(' VarType ')' WHEN Form Form ')' { ForallWhen $4 $7 $8 } 
      | '(' 'Exists' '(' VarType ')' Form ')' { Exists $4 $6 }
+     | '(' KNOWS VarName Form ')' { Knows $3 $4 }
 
 FormList : Form { [$1] } 
          | Form FormList { $1:$2 }

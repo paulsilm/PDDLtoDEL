@@ -5,6 +5,17 @@
 
 packages:
 - completed:
+    name: smcdel
+    version: 1.1.0
+    git: https://github.com/jrclogic/SMCDEL.git
+    pantry-tree:
+      size: 4242
+      sha256: c335ee7e225033c97cfcfbfbe7ee425fbed1502798d07c22cc5f70dcd9b599e6
+    commit: 10bd5ba2f1f3cc85e4b0f23d5eddbb26f05df5bf
+  original:
+    git: https://github.com/jrclogic/SMCDEL.git
+    commit: 10bd5ba2f1f3cc85e4b0f23d5eddbb26f05df5bf
+- completed:
     hackage: HasCacBDD-0.1.0.3@sha256:74272b9dcd8a95141b241841b45a23e861d18973cfed436af3d4fff3344ba4dd,1700
     pantry-tree:
       size: 1675
