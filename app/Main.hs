@@ -4,6 +4,7 @@ import Lib
 import Parse
 import Lex
 import PDDL
+import PrintPDDL
 
 
 main :: IO ()
@@ -12,8 +13,9 @@ main = do
   case parse $ alexScanTokens input of
       Left (lin,col) -> error ("Parse error in line " ++ show lin ++ ", column " ++ show col)
       Right (CheckInput domain problem) -> do
-        print domain
-        print problem
+        putStrLn $ ppDomain domain
+        --print domain
+        --print problem
         {-
         let mykns = KnS (map P vocabInts) (boolBddOf lawform) (map (second (map P)) obs)
         when texMode $
