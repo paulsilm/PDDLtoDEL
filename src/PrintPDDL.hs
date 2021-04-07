@@ -29,8 +29,8 @@ ppAction (Action name params actor events obss) =
      "(:action " ++ name ++ "\n\t\t"
   ++ ":parameters (" ++ (concat $ map (\v -> " " ++ ppVars v) params) ++ ")\n\t\t"
   ++ ":byagent " ++ actor ++ "\n\t\t"
-  ++ (concat $ map (\e -> "\n\t\t" ++ ppEvent e) events) ++ "\n\t\t"
-  ++ (concat $ map (\f -> "\n\t\t" ++ ppObs f) obss) ++ "\n\t\t)"
+  ++ (concat $ map (\e -> "\n\t\t" ++ ppEvent e) events) ++ "\n\t\t)"
+  ++ (concat $ map (\f -> "\n\t\t:observability" ++ ppObs f) obss) ++ "\n\t\t)"
 
 
 ppEvents :: [Event] -> String 
@@ -51,7 +51,7 @@ ppObs (ObsSpec obsType ags) = ppObsType obsType ++ (concat $ map (\a -> " ?" ++ 
 ppObsType :: ObsType -> String
 ppObsType Full = " full"
 ppObsType None = " none"
-ppObsType (Partition sss) = "(partition " ++ (concat $ map (\ss -> " (" ++ (concat $ map (\s -> "(" ++ s ++ ")") ss )) sss) ++ ")"
+ppObsType (Partition sss) = " (partition " ++ (concat $ map (\ss -> " (" ++ (concat $ map (\s -> " " ++ s) ss ) ++ ")") sss) ++ ")"
 
 ppForm :: Form -> String
 ppForm _ = "Stub"
