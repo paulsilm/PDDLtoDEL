@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8c371d70d89315277032870b2b1e6f92e81680cdbe6a01c127a07b0f93e76551
+-- hash: 0ec36202cecb0cd3d4a00410ce57cfd40a3bc6ed2ea803090909cbc255c8eb25
 
 name:           PDDL-DEL
 version:        0.1.0.0
@@ -33,6 +33,7 @@ library
       PDDL
       PrintPDDL
       Token
+      Translate
   other-modules:
       Paths_PDDL_DEL
   hs-source-dirs:

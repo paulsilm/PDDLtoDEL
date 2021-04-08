@@ -2,11 +2,11 @@ module PrintPDDL where
 
 import PDDL
 
-ppInput :: CheckInput -> String
-ppInput (CheckInput domain problem) = (ppDomain domain) ++ "\n\n" ++ (ppProblem problem)
+ppInput :: PDDL -> String
+ppInput (CheckPDDL domain problem) = (ppDomain domain) ++ "\n\n" ++ (ppProblem problem)
 
-ppDomain :: CheckDomain -> String
-ppDomain (CheckDomain str reqs strs preds actions) = 
+ppDomain :: Domain -> String
+ppDomain (Domain str reqs strs preds actions) = 
      "(define (domain " ++ str ++ ")\n" 
   ++ "\t(:requirements" ++ (concat $ map (\r -> " " ++ ppReq r) reqs) ++ ")\n"
   ++ "\t(:types" ++ (concat $ map (" " ++) strs) ++ ")\n"
@@ -33,11 +33,6 @@ ppAction (Action name params actor events obss) =
   ++ ":byagent ?" ++ actor ++ "\n\t\t"
   ++ (concat $ map (\e -> "\n\t\t" ++ ppEvent e) events) ++ "\n\t\t"
   ++ (concat $ map (\o -> "\n\t\t:observability" ++ ppObs o) obss) ++ "\n\t\t)"
-
-
-ppEvents :: [Event] -> String 
---ppEvents (e:[]) = (concat $ map (\e -> "\n\t\t" ++ ppEvent e) events)
-ppEvents events = (concat $ map (\e -> "\n\t\t" ++ ppEvent e) events)
 
 ppEvent :: Event -> String 
 ppEvent (Event des "" pres effect) = 
@@ -69,10 +64,9 @@ ppForm (Forall vt f) = "(forall \n\t\t(" ++ (ppVars vt) ++ ")\n\t\t\t" ++ (ppFor
 ppForm (ForallWhen vt fw ft) = "(forall " ++ (ppVars vt) ++ "\n\t\t\twhen " ++ (ppForm fw) ++ "\n\t\t\t\t" ++ (ppForm ft) ++ "\n\t\t)"
 ppForm (Exists vt f) = "(exists " ++ (ppVars vt) ++ "\n\t\t\t" ++ (ppForm f) ++ "\n\t\t)"
 
-
---CheckProblem String String [ObjType] [[String]] [World] [Obs] Form
-ppProblem :: CheckProblem -> String 
-ppProblem (CheckProblem problemName domainName objects init worlds obss goal) =
+--Problem String String [ObjType] [[String]] [World] [Obs] Form
+ppProblem :: Problem -> String 
+ppProblem (Problem problemName domainName objects init worlds obss goal) =
      "(define (problem " ++ problemName ++ ")\n\t"
   ++ "(:domain " ++ domainName ++ ")\n\t"
   ++ "(:objects" ++ (concat $ map (\o -> "\n\t\t" ++ ppObj o) objects) ++ ")\n\t"

@@ -11,7 +11,7 @@ data Form = Atom Predicate
           | Knows String Form
           deriving (Show, Eq)
 
-data CheckDomain = CheckDomain String [Req] [String] [Predicate] [Action]
+data Domain = Domain String [Req] [String] [Predicate] [Action]
           deriving (Show, Eq)
 
 data Req = Strips
@@ -41,8 +41,8 @@ data ObsType = Full
              | Partition [[String]]
              deriving (Show, Eq)
 
-data CheckProblem = 
-     CheckProblem String String [ObjType] [[String]] [World] [Obs] Form
+data Problem = 
+     Problem String String [ObjType] [[String]] [World] [Obs] Form
      deriving (Show, Eq)
 
 data ObjType = OTL [String] String
@@ -52,5 +52,5 @@ data ObjType = OTL [String] String
 data World = World Bool String [[String]]
            deriving (Show, Eq)
 
-data CheckInput = CheckInput CheckDomain CheckProblem
+data PDDL = CheckPDDL Domain Problem
                 deriving (Show, Eq)

@@ -8,7 +8,7 @@ import PDDL
 
 
 
-%name parse CheckInput
+%name parse PDDL
 %tokentype { Token AlexPosn }
 %error { parseError }
 
@@ -60,15 +60,15 @@ import PDDL
 
 
 %%
-CheckInput : CheckDomain CheckProblem { CheckInput $1 $2 }
+PDDL : Domain Problem { CheckPDDL $1 $2 }
 
-CheckDomain : '(' DEF 
+Domain : '(' DEF 
                  '(' DomainName ')' 
                  '(' REQS RequirementList ')'    
                  '(' TYPES TypeList ')'    
                  '(' PREDS PredicateList ')' 
                  ActionList         
-             ')'  { CheckDomain $4 $8 $12 $16 $18 }
+             ')'  { Domain $4 $8 $12 $16 $18 }
 
 RequirementList : Requirement { [$1] }
                 | Requirement RequirementList { $1:$2 }
@@ -118,7 +118,7 @@ Effect : EFF Form { $2 }
 
 DomainName : DOMNAME String { $2 }
 
-CheckProblem : '(' DEF
+Problem : '(' DEF
                    '(' PROBLEMNAME String ')'
                    '(' DOM String ')'
                    '(' OBJ ObjTypeList ')'
@@ -126,7 +126,7 @@ CheckProblem : '(' DEF
                    '(' WORLDS WorldList ')'
                    '(' ObsList ')' 
                    '(' GOAL Form ')'
-                ')' { CheckProblem $5 $9 $13 $17 $21 $24 $28 }
+                ')' { Problem $5 $9 $13 $17 $21 $24 $28 }
 
 ObjTypeList : ObjType { [$1] }
             | ObjType ObjTypeList { $1:$2 }
