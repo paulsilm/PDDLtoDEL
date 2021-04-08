@@ -34,7 +34,7 @@
           (destined ?l ?a)
         )
     :effect (received ?l))
-    (:event-designated check-unsucc
+    (:event-nondesignated check-unsucc
       :precondition 
         (and 
           (at ?l ?a)

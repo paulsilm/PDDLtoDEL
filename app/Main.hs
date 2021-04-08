@@ -9,11 +9,11 @@ import PrintPDDL
 
 main :: IO ()
 main = do
-  input <- readFile "example.pddl"
+  input <- readFile "example2.pddl"
   case parse $ alexScanTokens input of
       Left (lin,col) -> error ("Parse error in line " ++ show lin ++ ", column " ++ show col)
       Right (CheckInput domain problem) -> do
-        putStrLn $ ppDomain domain
+        putStrLn $ ppInput (CheckInput domain problem)
         --print domain
         --print problem
         {-
