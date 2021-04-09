@@ -10,11 +10,11 @@ import Translate
 
 main :: IO ()
 main = do
-  input <- readFile "example2.pddl"
+  input <- readFile "example.pddl"
   case parse $ alexScanTokens input of
       Left (lin,col) -> error ("Parse error in line " ++ show lin ++ ", column " ++ show col)
       Right (CheckPDDL domain problem) -> do
-        putStrLn $ show $ getAtomMap (getObjs problem) (getPreds domain)
+        putStrLn $ show $ getAtomMap (getObjs problem) (getPreds domain)--
         --print domain
         --print problem
         {-

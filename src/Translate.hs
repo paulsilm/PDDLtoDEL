@@ -19,23 +19,12 @@ predToProps :: [TypedObjs] -> Predicate -> [Predicate]
 predToProps objects (PredDef name vars) =
   let 
     predTypes = concat $ map typify vars -- [letter agent agent]
-    allAtoms = foldr (objectify objects) [] predTypes
+    allAtoms = foldr (objectify objects) [[]] predTypes
     allPreds = map (PredSpec name) allAtoms
   in allPreds
 
---predTypes :: [String] (e.g. [letter agent agent])
-
 --function that augments the existing varList by all objects
 --that suit the type of the current variable
--- a :: String
--- b :: [[String]] (something like [ [L, A1, A1], 
---                                   [L, A1, A2] ]) -- where L,A1,A2 are names of objects
---(objectify objects) -> [] -> predTypes  -> allAtoms 
---(a -> b -> b)       -> b  -> [a]        -> b
-
---objectify objs :: a -> b -> b
---                  String -> [[String]] -> [[String]]
-
 objectify :: [TypedObjs] -> String -> [[String]] -> [[String]]
 objectify objs predType varList = concat $ map (addTo varList) (getObjNames predType objs)
 
@@ -45,9 +34,7 @@ addTo varList newVar = map (newVar:) varList
 -- returns list of objectnames of type pred
 getObjNames :: String -> [TypedObjs] -> [String]
 getObjNames _ [] = []
-getObjNames pred ((TO names objName):objs)
-  | pred == objName = names
-  | otherwise = getObjNames pred objs
+getObjNames pred ((TO names objName):objs) = if pred == objName then names else getObjNames pred objs
 
 typify :: VarType -> [String]
 typify (VTL objs objType) = replicate (length objs) objType
