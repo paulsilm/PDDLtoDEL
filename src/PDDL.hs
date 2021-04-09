@@ -21,7 +21,7 @@ data Req = Strips
          | Typing
           deriving (Show, Eq)
 
--- Predicate: (atomic_predicate name|definition name typed_variables|specific name object_names)
+-- Predicate: (Atomic name|Definition name typed_variables|Specific name object_names)
 data Predicate = PredAtom String
                | PredDef String [VarType]
                | PredSpec String [String]
@@ -39,12 +39,12 @@ data Action = Action String [VarType] String [Event] [Obs]
 data Event = Event Bool String Form Form 
           deriving (Show, Eq)
 
--- Action or world observabilities: (default|specific_per_agent) (full|none|partitioned) [agents]
+-- Action or world observabilities: (Default|Specific_per_agent) (full|none|partitioned) [agents]
 data Obs = ObsDef ObsType 
          | ObsSpec ObsType [String]
          deriving (Show, Eq)
 
---Observability type: (full|none|partitioned partition)
+--Observability type: (Full|None|Partitioned partition)
 data ObsType = Full 
              | None
              | Partition [[String]]

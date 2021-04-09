@@ -2,15 +2,68 @@ module Translate where
 
 import PDDL
 import SMCDEL.Explicit.S5
+import SMCDEL.Language (Prp(..))
 
 type DEL = ([MultipointedActionModelS5], MultipointedModelS5)
 --pddlToDEL :: PDDL -> DEL
 --pddlToDEL (CheckPDDL domain problem) =
---  (DomainToActionModels domain, ProblemToKripke problem)
+--  (DomainToActionModels domain (getObjs problem), ProblemToKripke problem)
+
+getAtomMap :: [TypedObjs] -> [Predicate] -> [(Prp, Predicate)]
+getAtomMap objects preds = zip (map P [1..]) $ concat $ map (predToProps objects) preds 
+
+getPreds :: Domain -> [Predicate]
+getPreds (Domain _ _ _ preds _) = preds
+
+predToProps :: [TypedObjs] -> Predicate -> [Predicate]
+predToProps objects (PredDef name vars) =
+  let 
+    predTypes = concat $ map typify vars -- [letter agent agent]
+    allAtoms = foldr (objectify objects) [] predTypes
+    allPreds = map (PredSpec name) allAtoms
+  in allPreds
+
+--predTypes :: [String] (e.g. [letter agent agent])
+
+--function that augments the existing varList by all objects
+--that suit the type of the current variable
+-- a :: String
+-- b :: [[String]] (something like [ [L, A1, A1], 
+--                                   [L, A1, A2] ]) -- where L,A1,A2 are names of objects
+--(objectify objects) -> [] -> predTypes  -> allAtoms 
+--(a -> b -> b)       -> b  -> [a]        -> b
+
+--objectify objs :: a -> b -> b
+--                  String -> [[String]] -> [[String]]
+
+objectify :: [TypedObjs] -> String -> [[String]] -> [[String]]
+objectify objs predType varList = concat $ map (addTo varList) (getObjNames predType objs)
+
+addTo :: [[String]] -> String -> [[String]]
+addTo varList newVar = map (newVar:) varList
+
+-- returns list of objectnames of type pred
+getObjNames :: String -> [TypedObjs] -> [String]
+getObjNames _ [] = []
+getObjNames pred ((TO names objName):objs)
+  | pred == objName = names
+  | otherwise = getObjNames pred objs
+
+typify :: VarType -> [String]
+typify (VTL objs objType) = replicate (length objs) objType
+
+
+
+--allAtom = [ connected a b | a <- allAgents, b <- allAgents ]
+
+getObjs :: Problem -> [TypedObjs]
+getObjs (Problem _ _ objects _ _ _ _) = objects
+
 --(Problem problemName domainName objects init worlds obss goal)
 --domainToActionModels :: Domain -> [TypedObjs] -> [MultipointedActionModelS5]
---domainToActionModels (Domain str reqs types preds actions) =
---  map (pddlActionToActionModel (betterPreds types preds)) actions
+--domainToActionModels objs (Domain str reqs types preds actions) =
+--  map (pddlActionToActionModel (getAtomMap types preds objs)) actions
+
 
 
 {-
