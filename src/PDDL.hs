@@ -42,10 +42,10 @@ data ObsType = Full
              deriving (Show, Eq)
 
 data Problem = 
-     Problem String String [ObjType] [[String]] [World] [Obs] Form
+     Problem String String [TypedObjs] [[String]] [World] [Obs] Form
      deriving (Show, Eq)
 
-data ObjType = OTL [String] String
+data TypedObjs = TO [String] String
              deriving (Show, Eq)
                   
 

@@ -6,10 +6,10 @@ ppInput :: PDDL -> String
 ppInput (CheckPDDL domain problem) = (ppDomain domain) ++ "\n\n" ++ (ppProblem problem)
 
 ppDomain :: Domain -> String
-ppDomain (Domain str reqs strs preds actions) = 
+ppDomain (Domain str reqs types preds actions) = 
      "(define (domain " ++ str ++ ")\n" 
   ++ "\t(:requirements" ++ (concat $ map (\r -> " " ++ ppReq r) reqs) ++ ")\n"
-  ++ "\t(:types" ++ (concat $ map (" " ++) strs) ++ ")\n"
+  ++ "\t(:types" ++ (concat $ map (" " ++) types) ++ ")\n"
   ++ "\t(:predicates" ++ (concat $ map (\p -> "\n\t\t" ++ ppPred p) preds) ++ "\n\t)"
   ++ (concat $ map (\a -> "\n\n\t" ++ ppAction a) actions) ++ "\n"
   ++ ")"
@@ -24,7 +24,7 @@ ppPred (PredSpec p vars) = "(" ++  p ++ (concat $ map (" ?" ++) vars) ++ ")"
 ppPred (PredDef p varTypes) = "(" ++  p ++ (concat $ map (\v -> " " ++ ppVars v) varTypes) ++ ")"
 
 ppVars :: VarType -> String
-ppVars (VTL vars objType) = (concat $ map (" ?" ++) vars) ++ " - " ++ objType
+ppVars (VTL vars typedObjs) = (concat $ map (" ?" ++) vars) ++ " - " ++ typedObjs
 
 ppAction :: Action -> String
 ppAction (Action name params actor events obss) = 
@@ -64,7 +64,7 @@ ppForm (Forall vt f) = "(forall \n\t\t(" ++ (ppVars vt) ++ ")\n\t\t\t" ++ (ppFor
 ppForm (ForallWhen vt fw ft) = "(forall " ++ (ppVars vt) ++ "\n\t\t\twhen " ++ (ppForm fw) ++ "\n\t\t\t\t" ++ (ppForm ft) ++ "\n\t\t)"
 ppForm (Exists vt f) = "(exists " ++ (ppVars vt) ++ "\n\t\t\t" ++ (ppForm f) ++ "\n\t\t)"
 
---Problem String String [ObjType] [[String]] [World] [Obs] Form
+--Problem String String [TypedObjs] [[String]] [World] [Obs] Form
 ppProblem :: Problem -> String 
 ppProblem (Problem problemName domainName objects init worlds obss goal) =
      "(define (problem " ++ problemName ++ ")\n\t"
@@ -75,8 +75,8 @@ ppProblem (Problem problemName domainName objects init worlds obss goal) =
   ++ "( " ++ (concat $ map (\o -> "\n\t:observability" ++ ppObs o) obss) ++ ")\n\t"
   ++ "(:goal\n\t" ++ (ppForm goal) ++ "\n\t)\n)\n"
 
-ppObj :: ObjType -> String 
-ppObj (OTL objs objType) = (concat $ map (" " ++) objs) ++ " - " ++ objType
+ppObj :: TypedObjs -> String 
+ppObj (TO objs typedObjs) = (concat $ map (" " ++) objs) ++ " - " ++ typedObjs
 
 ppWorld :: World -> String
 ppWorld (World des name objects) = 

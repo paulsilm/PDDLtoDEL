@@ -121,17 +121,17 @@ DomainName : DOMNAME String { $2 }
 Problem : '(' DEF
                    '(' PROBLEMNAME String ')'
                    '(' DOM String ')'
-                   '(' OBJ ObjTypeList ')'
+                   '(' OBJ TypedObjsList ')'
                    '(' INIT StatementList ')'
                    '(' WORLDS WorldList ')'
                    '(' ObsList ')' 
                    '(' GOAL Form ')'
                 ')' { Problem $5 $9 $13 $17 $21 $24 $28 }
 
-ObjTypeList : ObjType { [$1] }
-            | ObjType ObjTypeList { $1:$2 }
+TypedObjsList : TypedObjs { [$1] }
+            | TypedObjs TypedObjsList { $1:$2 }
 
-ObjType : StringList '-' String { OTL $1 $3 }
+TypedObjs : StringList '-' String { TO $1 $3 }
 
 WorldList : '(' IsWorldDesignated String StatementList ')' { [World $2 $3 $4] }
           | '(' IsWorldDesignated String StatementList ')' WorldList { (World $2 $3 $4):$6 }
