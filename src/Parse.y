@@ -83,7 +83,8 @@ PredicateList : '(' Predicate ')' { [$2] }
               | '(' Predicate ')' PredicateList { $2:$4 }
 
 Predicate : String { PredAtom $1 }
-          | String Vars { PredSpec $1 $2 }
+          | String VarList { PredSpec $1 $2 True }
+          | String StringList { PredSpec $1 $2 False }
           | String VarTypeList { PredDef $1 $2 }
 
 ActionList : '(' ACT Action ')'  { [$3] }
@@ -97,10 +98,10 @@ Params : PARAMS '(' VarTypeList ')' { $3 }
 VarTypeList : VarType { [$1] } 
             | VarType VarTypeList { $1:$2 } 
 
-VarType : Vars '-' String { VTL $1 $3 } 
+VarType : VarList '-' String { VTL $1 $3 } 
 
-Vars : VarName { [$1] }
-     | VarName Vars { $1:$2 }
+VarList : VarName { [$1] }
+     | VarName VarList { $1:$2 }
 
 ByAgent : BYA VarName { $2 }
 
@@ -122,7 +123,7 @@ Problem : '(' DEF
                    '(' PROBLEMNAME String ')'
                    '(' DOM String ')'
                    '(' OBJ TypedObjsList ')'
-                   '(' INIT StatementList ')'
+                   '(' INIT PredicateList ')'
                    '(' WORLDS WorldList ')'
                    '(' ObsList ')' 
                    '(' GOAL Form ')'
@@ -133,22 +134,16 @@ TypedObjsList : TypedObjs { [$1] }
 
 TypedObjs : StringList '-' String { TO $1 $3 }
 
-WorldList : '(' IsWorldDesignated String StatementList ')' { [World $2 $3 $4] }
-          | '(' IsWorldDesignated String StatementList ')' WorldList { (World $2 $3 $4):$6 }
+WorldList : '(' IsWorldDesignated String PredicateList ')' { [World $2 $3 $4] }
+          | '(' IsWorldDesignated String PredicateList ')' WorldList { (World $2 $3 $4):$6 }
 
 IsWorldDesignated : WDES { True }
                   | WNON { False }
 
-StatementList : '(' Statement ')' { [$2] }
-         | '(' Statement ')' StatementList { $2:$4 }
-
-Statement : String { [$1] }
-          | String StringList { $1:$2 }
-
 ObsList : ObsType { [$1] }
         | ObsType ObsList { $1:$2 }
 
-ObsType : Obs Vars { ObsSpec $1 $2 }
+ObsType : Obs VarList { ObsSpec $1 $2 }
         | Obs { ObsDef $1 }
 
 Obs : OBS 'full' { Full }

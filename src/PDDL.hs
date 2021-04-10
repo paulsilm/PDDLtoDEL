@@ -21,10 +21,10 @@ data Req = Strips
          | Typing
           deriving (Show, Eq)
 
--- Predicate: (Atomic name|Definition name typed_variables|Specific name object_names)
+-- Predicate: (Atomic name|Definition name typed_variables|Specific name object_names var?)
 data Predicate = PredAtom String
                | PredDef String [VarType]
-               | PredSpec String [String]
+               | PredSpec String [String] Bool
                deriving (Show, Eq)
 
 --Typed variables: variables type
@@ -52,7 +52,7 @@ data ObsType = Full
 
 --PDDL Problem: problem_name domain_name objects initial_true_predicates worlds observabilities goal
 data Problem = 
-     Problem String String [TypedObjs] [[String]] [World] [Obs] Form
+     Problem String String [TypedObjs] [Predicate] [World] [Obs] Form
      deriving (Show, Eq)
 
 --Objects with their type: object_names type
@@ -60,7 +60,7 @@ data TypedObjs = TO [String] String
              deriving (Show, Eq)
                   
 --World: designated? name initial_true_predicates
-data World = World Bool String [[String]]
+data World = World Bool String [Predicate]
            deriving (Show, Eq)
 
 --PDDL file: domain problem

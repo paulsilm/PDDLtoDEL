@@ -9,12 +9,21 @@ type DEL = ([MultipointedActionModelS5], MultipointedModelS5)
 --pddlToDEL (CheckPDDL domain problem) =
 --  (DomainToActionModels domain (getObjs problem), ProblemToKripke problem)
 
+--(Problem problemName domainName objects init worlds obss goal)
+domainToActionModels :: Domain -> [TypedObjs] -> [MultipointedActionModelS5]
+domainToActionModels objs (Domain str reqs types preds actions) =
+  map (pddlActionToActionModel (getAtomMap types preds objs)) actions
+
+pddlActionToActionModel :: [(Prp, Predicate)] -> Action -> MultipointedActionModelS5
+
+--Returns a mapping between propositions of type Prp and their corresponding predicate
 getAtomMap :: [TypedObjs] -> [Predicate] -> [(Prp, Predicate)]
 getAtomMap objects preds = zip (map P [1..]) $ concat $ map (predToProps objects) preds 
 
 getPreds :: Domain -> [Predicate]
 getPreds (Domain _ _ _ preds _) = preds
 
+--converts the predicate to a list of definite (objectifed) propositions
 predToProps :: [TypedObjs] -> Predicate -> [Predicate]
 predToProps objects (PredDef name vars) =
   let 
@@ -23,35 +32,26 @@ predToProps objects (PredDef name vars) =
     allPreds = map (PredSpec name) allAtoms
   in allPreds
 
---function that augments the existing varList by all objects
+--function that augments the existing varListList by all objects
 --that suit the type of the current variable
 objectify :: [TypedObjs] -> String -> [[String]] -> [[String]]
-objectify objs predType varList = concat $ map (addTo varList) (getObjNames predType objs)
+objectify objs predType varListList = concat $ map (addTo varListList) (getObjNames predType objs)
 
+--Adds the newVar in front of every list of vars in varListList
 addTo :: [[String]] -> String -> [[String]]
-addTo varList newVar = map (newVar:) varList
+addTo varListList newVar = map (newVar:) varListList
 
 -- returns list of objectnames of type pred
 getObjNames :: String -> [TypedObjs] -> [String]
 getObjNames _ [] = []
 getObjNames pred ((TO names objName):objs) = if pred == objName then names else getObjNames pred objs
 
+--replaces agent variables with their type e.g. at ?l1 ?l2 - "letter" -> at "letter" "letter"
 typify :: VarType -> [String]
 typify (VTL objs objType) = replicate (length objs) objType
 
-
-
---allAtom = [ connected a b | a <- allAgents, b <- allAgents ]
-
 getObjs :: Problem -> [TypedObjs]
 getObjs (Problem _ _ objects _ _ _ _) = objects
-
---(Problem problemName domainName objects init worlds obss goal)
---domainToActionModels :: Domain -> [TypedObjs] -> [MultipointedActionModelS5]
---domainToActionModels objs (Domain str reqs types preds actions) =
---  map (pddlActionToActionModel (getAtomMap types preds objs)) actions
-
-
 
 {-
 

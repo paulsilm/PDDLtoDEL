@@ -19,8 +19,8 @@ ppReq Strips = ":strips"
 ppReq Typing = ":typing"
 
 ppPred :: Predicate -> String 
-ppPred (PredAtom a) = "(" ++ a ++ ")"
-ppPred (PredSpec p vars) = "(" ++  p ++ (concat $ map (" ?" ++) vars) ++ ")"
+ppPred (PredAtom a)= "(" ++ a ++ ")"
+ppPred (PredSpec p vars qm) = "(" ++  p ++ (concat $ map ((if qm then " ?" else " ") ++) vars) ++ ")"
 ppPred (PredDef p varTypes) = "(" ++  p ++ (concat $ map (\v -> " " ++ ppVars v) varTypes) ++ ")"
 
 ppVars :: VarType -> String
@@ -70,7 +70,7 @@ ppProblem (Problem problemName domainName objects init worlds obss goal) =
      "(define (problem " ++ problemName ++ ")\n\t"
   ++ "(:domain " ++ domainName ++ ")\n\t"
   ++ "(:objects" ++ (concat $ map (\o -> "\n\t\t" ++ ppObj o) objects) ++ ")\n\t"
-  ++ "(:init" ++ (ppStringListList init) ++ ")\n\t"
+  ++ "(:init" ++ (concat $ map (\p -> "\n\t\t" ++ ppPred p) init) ++ ")\n\t"
   ++ "(:worlds " ++ (concat $ map (\w -> "\n\t\t" ++ ppWorld w) worlds) ++ ")\n\t"
   ++ "( " ++ (concat $ map (\o -> "\n\t:observability" ++ ppObs o) obss) ++ ")\n\t"
   ++ "(:goal\n\t" ++ (ppForm goal) ++ "\n\t)\n)\n"
@@ -79,8 +79,8 @@ ppObj :: TypedObjs -> String
 ppObj (TO objs typedObjs) = (concat $ map (" " ++) objs) ++ " - " ++ typedObjs
 
 ppWorld :: World -> String
-ppWorld (World des name objects) = 
-  "(:world-" ++ dess ++ "designated " ++ name ++ (ppStringListList objects) ++ "\n\t\t)\n"
+ppWorld (World des name truePreds) = 
+  "(:world-" ++ dess ++ "designated " ++ name ++ (concat $ map (\p -> "\n\t\t" ++ ppPred p) truePreds) ++ "\n\t\t)\n"
     where dess = if des then "" else "non"
 
 ppStringListList :: [[String]] -> String
