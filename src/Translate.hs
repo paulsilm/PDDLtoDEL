@@ -1,8 +1,10 @@
 module Translate where
 
 import PDDL
-import SMCDEL.Explicit.S5
+import SMCDEL.Explicit.S5 
 import SMCDEL.Language (Prp(..))
+import SMCDEL.Internal.Help ((!))
+import Data.Tuple (swap)
 
 type DEL = ([MultipointedActionModelS5], MultipointedModelS5)
 --pddlToDEL :: PDDL -> DEL
@@ -10,11 +12,57 @@ type DEL = ([MultipointedActionModelS5], MultipointedModelS5)
 --  (DomainToActionModels domain (getObjs problem), ProblemToKripke problem)
 
 --(Problem problemName domainName objects init worlds obss goal)
-domainToActionModels :: Domain -> [TypedObjs] -> [MultipointedActionModelS5]
-domainToActionModels objs (Domain str reqs types preds actions) =
-  map (pddlActionToActionModel (getAtomMap types preds objs)) actions
+--domainToActionModels :: Domain -> [TypedObjs] -> [MultipointedActionModelS5]
+--domainToActionModels objs (Domain str reqs types preds actions) =
+--  map (pddlActionToActionModel (getAtomMap types preds objs)) actions
 
-pddlActionToActionModel :: [(Prp, Predicate)] -> Action -> MultipointedActionModelS5
+--pddlActionToActionModel :: [(Prp, Predicate)] -> Action -> MultipointedActionModelS5
+--pddlActionToActionModel atomMap 
+
+problemToKripkeModel ::  [(Prp, Predicate)] -> Problem -> MultipointedModelS5
+problemToKripkeModel atomMap (Problem _ _ objects init parsedWorlds obss _) =
+  let
+    worldMap = zip parsedWorlds [0..]
+    val = [ (i, [ (P k, elem statement $ trueHere ++ init) 
+                | (P k, statement) <- atomMap ])
+          | ((World _ _ trueHere),i)  <- worldMap ]
+    worlds = map snd worldMap
+    allAgents = getObjNames "agent" objects
+    --get all agents alongside their worldpartition, mapped onto worlds (intlist) 
+    worldMapWithNames = zip (map (getWorldName . fst) worldMap) worldMap -- (String, (World,Int))--                           partition, agent
+    partitionsInStringsMapToAgents = zip (map (\obs -> convertPart (getObs obss obs) parsedWorlds) allAgents) allAgents   --([[String]], String)
+    partitionsInIntsMapToAgents = map (\(partition, agent) -> (mapListOfLists (\s -> snd (worldMapWithNames ! s)) partition, agent)) partitionsInStringsMapToAgents   --([[Int]], String)
+    agentRels = map swap partitionsInIntsMapToAgents 
+    actualWorlds = [i | ((World des _ _), i) <- worldMap, des]
+  in
+    (KrMS5 worlds agentRels val, actualWorlds)
+
+mapListOfLists :: (a -> b) -> [[a]] -> [[b]]
+mapListOfLists _ [] = []
+mapListOfLists func (ss:sss) = (map func ss):(mapListOfLists func sss)
+
+--Takes observartions and returns partition
+getObs :: [Obs] -> String -> ObsType
+getObs [] _ = error ("Error: Either no default option or getObs is broken")
+getObs ((ObsDef ot):obss) ag 
+  | any (isInObs ag) obss = getObs obss ag
+  | otherwise = ot
+getObs ((ObsSpec ot ags):obss) ag 
+  | ag `elem` ags = ot
+  | otherwise = getObs obss ag
+
+isInObs :: String -> Obs -> Bool
+isInObs ag (ObsDef _) = False
+isInObs ag (ObsSpec _ ags) = ag `elem` ags
+
+--Takes in list of all worlds and the obstype of the agent, returns the partition in strings
+convertPart :: ObsType -> [PDDL.World] -> [[String]]
+convertPart None worlds = [map getWorldName worlds]
+convertPart Full worlds = map (:[]) (map getWorldName worlds)
+convertPart (Partition partition) _ = partition
+
+getWorldName :: PDDL.World -> String
+getWorldName (World _ name _) = name
 
 --Returns a mapping between propositions of type Prp and their corresponding predicate
 getAtomMap :: [TypedObjs] -> [Predicate] -> [(Prp, Predicate)]
@@ -29,7 +77,7 @@ predToProps objects (PredDef name vars) =
   let 
     predTypes = concat $ map typify vars -- [letter agent agent]
     allAtoms = foldr (objectify objects) [[]] predTypes
-    allPreds = map (PredSpec name) allAtoms
+    allPreds = map (\as -> PredSpec name as False) allAtoms
   in allPreds
 
 --function that augments the existing varListList by all objects

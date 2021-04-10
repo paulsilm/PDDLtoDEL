@@ -14,7 +14,7 @@ main = do
   case parse $ alexScanTokens input of
       Left (lin,col) -> error ("Parse error in line " ++ show lin ++ ", column " ++ show col)
       Right (CheckPDDL domain problem) -> do
-        putStrLn $ show $ getAtomMap (getObjs problem) (getPreds domain)--
+        putStrLn $ show $ problemToKripkeModel (getAtomMap (getObjs problem) (getPreds domain)) problem--
         --print domain
         --print problem
         {-
