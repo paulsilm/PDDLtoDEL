@@ -1,11 +1,10 @@
 module Main where
 
-import Lib
 import Parse
 import Lex
-import PDDL
 import PrintPDDL
 import Translate
+import PDDL
 
 
 main :: IO ()

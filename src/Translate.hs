@@ -2,7 +2,7 @@ module Translate where
 
 import PDDL
 import SMCDEL.Explicit.S5 
-import SMCDEL.Language (Prp(..))
+import SMCDEL.Language (Prp(..), Form(..))
 import SMCDEL.Internal.Help ((!))
 import Data.Tuple (swap)
 
@@ -88,10 +88,10 @@ objectify objs predType varListList = concat $ map (addTo varListList) (getObjNa
 addTo :: [[String]] -> String -> [[String]]
 addTo varListList newVar = map (newVar:) varListList
 
--- returns list of objectnames of type pred
+-- returns list of objectnames of type objType
 getObjNames :: String -> [TypedObjs] -> [String]
 getObjNames _ [] = []
-getObjNames pred ((TO names objName):objs) = if pred == objName then names else getObjNames pred objs
+getObjNames objType ((TO names objName):objs) = if objType == objName then names else getObjNames objType objs
 
 --replaces agent variables with their type e.g. (VTL "at" ["L1","L2"] - "letter") -> ["letter","letter"]
 typify :: VarType -> [String]
@@ -100,11 +100,26 @@ typify (VTL objs objType) = replicate (length objs) objType
 getObjs :: Problem -> [TypedObjs]
 getObjs (Problem _ _ objects _ _ _ _) = objects
 
-
---pddlFormToDelForm :: PDDL.Form -> [(Predicate, Prp)] -> SMCDEL.Form 
---pddlFormToDelForm pred predMap = 
+--  Function to translate a PDDL Formula to the list of matching SMCDEL Formulas
+--params: 
+--  mapping between object-specific PDDL predicates and SMCDEL propositions
+--  mapping between variable names and the specific object it refers to in the DEL action instance
+--  objects in the problem file, used for forall and exists statements
+pddlFormToDelForm :: PDDL.Form -> [(Predicate, Prp)] -> [(String, String)] -> [TypedObjs] -> SMCDEL.Language.Form 
+pddlFormToDelForm (Atom (PredSpec name vars True)) predMap objectMap _ = 
+  PrpF $ predMap ! (PredSpec name (map ((!) objectMap) vars) False)
+pddlFormToDelForm (Not f) pm om os = Neg $ (pddlFormToDelForm f pm om os) 
+pddlFormToDelForm (And fs) pm om os = Conj $ map (\f -> pddlFormToDelForm f pm om os) fs
+pddlFormToDelForm (Or fs) pm om os = Disj $ map (\f -> pddlFormToDelForm f pm om os) fs
+pddlFormToDelForm (Imply f1 f2) pm om os = Impl (pddlFormToDelForm f1 pm om os) (pddlFormToDelForm f2 pm om os)
+pddlFormToDelForm (PDDL.Forall (VTL [var] objType) f) pmap oMap ojs = 
+  Conj $ map (\s -> pddlFormToDelForm f pmap ((var,s):oMap) ojs) $ getObjNames objType ojs
 
 {-
+data Form = ForallWhen VarType Form Form
+          | Exists VarType Form 
+          | Knows String Form
+
 data Form
   = Top                         -- ^ True Constant
   | Bot                         -- ^ False Constant
