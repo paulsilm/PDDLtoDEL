@@ -19,27 +19,24 @@ type DEL = ([MultipointedActionModelS5], MultipointedModelS5)
 --pddlActionToActionModel :: [(Prp, Predicate)] -> Action -> MultipointedActionModelS5
 --pddlActionToActionModel atomMap 
 
-problemToKripkeModel ::  [(Prp, Predicate)] -> Problem -> MultipointedModelS5
+problemToKripkeModel ::  [(Predicate, Prp)] -> Problem -> MultipointedModelS5
 problemToKripkeModel atomMap (Problem _ _ objects init parsedWorlds obss _) =
   let
     worldMap = zip parsedWorlds [0..]
     val = [ (i, [ (P k, elem statement $ trueHere ++ init) 
-                | (P k, statement) <- atomMap ])
+                | (statement, P k) <- atomMap ])
           | ((World _ _ trueHere),i)  <- worldMap ]
     worlds = map snd worldMap
     allAgents = getObjNames "agent" objects
-    --get all agents alongside their worldpartition, mapped onto worlds (intlist) 
-    worldMapWithNames = zip (map (getWorldName . fst) worldMap) worldMap -- (String, (World,Int))--                           partition, agent
-    partitionsInStringsMapToAgents = zip (map (\obs -> convertPart (getObs obss obs) parsedWorlds) allAgents) allAgents   --([[String]], String)
-    partitionsInIntsMapToAgents = map (\(partition, agent) -> (mapListOfLists (\s -> snd (worldMapWithNames ! s)) partition, agent)) partitionsInStringsMapToAgents   --([[Int]], String)
-    agentRels = map swap partitionsInIntsMapToAgents 
+    --get all agents alongside their worldpartition, mapped onto worlds::[Int]
+    translateWorld s = head [ i | (World _ name _, i) <- worldMap, name == s ] -- takes name s of world and returns its index (unsafe)
+    agentRels = 
+      map (\ag -> (ag, map (map translateWorld) $ -- take the agent's partition with worldnames and map names to ints
+            convertPart (getObs obss ag) parsedWorlds)) -- get agent's partition of worlds and convert to names
+          allAgents
     actualWorlds = [i | ((World des _ _), i) <- worldMap, des]
   in
     (KrMS5 worlds agentRels val, actualWorlds)
-
-mapListOfLists :: (a -> b) -> [[a]] -> [[b]]
-mapListOfLists _ [] = []
-mapListOfLists func (ss:sss) = (map func ss):(mapListOfLists func sss)
 
 --Takes observartions and returns partition
 getObs :: [Obs] -> String -> ObsType
@@ -65,8 +62,8 @@ getWorldName :: PDDL.World -> String
 getWorldName (World _ name _) = name
 
 --Returns a mapping between propositions of type Prp and their corresponding predicate
-getAtomMap :: [TypedObjs] -> [Predicate] -> [(Prp, Predicate)]
-getAtomMap objects preds = zip (map P [1..]) $ concat $ map (predToProps objects) preds 
+getAtomMap :: [TypedObjs] -> [Predicate] -> [(Predicate, Prp)]
+getAtomMap objects preds = zip (concat $ map (predToProps objects) preds) (map P [1..]) 
 
 getPreds :: Domain -> [Predicate]
 getPreds (Domain _ _ _ preds _) = preds
@@ -76,9 +73,11 @@ predToProps :: [TypedObjs] -> Predicate -> [Predicate]
 predToProps objects (PredDef name vars) =
   let 
     predTypes = concat $ map typify vars -- [letter agent agent]
-    allAtoms = foldr (objectify objects) [[]] predTypes
-    allPreds = map (\as -> PredSpec name as False) allAtoms
+    allObjectedPreds = foldr (objectify objects) [[]] predTypes -- [[L1,A1,A1], [L2,A1,A1], ...]
+    allPreds = map (\as -> PredSpec name as False) allObjectedPreds -- [(PredSpec name [L1,A1,A1] False), 
+                                                                    --  (PredSpec name [L2,A1,A1] False)...]
   in allPreds
+predToProps _ (PredAtom name) = [(PredSpec name [] False)]--TODO maybe '[(PredAtom name)]' instead?
 
 --function that augments the existing varListList by all objects
 --that suit the type of the current variable
@@ -94,66 +93,53 @@ getObjNames :: String -> [TypedObjs] -> [String]
 getObjNames _ [] = []
 getObjNames pred ((TO names objName):objs) = if pred == objName then names else getObjNames pred objs
 
---replaces agent variables with their type e.g. at ?l1 ?l2 - "letter" -> at "letter" "letter"
+--replaces agent variables with their type e.g. (VTL "at" ["L1","L2"] - "letter") -> ["letter","letter"]
 typify :: VarType -> [String]
 typify (VTL objs objType) = replicate (length objs) objType
 
 getObjs :: Problem -> [TypedObjs]
 getObjs (Problem _ _ objects _ _ _ _) = objects
 
+
+--pddlFormToDelForm :: PDDL.Form -> [(Predicate, Prp)] -> SMCDEL.Form 
+--pddlFormToDelForm pred predMap = 
+
 {-
+data Form
+  = Top                         -- ^ True Constant
+  | Bot                         -- ^ False Constant
+  | PrpF Prp                    -- ^ Atomic Proposition
+  | Neg Form                    -- ^ Negation
+  | Conj [Form]                 -- ^ Conjunction
+  | Disj [Form]                 -- ^ Disjunction
+  | Xor [Form]                  -- ^ n-ary X-OR
+  | Impl Form Form              -- ^ Implication
+  | Equi Form Form              -- ^ Bi-Implication
+  | Forall [Prp] Form           -- ^ Boolean Universal Quantification
+  | Exists [Prp] Form           -- ^ Boolean Existential Quantification
+  | K Agent Form                -- ^ Knowing that
+  | Ck [Agent] Form             -- ^ Common knowing that
+  | Kw Agent Form               -- ^ Knowing whether
+  | Ckw [Agent] Form            -- ^ Common knowing whether
+  | PubAnnounce Form Form       -- ^ Public announcement that
+  | PubAnnounceW Form Form      -- ^ Public announcement whether
+  | Announce [Agent] Form Form  -- ^ (Semi-)Private announcement that
+  | AnnounceW [Agent] Form Form -- ^ (Semi-)Private announcement whether
+  | Dia DynamicOp Form          -- ^ Dynamic Diamond
+  deriving (Eq,Ord,Show)
+-}
 
-problemToKripkeModel :: _ -> MultipointedModelS5
-problemToKripkeModel =
-  let
-    atomMap = zip [1..] parsedAtoms
-    val = [ (i, [ ( P k, statement `elem` trueHere ) |
-    (k,statement) <- atomMap ])
-          | ((name,trueHere),i)  <- zip parsedWorlds [1..] ]
-    worlds = map fst val
-    agentRels = [ (ag,[worlds]) | a <- allAgents ]
-  in
-    (KrMS5 worlds agentRels val, actualWorlds)
-
-init :: MultipointedModelS5
-init = KrMS5
-  [0,1]
-  [ (anne,[[0],[1]]), (bob,[[0,1]]) ]
-  [ (0,[(P 0,True ),(P 1,False), (P 2, False)])
-  , (1,[(P 0,False),(P 1,False), (P 2, False)]) ], [0] )
-
-
-type Action = Int      atom bool
+{-
+type Action = Int     
+--                     atom bool
 type PostCondition = [(Prp,Form)]
 
-                              index   pre  effect             name <- obs
+--                            index   pre  effect             name <- obs
 data ActionModelS5 = ActMS5 [(Action,(Form,PostCondition))] [(Agent,Partition)]
   deriving (Eq,Ord,Show)
 
-instance HasAgents ActionModelS5 where
-  agentsOf (ActMS5 _ rel) = map fst rel
-
--- | A safe way to `lookup` all postconditions
-safepost :: PostCondition -> Prp -> Form
-safepost posts p = fromMaybe (PrpF p) (lookup p posts)
-
-instance Pointed ActionModelS5 Action
-type PointedActionModelS5 = (ActionModelS5, Action)
-
-instance HasPrecondition ActionModelS5 where
-  preOf _ = Top
-
-instance HasPrecondition PointedActionModelS5 where
-  preOf (ActMS5 acts _, actual) = fst (acts ! actual)
-
 instance Pointed ActionModelS5 [World]            des
 type MultipointedActionModelS5 = (ActionModelS5,[Action])
-
-
-
-
-
-
 
 
 (:action try-take
