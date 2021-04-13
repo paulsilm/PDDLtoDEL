@@ -4,20 +4,36 @@ import PDDL
 import SMCDEL.Explicit.S5 
 import SMCDEL.Language (Prp(..), Form(..))
 import SMCDEL.Internal.Help ((!))
-import Data.Tuple (swap)
 
 type DEL = ([MultipointedActionModelS5], MultipointedModelS5)
+type DelEvent = (Bool,String,SMCDEL.Language.Form,SMCDEL.Language.Form)
 --pddlToDEL :: PDDL -> DEL
 --pddlToDEL (CheckPDDL domain problem) =
 --  (DomainToActionModels domain (getObjs problem), ProblemToKripke problem)
 
---(Problem problemName domainName objects init worlds obss goal)
---domainToActionModels :: Domain -> [TypedObjs] -> [MultipointedActionModelS5]
---domainToActionModels objs (Domain str reqs types preds actions) =
---  map (pddlActionToActionModel (getAtomMap types preds objs)) actions
+domainToActionModels :: Domain -> [TypedObjs] -> [(String, MultipointedActionModelS5)]
+domainToActionModels (Domain str reqs types preds actions) objs =
+  translateActions (getAtomMap objs preds) objs actions
 
---pddlActionToActionModel :: [(Prp, Predicate)] -> Action -> MultipointedActionModelS5
---pddlActionToActionModel atomMap 
+translateActions :: [(Predicate, Prp)] -> [TypedObjs] -> [PDDL.Action] -> [(String, MultipointedActionModelS5)]
+translateActions _ _ [] = []
+translateActions atomMap objs ((Action name params _ events obss):actions) =
+  let 
+    paramMaps = parameterMaps params objs
+    convertedEvents = [ (b,n,(pddlFormToDelForm pre atomMap varMap objs),(pddlFormToDelForm eff atomMap varMap objs)) 
+                        | (Event b n pre eff) <- events, varMap <- paramMaps]
+    eventMap = zip convertedEvents [0..]
+    allAgents = getObjNames "agent" objs
+    translateEvent s = head [ i | ((_,name,_,_), i) <- eventMap, name == s ] -- takes name s of world and returns its index (unsafe)
+    agentRels = 
+      map (\ag -> (ag, map (map translateEvent) $ -- take the agent's partition with eventnames and map names to ints
+            eventPart (getObs obss ag) convertedEvents)) -- get agent's partition of events and convert to names
+          allAgents
+    actualEvents = [i | ((des,_,_,_), i) <- eventMap, des]
+    action = ActMS5 [(i, (pre, [(P i, eff)])) | ((_,_,pre,eff), i) <- eventMap ] agentRels
+  in
+    (name, (action, actualEvents)):(translateActions atomMap objs actions)
+--effect :: [(Prp,Form)], pre :: Form, agent :: String, partition :: [[Int]], desEvents :: [Int]
 
 problemToKripkeModel ::  [(Predicate, Prp)] -> Problem -> MultipointedModelS5
 problemToKripkeModel atomMap (Problem _ _ objects init parsedWorlds obss _) =
@@ -32,7 +48,7 @@ problemToKripkeModel atomMap (Problem _ _ objects init parsedWorlds obss _) =
     translateWorld s = head [ i | (World _ name _, i) <- worldMap, name == s ] -- takes name s of world and returns its index (unsafe)
     agentRels = 
       map (\ag -> (ag, map (map translateWorld) $ -- take the agent's partition with worldnames and map names to ints
-            convertPart (getObs obss ag) parsedWorlds)) -- get agent's partition of worlds and convert to names
+            worldPart (getObs obss ag) parsedWorlds)) -- get agent's partition of worlds and convert to names
           allAgents
     actualWorlds = [i | ((World des _ _), i) <- worldMap, des]
   in
@@ -49,21 +65,27 @@ getObs ((ObsSpec ot ags):obss) ag
   | otherwise = getObs obss ag
 
 isInObs :: String -> Obs -> Bool
-isInObs ag (ObsDef _) = False
+isInObs _ (ObsDef _) = False
 isInObs ag (ObsSpec _ ags) = ag `elem` ags
 
 --Takes in list of all worlds and the obstype of the agent, returns the partition in strings
-convertPart :: ObsType -> [PDDL.World] -> [[String]]
-convertPart None worlds = [map getWorldName worlds]
-convertPart Full worlds = map (:[]) (map getWorldName worlds)
-convertPart (Partition partition) _ = partition
+worldPart :: ObsType -> [PDDL.World] -> [[String]]
+worldPart None worlds = [map getWorldName worlds]
+worldPart Full worlds = map (:[]) (map getWorldName worlds)
+worldPart (Partition partition) _ = partition
+
+--Takes in list of all events and the obstype of the agent, returns the partition in strings
+eventPart :: ObsType -> [DelEvent] -> [[String]]
+eventPart None events = [[name | (_,name,_,_) <- events]]
+eventPart Full events = map (:[]) ([name | (_,name,_,_) <- events])
+eventPart (Partition partition) _ = partition
 
 getWorldName :: PDDL.World -> String
 getWorldName (World _ name _) = name
 
 --Returns a mapping between propositions of type Prp and their corresponding predicate
 getAtomMap :: [TypedObjs] -> [Predicate] -> [(Predicate, Prp)]
-getAtomMap objects preds = zip (concat $ map (predToProps objects) preds) (map P [1..]) 
+getAtomMap objects preds = zip (concatMap (predToProps objects) preds) (map P [1..]) 
 
 getPreds :: Domain -> [Predicate]
 getPreds (Domain _ _ _ preds _) = preds
@@ -72,17 +94,20 @@ getPreds (Domain _ _ _ preds _) = preds
 predToProps :: [TypedObjs] -> Predicate -> [Predicate]
 predToProps objects (PredDef name vars) =
   let 
-    predTypes = concat $ map typify vars -- [letter agent agent]
-    allObjectedPreds = foldr (objectify objects) [[]] predTypes -- [[L1,A1,A1], [L2,A1,A1], ...]
-    allPreds = map (\as -> PredSpec name as False) allObjectedPreds -- [(PredSpec name [L1,A1,A1] False), 
-                                                                    --  (PredSpec name [L2,A1,A1] False)...]
+    objMap = concatMap typify vars 
+    objTypes = map snd objMap -- [letter agent agent]
+    allObjectedVarLists = foldr (objectify objects) [[]] objTypes -- [[L1,A1,A1], [L2,A1,A1], ...]
+    allPreds = map (\as -> PredSpec name as False) allObjectedVarLists -- [(PredSpec name [L1,A1,A1] False), 
+                                                                       --  (PredSpec name [L2,A1,A1] False)...]
   in allPreds
-predToProps _ (PredAtom name) = [(PredSpec name [] False)]--TODO maybe '[(PredAtom name)]' instead?
+predToProps _ (PredAtom name) = [(PredSpec name [] False)]
+
 
 --function that augments the existing varListList by all objects
 --that suit the type of the current variable
-objectify :: [TypedObjs] -> String -> [[String]] -> [[String]]
-objectify objs predType varListList = concat $ map (addTo varListList) (getObjNames predType objs)
+--objectify [(TO ["A1","A2"] "agent"),...] "agent" [["L1"]] = [["A1","L1"],["A2","L1"]]
+objectify :: [TypedObjs] -> String -> [[String]] -> [[String]] 
+objectify objs objType varListList = concatMap (addTo varListList) (getObjNames objType objs)
 
 --Adds the newVar in front of every list of vars in varListList
 addTo :: [[String]] -> String -> [[String]]
@@ -93,9 +118,9 @@ getObjNames :: String -> [TypedObjs] -> [String]
 getObjNames _ [] = []
 getObjNames objType ((TO names objName):objs) = if objType == objName then names else getObjNames objType objs
 
---replaces agent variables with their type e.g. (VTL "at" ["L1","L2"] - "letter") -> ["letter","letter"]
-typify :: VarType -> [String]
-typify (VTL objs objType) = replicate (length objs) objType
+--adds agent variables their type e.g. (VTL "at" ["L1","L2"] - "letter") -> [("L1,"letter"),("L2,"letter")]
+typify :: VarType -> [(String,String)]
+typify (VTL objs objType) = zip objs $ replicate (length objs) objType
 
 getObjs :: Problem -> [TypedObjs]
 getObjs (Problem _ _ objects _ _ _ _) = objects
@@ -114,35 +139,35 @@ pddlFormToDelForm (Or fs) pm om os = Disj $ map (\f -> pddlFormToDelForm f pm om
 pddlFormToDelForm (Imply f1 f2) pm om os = Impl (pddlFormToDelForm f1 pm om os) (pddlFormToDelForm f2 pm om os)
 pddlFormToDelForm (PDDL.Forall (VTL [var] objType) f) pmap oMap ojs = 
   Conj $ map (\s -> pddlFormToDelForm f pmap ((var,s):oMap) ojs) $ getObjNames objType ojs
+pddlFormToDelForm (PDDL.Exists (VTL [var] objType) f) pmap oMap ojs = 
+  Disj $ map (\s -> pddlFormToDelForm f pmap ((var,s):oMap) ojs) $ getObjNames objType ojs
+pddlFormToDelForm (ForallWhen (VTL [var] objType) f1 f2) pmap oMap ojs = 
+  Conj $ map 
+        (\s -> Impl 
+                (pddlFormToDelForm f1 pmap ((var,s):oMap) ojs) 
+                (pddlFormToDelForm f2 pmap ((var,s):oMap) ojs)
+        ) $ getObjNames objType ojs
+pddlFormToDelForm (Knows ag f) pmap oMap ojs = K ag $ pddlFormToDelForm f pmap oMap ojs
 
-{-
-data Form = ForallWhen VarType Form Form
-          | Exists VarType Form 
-          | Knows String Form
+-- Takes the list of all variables, and returns the permutation (list of lists) 
+-- of mappings from variable to object names
+-- parameterMaps [(VTL ["a1","a2"] "agent")] [(TO ["A1","A2"] "agent"),...] = 
+--  [[("a1","A1"),("a2","A1")],
+--   ...
+--   [("a1","A2"),("a2","A2")]]
+parameterMaps :: [VarType] -> [TypedObjs] -> [[(String, String)]]
+parameterMaps [] _ = []
+parameterMaps params objList = 
+  let 
+    typeMap = concatMap typify params
+    -- [("A1","agent"),("A2","agent")]
+    allObjectedVarLists = foldr (objectify objList) [[]] (map snd typeMap)
+    -- [["A1","A1"],["A1","A2"],["A2","A1"],["A2","A2"]]
+    paramMap = map (zip (map fst typeMap)) allObjectedVarLists
+    -- [["A1","A1","L1"],["A1","A2","L1"],["A2","A1","L1"],["A2","A2","L1"]]
+  in 
+    paramMap
 
-data Form
-  = Top                         -- ^ True Constant
-  | Bot                         -- ^ False Constant
-  | PrpF Prp                    -- ^ Atomic Proposition
-  | Neg Form                    -- ^ Negation
-  | Conj [Form]                 -- ^ Conjunction
-  | Disj [Form]                 -- ^ Disjunction
-  | Xor [Form]                  -- ^ n-ary X-OR
-  | Impl Form Form              -- ^ Implication
-  | Equi Form Form              -- ^ Bi-Implication
-  | Forall [Prp] Form           -- ^ Boolean Universal Quantification
-  | Exists [Prp] Form           -- ^ Boolean Existential Quantification
-  | K Agent Form                -- ^ Knowing that
-  | Ck [Agent] Form             -- ^ Common knowing that
-  | Kw Agent Form               -- ^ Knowing whether
-  | Ckw [Agent] Form            -- ^ Common knowing whether
-  | PubAnnounce Form Form       -- ^ Public announcement that
-  | PubAnnounceW Form Form      -- ^ Public announcement whether
-  | Announce [Agent] Form Form  -- ^ (Semi-)Private announcement that
-  | AnnounceW [Agent] Form Form -- ^ (Semi-)Private announcement whether
-  | Dia DynamicOp Form          -- ^ Dynamic Diamond
-  deriving (Eq,Ord,Show)
--}
 
 {-
 type Action = Int     
