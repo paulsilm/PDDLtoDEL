@@ -5,6 +5,7 @@ import Lex
 import PrintPDDL
 import Translate
 import PDDL
+import SMCDEL.Internal.TexDisplay
 
 
 main :: IO ()
@@ -12,8 +13,11 @@ main = do
   input <- readFile "example.pddl"
   case parse $ alexScanTokens input of
       Left (lin,col) -> error ("Parse error in line " ++ show lin ++ ", column " ++ show col)
-      Right (CheckPDDL domain problem) -> do
-        putStrLn $ show $ problemToKripkeModel (getAtomMap (getObjs problem) (getPreds domain)) problem--
+      Right pddl -> do
+        let (actionModelMap,problem) = pddlToDEL pddl
+        --disp $ (map snd) actionModelMap
+        putStrLn $ show $ problem
+        putStrLn $ show $ (map snd) actionModelMap
         --print domain
         --print problem
         {-

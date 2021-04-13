@@ -44,7 +44,6 @@
     )
     :observability none
     :observability full ?a
-    :observability (partition (check-succ) (check-unsucc))
     )
 )
 

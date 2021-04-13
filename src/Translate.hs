@@ -5,16 +5,20 @@ import SMCDEL.Explicit.S5
 import SMCDEL.Language (Prp(..), Form(..))
 import SMCDEL.Internal.Help ((!))
 
-type DEL = ([MultipointedActionModelS5], MultipointedModelS5)
+type DEL = ([(String, MultipointedActionModelS5)], MultipointedModelS5)
 type DelEvent = (Bool,String,SMCDEL.Language.Form,SMCDEL.Language.Form)
---pddlToDEL :: PDDL -> DEL
---pddlToDEL (CheckPDDL domain problem) =
---  (DomainToActionModels domain (getObjs problem), ProblemToKripke problem)
 
-domainToActionModels :: Domain -> [TypedObjs] -> [(String, MultipointedActionModelS5)]
-domainToActionModels (Domain str reqs types preds actions) objs =
-  translateActions (getAtomMap objs preds) objs actions
-
+--Top level translation function, takes a valid PDDL problem and domain combo and returns 
+pddlToDEL :: PDDL -> DEL
+pddlToDEL (CheckPDDL (Domain _ _ _ preds actions) (Problem _ _ objects initPreds parsedWorlds obss goal)) =
+  let
+    atomMap = getAtomMap objects preds 
+    actionModelMap = translateActions atomMap objects actions
+    kripkeModel = problemToKripkeModel atomMap (Problem "" "" objects initPreds parsedWorlds obss goal)
+  in
+    (actionModelMap,kripkeModel)
+--Problem: Observabilities are yet to be translated.
+--Translates the PDDL actions to a list of actionmodels
 translateActions :: [(Predicate, Prp)] -> [TypedObjs] -> [PDDL.Action] -> [(String, MultipointedActionModelS5)]
 translateActions _ _ [] = []
 translateActions atomMap objs ((Action name params _ events obss):actions) =
@@ -24,7 +28,7 @@ translateActions atomMap objs ((Action name params _ events obss):actions) =
                         | (Event b n pre eff) <- events, varMap <- paramMaps]
     eventMap = zip convertedEvents [0..]
     allAgents = getObjNames "agent" objs
-    translateEvent s = head [ i | ((_,name,_,_), i) <- eventMap, name == s ] -- takes name s of world and returns its index (unsafe)
+    translateEvent s = head [ i | ((_,name,_,_), i) <- eventMap, name == s ] -- takes name s of event and returns its index (unsafe)
     agentRels = 
       map (\ag -> (ag, map (map translateEvent) $ -- take the agent's partition with eventnames and map names to ints
             eventPart (getObs obss ag) convertedEvents)) -- get agent's partition of events and convert to names
@@ -33,13 +37,30 @@ translateActions atomMap objs ((Action name params _ events obss):actions) =
     action = ActMS5 [(i, (pre, [(P i, eff)])) | ((_,_,pre,eff), i) <- eventMap ] agentRels
   in
     (name, (action, actualEvents)):(translateActions atomMap objs actions)
---effect :: [(Prp,Form)], pre :: Form, agent :: String, partition :: [[Int]], desEvents :: [Int]
+{-    convertedEvents = [ (b,n,(pddlFormToDelForm pre atomMap varMap objs),(pddlFormToDelForm eff atomMap varMap objs),varMap) 
+                        | (Event b n pre eff) <- events, varMap <- paramMaps]
+    eventMap = zip convertedEvents [0..]
+    allAgents = getObjNames "agent" objs
+    translateEvent s = head [ (i,varMap) | ((_,name,_,_,varMap), i) <- eventMap, name == s ] -- takes name s of event and returns its index (unsafe)
+    agentMap = 
+      map (\ag -> (ag, map (map translateEvent) $ -- take the agent's partition with eventnames and map names to ints
+            eventPart (getObs obss ag) convertedEvents)) -- get agent's partition of events and convert to names
+          allAgents
+    --agentMap :: [    (String, [[ (Int,[(String,String)]) ]] )     ]
+    agentRels = map (\(ag,part) -> (ag, map (map (\(i,varMap) -> ))) agentMap
+    actualEvents = [i | ((des,_,_,_,_), i) <- eventMap, des]
+    action = ActMS5 [(i, (pre, [(P i, eff)])) | ((_,_,pre,eff,_), i) <- eventMap ] agentRels
+  in
+    (name, (action, actualEvents)):(translateActions atomMap objs actions)
 
-problemToKripkeModel ::  [(Predicate, Prp)] -> Problem -> MultipointedModelS5
-problemToKripkeModel atomMap (Problem _ _ objects init parsedWorlds obss _) =
+convertRel :: (String, (Int, [(String,String)])) -> (String,Int)
+convertRel (varAg, (i,varMap)) = (varMap ! varAg, i) --unsafe-}
+--translates the PDDL problem to a Kripke model
+problemToKripkeModel :: [(Predicate, Prp)] -> Problem -> MultipointedModelS5
+problemToKripkeModel atomMap (Problem _ _ objects initialPreds parsedWorlds obss _) =
   let
     worldMap = zip parsedWorlds [0..]
-    val = [ (i, [ (P k, elem statement $ trueHere ++ init) 
+    val = [ (i, [ (P k, elem statement $ trueHere ++ initialPreds) 
                 | (statement, P k) <- atomMap ])
           | ((World _ _ trueHere),i)  <- worldMap ]
     worlds = map snd worldMap
@@ -56,7 +77,7 @@ problemToKripkeModel atomMap (Problem _ _ objects init parsedWorlds obss _) =
 
 --Takes observartions and returns partition
 getObs :: [Obs] -> String -> ObsType
-getObs [] _ = error ("Error: Either no default option or getObs is broken")
+getObs [] ag = error ("Error: Either no default option or getObs is broken, didn't find " ++ ag)
 getObs ((ObsDef ot):obss) ag 
   | any (isInObs ag) obss = getObs obss ag
   | otherwise = ot
@@ -64,14 +85,15 @@ getObs ((ObsSpec ot ags):obss) ag
   | ag `elem` ags = ot
   | otherwise = getObs obss ag
 
+--Checks if the observability is defined for the agent
 isInObs :: String -> Obs -> Bool
 isInObs _ (ObsDef _) = False
 isInObs ag (ObsSpec _ ags) = ag `elem` ags
 
 --Takes in list of all worlds and the obstype of the agent, returns the partition in strings
 worldPart :: ObsType -> [PDDL.World] -> [[String]]
-worldPart None worlds = [map getWorldName worlds]
-worldPart Full worlds = map (:[]) (map getWorldName worlds)
+worldPart None worlds = [[name | (World _ name _) <- worlds]]
+worldPart Full worlds = map (:[]) ([name | (World _ name _) <- worlds])
 worldPart (Partition partition) _ = partition
 
 --Takes in list of all events and the obstype of the agent, returns the partition in strings
@@ -80,15 +102,9 @@ eventPart None events = [[name | (_,name,_,_) <- events]]
 eventPart Full events = map (:[]) ([name | (_,name,_,_) <- events])
 eventPart (Partition partition) _ = partition
 
-getWorldName :: PDDL.World -> String
-getWorldName (World _ name _) = name
-
 --Returns a mapping between propositions of type Prp and their corresponding predicate
 getAtomMap :: [TypedObjs] -> [Predicate] -> [(Predicate, Prp)]
 getAtomMap objects preds = zip (concatMap (predToProps objects) preds) (map P [1..]) 
-
-getPreds :: Domain -> [Predicate]
-getPreds (Domain _ _ _ preds _) = preds
 
 --converts the predicate to a list of definite (objectifed) propositions
 predToProps :: [TypedObjs] -> Predicate -> [Predicate]
@@ -118,12 +134,10 @@ getObjNames :: String -> [TypedObjs] -> [String]
 getObjNames _ [] = []
 getObjNames objType ((TO names objName):objs) = if objType == objName then names else getObjNames objType objs
 
---adds agent variables their type e.g. (VTL "at" ["L1","L2"] - "letter") -> [("L1,"letter"),("L2,"letter")]
+--adds agent variables their type and converts VarType to list
+--(VTL "at" ["L1","L2"] - "letter") -> [("L1,"letter"),("L2,"letter")]
 typify :: VarType -> [(String,String)]
 typify (VTL objs objType) = zip objs $ replicate (length objs) objType
-
-getObjs :: Problem -> [TypedObjs]
-getObjs (Problem _ _ objects _ _ _ _) = objects
 
 --  Function to translate a PDDL Formula to the list of matching SMCDEL Formulas
 --params: 
@@ -147,7 +161,7 @@ pddlFormToDelForm (ForallWhen (VTL [var] objType) f1 f2) pmap oMap ojs =
                 (pddlFormToDelForm f1 pmap ((var,s):oMap) ojs) 
                 (pddlFormToDelForm f2 pmap ((var,s):oMap) ojs)
         ) $ getObjNames objType ojs
-pddlFormToDelForm (Knows ag f) pmap oMap ojs = K ag $ pddlFormToDelForm f pmap oMap ojs
+pddlFormToDelForm (Knows ag f) pmap oMap ojs = K (oMap ! ag) $ pddlFormToDelForm f pmap oMap ojs
 
 -- Takes the list of all variables, and returns the permutation (list of lists) 
 -- of mappings from variable to object names
@@ -167,35 +181,3 @@ parameterMaps params objList =
     -- [["A1","A1","L1"],["A1","A2","L1"],["A2","A1","L1"],["A2","A2","L1"]]
   in 
     paramMap
-
-
-{-
-type Action = Int     
---                     atom bool
-type PostCondition = [(Prp,Form)]
-
---                            index   pre  effect             name <- obs
-data ActionModelS5 = ActMS5 [(Action,(Form,PostCondition))] [(Agent,Partition)]
-  deriving (Eq,Ord,Show)
-
-instance Pointed ActionModelS5 [World]            des
-type MultipointedActionModelS5 = (ActionModelS5,[Action])
-
-
-(:action try-take
-        (:event-designated e1
-          :precondition (not (key-under-mat))
-          :effect T)
-        (:event-designated e2
-          :precondition (key-under-mat)
-          :effect and (not (key-under-mat)) (has-key bob))
-        :observability none anne
-        :observability full bob
-
-tryTake :: MultipointedActionModelS5
-tryTake = (ActMS5
-  [ (0, (p              ,[]))
-  , (1, (Disj [p, Neg q],[]) )]
-  [ ("Anne",[[0],[1]])
-  , ("Bob" ,[[0,1]]  )], [0])
--}
