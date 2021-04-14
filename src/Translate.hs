@@ -6,7 +6,7 @@ import SMCDEL.Language (Prp(..), Form(..))
 import SMCDEL.Internal.Help ((!))
 
 type DEL = ([(String, MultipointedActionModelS5)], MultipointedModelS5)
-type DelEvent = (Bool,String,SMCDEL.Language.Form,SMCDEL.Language.Form)
+type DelEvent = (Bool,String,SMCDEL.Language.Form,[(Prp,SMCDEL.Language.Form)])
 
 --Top level translation function, takes a valid PDDL problem and domain combo and returns 
 pddlToDEL :: PDDL -> DEL
@@ -17,15 +17,27 @@ pddlToDEL (CheckPDDL (Domain _ _ _ preds actions) (Problem _ _ objects initPreds
     kripkeModel = problemToKripkeModel atomMap (Problem "" "" objects initPreds parsedWorlds obss goal)
   in
     (actionModelMap,kripkeModel)
+
 --Problem: Observabilities are yet to be translated.
---Translates the PDDL actions to a list of actionmodels
+--Translates the PDDL actions to a list of actionModels
 translateActions :: [(Predicate, Prp)] -> [TypedObjs] -> [PDDL.Action] -> [(String, MultipointedActionModelS5)]
 translateActions _ _ [] = []
-translateActions atomMap objs ((Action name params _ events obss):actions) =
+translateActions atomMap objs ((Action name params actor events obss):actions) =
   let 
     paramMaps = parameterMaps params objs
-    convertedEvents = [ (b,n,(pddlFormToDelForm pre atomMap varMap objs),(pddlFormToDelForm eff atomMap varMap objs)) 
-                        | (Event b n pre eff) <- events, varMap <- paramMaps]
+    actionModels = map (actionToActionModel atomMap objs (Action name params actor events obss)) paramMaps 
+    namedModels = map (\model -> (name,model)) actionModels
+  in
+    namedModels ++ (translateActions atomMap objs actions)
+
+actionToActionModel :: [(Predicate, Prp)] -> [TypedObjs] -> PDDL.Action -> [(String,String)] -> MultipointedActionModelS5
+actionToActionModel atomMap objs (Action _ _ _ events obss) varMap =
+  let
+    convertedEvents = [(b,n,(pddlFormToDelForm pre atomMap varMap objs),
+                            formToMap (pddlFormToDelForm eff atomMap varMap objs)) 
+                      | (Event b n pre eff) <- events]
+    --furtherConvertedEvents = [ (b,n,pre,map ((!) atomMap) preds) | (b,n,pre,(And preds)) <- convertedEvents]
+    convertedObss = map (translateObs varMap) obss 
     eventMap = zip convertedEvents [0..]
     allAgents = getObjNames "agent" objs
     translateEvent s = head [ i | ((_,name,_,_), i) <- eventMap, name == s ] -- takes name s of event and returns its index (unsafe)
@@ -34,27 +46,20 @@ translateActions atomMap objs ((Action name params _ events obss):actions) =
             eventPart (getObs obss ag) convertedEvents)) -- get agent's partition of events and convert to names
           allAgents
     actualEvents = [i | ((des,_,_,_), i) <- eventMap, des]
-    action = ActMS5 [(i, (pre, [(P i, eff)])) | ((_,_,pre,eff), i) <- eventMap ] agentRels
   in
-    (name, (action, actualEvents)):(translateActions atomMap objs actions)
-{-    convertedEvents = [ (b,n,(pddlFormToDelForm pre atomMap varMap objs),(pddlFormToDelForm eff atomMap varMap objs),varMap) 
-                        | (Event b n pre eff) <- events, varMap <- paramMaps]
-    eventMap = zip convertedEvents [0..]
-    allAgents = getObjNames "agent" objs
-    translateEvent s = head [ (i,varMap) | ((_,name,_,_,varMap), i) <- eventMap, name == s ] -- takes name s of event and returns its index (unsafe)
-    agentMap = 
-      map (\ag -> (ag, map (map translateEvent) $ -- take the agent's partition with eventnames and map names to ints
-            eventPart (getObs obss ag) convertedEvents)) -- get agent's partition of events and convert to names
-          allAgents
-    --agentMap :: [    (String, [[ (Int,[(String,String)]) ]] )     ]
-    agentRels = map (\(ag,part) -> (ag, map (map (\(i,varMap) -> ))) agentMap
-    actualEvents = [i | ((des,_,_,_,_), i) <- eventMap, des]
-    action = ActMS5 [(i, (pre, [(P i, eff)])) | ((_,_,pre,eff,_), i) <- eventMap ] agentRels
-  in
-    (name, (action, actualEvents)):(translateActions atomMap objs actions)
+    ((ActMS5 [(i, (pre, eff)) | ((_,_,pre,eff), i) <- eventMap ] agentRels), actualEvents)
 
-convertRel :: (String, (Int, [(String,String)])) -> (String,Int)
-convertRel (varAg, (i,varMap)) = (varMap ! varAg, i) --unsafe-}
+--translates the effect formula to a list of predicate tuples
+formToMap :: SMCDEL.Language.Form -> [(Prp,SMCDEL.Language.Form)]
+formToMap (Conj preds) = concatMap formToMap preds
+formToMap (Neg (PrpF p)) = [(p,Bot)]
+formToMap (PrpF p) = [(p,Top)]
+
+--Translates the observabilities to specific agents
+translateObs :: [(String,String)] -> Obs -> Obs
+translateObs varMap (ObsSpec ot ags) = ObsSpec ot $ map ((!) varMap) ags
+translateObs _ obs = obs
+
 --translates the PDDL problem to a Kripke model
 problemToKripkeModel :: [(Predicate, Prp)] -> Problem -> MultipointedModelS5
 problemToKripkeModel atomMap (Problem _ _ objects initialPreds parsedWorlds obss _) =
@@ -77,7 +82,7 @@ problemToKripkeModel atomMap (Problem _ _ objects initialPreds parsedWorlds obss
 
 --Takes observartions and returns partition
 getObs :: [Obs] -> String -> ObsType
-getObs [] ag = error ("Error: Either no default option or getObs is broken, didn't find " ++ ag)
+getObs [] _ = Full -- The case with one event, no observabilities
 getObs ((ObsDef ot):obss) ag 
   | any (isInObs ag) obss = getObs obss ag
   | otherwise = ot
@@ -145,8 +150,10 @@ typify (VTL objs objType) = zip objs $ replicate (length objs) objType
 --  mapping between variable names and the specific object it refers to in the DEL action instance
 --  objects in the problem file, used for forall and exists statements
 pddlFormToDelForm :: PDDL.Form -> [(Predicate, Prp)] -> [(String, String)] -> [TypedObjs] -> SMCDEL.Language.Form 
-pddlFormToDelForm (Atom (PredSpec name vars True)) predMap objectMap _ = 
-  PrpF $ predMap ! (PredSpec name (map ((!) objectMap) vars) False)
+pddlFormToDelForm (Atom (PredSpec name vars True)) atomMap objectMap _ = 
+  PrpF $ atomMap ! (PredSpec name (map ((!) objectMap) vars) False)
+pddlFormToDelForm (Atom (PredAtom name)) atomMap objectMap _ = 
+  PrpF $ atomMap ! (PredSpec name [] False)
 pddlFormToDelForm (Not f) pm om os = Neg $ (pddlFormToDelForm f pm om os) 
 pddlFormToDelForm (And fs) pm om os = Conj $ map (\f -> pddlFormToDelForm f pm om os) fs
 pddlFormToDelForm (Or fs) pm om os = Disj $ map (\f -> pddlFormToDelForm f pm om os) fs
