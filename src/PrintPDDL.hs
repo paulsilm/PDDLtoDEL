@@ -24,13 +24,13 @@ ppPred (PredSpec p vars qm) = "(" ++  p ++ (concatMap ((if qm then " ?" else " "
 ppPred (PredDef p varTypes) = "(" ++  p ++ (concatMap (\v -> " " ++ ppVars v) varTypes) ++ ")"
 
 ppVars :: VarType -> String
-ppVars (VTL vars typedObjs) = (concatMap (" ?" ++) vars) ++ " - " ++ typedObjs
+ppVars (VTL vars typedObjs) = "?" ++ head vars ++ (concatMap (" ?" ++) $ tail vars) ++ " - " ++ typedObjs
 
 ppAction :: Action -> String
 ppAction (Action name params actor events obss) = 
      "(:action " ++ name ++ "\n\t\t"
-  ++ ":parameters (" ++ (concatMap (\v -> "" ++ ppVars v) params) ++ ")\n\t\t"
-  ++ ":byagent ?" ++ actor ++ "\n\t\t"
+  ++ ":parameters (" ++ ppVars (head params) ++ (concatMap (\p -> " " ++ ppVars p) $ tail params) ++ ")\n\t\t"
+  ++ ":byagent ?" ++ actor
   ++ (concatMap (\e -> "\n\t\t" ++ ppEvent e) events) ++ "\n\t\t"
   ++ (concatMap (\o -> "\n\t\t:observability" ++ ppObs o) obss) ++ "\n\t\t)"
 
@@ -71,8 +71,8 @@ ppProblem (Problem problemName domainName objects init worlds obss goal) =
   ++ "(:domain " ++ domainName ++ ")\n\t"
   ++ "(:objects" ++ (concatMap (\o -> "\n\t\t" ++ ppObj o) objects) ++ ")\n\t"
   ++ "(:init" ++ (concatMap (\p -> "\n\t\t" ++ ppPred p) init) ++ ")\n\t"
-  ++ "(:worlds " ++ (concatMap (\w -> "\n\t\t" ++ ppWorld w) worlds) ++ ")\n\t"
-  ++ "( " ++ (concatMap (\o -> "\n\t:observability" ++ ppObs o) obss) ++ ")\n\t"
+  ++ "(:worlds\n" ++ (concatMap ppWorld worlds) ++ "\t)\n\n\t"
+  ++ "(:observability" ++ ppObs (head obss) ++ (concatMap (\o -> "\n\t :observability" ++ ppObs o) $ tail obss) ++ ")\n\t"
   ++ "(:goal\n\t" ++ (ppForm goal) ++ "\n\t)\n)\n"
 
 ppObj :: TypedObjs -> String 
@@ -80,7 +80,7 @@ ppObj (TO objs typedObjs) = (concatMap (" " ++) objs) ++ " - " ++ typedObjs
 
 ppWorld :: World -> String
 ppWorld (World des name truePreds) = 
-  "(:world-" ++ dess ++ "designated " ++ name ++ (concatMap (\p -> "\n\t\t" ++ ppPred p) truePreds) ++ "\n\t\t)\n"
+  "\t\t(:world-" ++ dess ++ "designated " ++ name ++ (concatMap (\p -> "\n\t\t\t" ++ ppPred p) truePreds) ++ "\n\t\t)\n"
     where dess = if des then "" else "non"
 
 ppStringListList :: [[String]] -> String

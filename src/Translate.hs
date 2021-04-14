@@ -82,7 +82,7 @@ problemToKripkeModel atomMap (Problem _ _ objects initialPreds parsedWorlds obss
 
 --Takes observartions and returns partition
 getObs :: [Obs] -> String -> ObsType
-getObs [] _ = Full -- The case with one event, no observabilities
+getObs [] _ = Full -- The default case
 getObs (ObsDef ot:obss) ag 
   | any (isInObs ag) obss = getObs obss ag
   | otherwise = ot

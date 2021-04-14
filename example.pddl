@@ -76,7 +76,8 @@
       (not-destined L1 A2)
     )
   )
-  (:observability none)
+  (:observability none
+   :observability full ?A1)
   (:goal 
     (forall (?l - letter)
       (received ?l - letter)
