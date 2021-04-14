@@ -33,7 +33,7 @@ translateActions atomMap objs ((Action name params actor events obss):actions) =
 actionToActionModel :: [(Predicate, Prp)] -> [TypedObjs] -> PDDL.Action -> [(String,String)] -> MultipointedActionModelS5
 actionToActionModel atomMap objs (Action _ _ _ events obss) varMap =
   let
-    convertedEvents = [(b,n,(pddlFormToDelForm pre atomMap varMap objs),
+    convertedEvents = [(b,n,pddlFormToDelForm pre atomMap varMap objs,
                             formToMap (pddlFormToDelForm eff atomMap varMap objs)) 
                       | (Event b n pre eff) <- events]
     --furtherConvertedEvents = [ (b,n,pre,map ((!) atomMap) preds) | (b,n,pre,(And preds)) <- convertedEvents]
@@ -43,11 +43,11 @@ actionToActionModel atomMap objs (Action _ _ _ events obss) varMap =
     translateEvent s = head [ i | ((_,name,_,_), i) <- eventMap, name == s ] -- takes name s of event and returns its index (unsafe)
     agentRels = 
       map (\ag -> (ag, map (map translateEvent) $ -- take the agent's partition with eventnames and map names to ints
-            eventPart (getObs obss ag) convertedEvents)) -- get agent's partition of events and convert to names
+            eventPart (getObs convertedObss ag) convertedEvents)) -- get agent's partition of events and convert to names
           allAgents
     actualEvents = [i | ((des,_,_,_), i) <- eventMap, des]
   in
-    ((ActMS5 [(i, (pre, eff)) | ((_,_,pre,eff), i) <- eventMap ] agentRels), actualEvents)
+    (ActMS5 [(i, (pre, eff)) | ((_,_,pre,eff), i) <- eventMap ] agentRels, actualEvents)
 
 --translates the effect formula to a list of predicate tuples
 formToMap :: SMCDEL.Language.Form -> [(Prp,SMCDEL.Language.Form)]
@@ -57,7 +57,7 @@ formToMap (PrpF p) = [(p,Top)]
 
 --Translates the observabilities to specific agents
 translateObs :: [(String,String)] -> Obs -> Obs
-translateObs varMap (ObsSpec ot ags) = ObsSpec ot $ map ((!) varMap) ags
+translateObs varMap (ObsSpec ot ags) = ObsSpec ot $ map (varMap !) ags
 translateObs _ obs = obs
 
 --translates the PDDL problem to a Kripke model
@@ -67,7 +67,7 @@ problemToKripkeModel atomMap (Problem _ _ objects initialPreds parsedWorlds obss
     worldMap = zip parsedWorlds [0..]
     val = [ (i, [ (P k, elem statement $ trueHere ++ initialPreds) 
                 | (statement, P k) <- atomMap ])
-          | ((World _ _ trueHere),i)  <- worldMap ]
+          | (World _ _ trueHere, i)  <- worldMap ]
     worlds = map snd worldMap
     allAgents = getObjNames "agent" objects
     --get all agents alongside their worldpartition, mapped onto worlds::[Int]
@@ -76,14 +76,14 @@ problemToKripkeModel atomMap (Problem _ _ objects initialPreds parsedWorlds obss
       map (\ag -> (ag, map (map translateWorld) $ -- take the agent's partition with worldnames and map names to ints
             worldPart (getObs obss ag) parsedWorlds)) -- get agent's partition of worlds and convert to names
           allAgents
-    actualWorlds = [i | ((World des _ _), i) <- worldMap, des]
+    actualWorlds = [i | (World des _ _, i) <- worldMap, des]
   in
     (KrMS5 worlds agentRels val, actualWorlds)
 
 --Takes observartions and returns partition
 getObs :: [Obs] -> String -> ObsType
 getObs [] _ = Full -- The case with one event, no observabilities
-getObs ((ObsDef ot):obss) ag 
+getObs (ObsDef ot:obss) ag 
   | any (isInObs ag) obss = getObs obss ag
   | otherwise = ot
 getObs ((ObsSpec ot ags):obss) ag 
@@ -98,13 +98,13 @@ isInObs ag (ObsSpec _ ags) = ag `elem` ags
 --Takes in list of all worlds and the obstype of the agent, returns the partition in strings
 worldPart :: ObsType -> [PDDL.World] -> [[String]]
 worldPart None worlds = [[name | (World _ name _) <- worlds]]
-worldPart Full worlds = map (:[]) ([name | (World _ name _) <- worlds])
+worldPart Full worlds = [[name] | (World _ name _) <- worlds]
 worldPart (Partition partition) _ = partition
 
 --Takes in list of all events and the obstype of the agent, returns the partition in strings
 eventPart :: ObsType -> [DelEvent] -> [[String]]
 eventPart None events = [[name | (_,name,_,_) <- events]]
-eventPart Full events = map (:[]) ([name | (_,name,_,_) <- events])
+eventPart Full events =  [[name] | (_,name,_,_) <- events]
 eventPart (Partition partition) _ = partition
 
 --Returns a mapping between propositions of type Prp and their corresponding predicate
@@ -121,7 +121,7 @@ predToProps objects (PredDef name vars) =
     allPreds = map (\as -> PredSpec name as False) allObjectedVarLists -- [(PredSpec name [L1,A1,A1] False), 
                                                                        --  (PredSpec name [L2,A1,A1] False)...]
   in allPreds
-predToProps _ (PredAtom name) = [(PredSpec name [] False)]
+predToProps _ (PredAtom name) = [PredSpec name [] False]
 
 
 --function that augments the existing varListList by all objects
@@ -151,10 +151,10 @@ typify (VTL objs objType) = zip objs $ replicate (length objs) objType
 --  objects in the problem file, used for forall and exists statements
 pddlFormToDelForm :: PDDL.Form -> [(Predicate, Prp)] -> [(String, String)] -> [TypedObjs] -> SMCDEL.Language.Form 
 pddlFormToDelForm (Atom (PredSpec name vars True)) atomMap objectMap _ = 
-  PrpF $ atomMap ! (PredSpec name (map ((!) objectMap) vars) False)
-pddlFormToDelForm (Atom (PredAtom name)) atomMap objectMap _ = 
-  PrpF $ atomMap ! (PredSpec name [] False)
-pddlFormToDelForm (Not f) pm om os = Neg $ (pddlFormToDelForm f pm om os) 
+  PrpF $ atomMap ! PredSpec name (map (objectMap !) vars) False
+pddlFormToDelForm (Atom (PredAtom name)) atomMap _ _ = 
+  PrpF $ atomMap ! PredSpec name [] False
+pddlFormToDelForm (Not f) pm om os = Neg $ pddlFormToDelForm f pm om os 
 pddlFormToDelForm (And fs) pm om os = Conj $ map (\f -> pddlFormToDelForm f pm om os) fs
 pddlFormToDelForm (Or fs) pm om os = Disj $ map (\f -> pddlFormToDelForm f pm om os) fs
 pddlFormToDelForm (Imply f1 f2) pm om os = Impl (pddlFormToDelForm f1 pm om os) (pddlFormToDelForm f2 pm om os)
@@ -182,7 +182,7 @@ parameterMaps params objList =
   let 
     typeMap = concatMap typify params
     -- [("A1","agent"),("A2","agent")]
-    allObjectedVarLists = foldr (objectify objList) [[]] (map snd typeMap)
+    allObjectedVarLists = foldr (objectify objList . snd) [[]] typeMap
     -- [["A1","A1"],["A1","A2"],["A2","A1"],["A2","A2"]]
     paramMap = map (zip (map fst typeMap)) allObjectedVarLists
     -- [["A1","A1","L1"],["A1","A2","L1"],["A2","A1","L1"],["A2","A2","L1"]]

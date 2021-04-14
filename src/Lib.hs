@@ -7,4 +7,4 @@ import SMCDEL.Internal.Help ((!))
 import Data.Tuple (swap)
 
 translationForPP :: [(Predicate, Prp)] -> (Prp -> String)
-translationForPP atomMap = (\p -> ppPred $ (map swap atomMap) ! p)
+translationForPP atomMap = \p -> ppPred $ map swap atomMap ! p

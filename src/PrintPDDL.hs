@@ -3,15 +3,15 @@ module PrintPDDL where
 import PDDL
 
 ppInput :: PDDL -> String
-ppInput (CheckPDDL domain problem) = (ppDomain domain) ++ "\n\n" ++ (ppProblem problem)
+ppInput (CheckPDDL domain problem) = ppDomain domain ++ "\n\n" ++ ppProblem problem
 
 ppDomain :: Domain -> String
 ppDomain (Domain str reqs types preds actions) = 
      "(define (domain " ++ str ++ ")\n" 
-  ++ "\t(:requirements" ++ (concat $ map (\r -> " " ++ ppReq r) reqs) ++ ")\n"
-  ++ "\t(:types" ++ (concat $ map (" " ++) types) ++ ")\n"
-  ++ "\t(:predicates" ++ (concat $ map (\p -> "\n\t\t" ++ ppPred p) preds) ++ "\n\t)"
-  ++ (concat $ map (\a -> "\n\n\t" ++ ppAction a) actions) ++ "\n"
+  ++ "\t(:requirements" ++ (concatMap (\r -> " " ++ ppReq r) reqs) ++ ")\n"
+  ++ "\t(:types" ++ (concatMap (" " ++) types) ++ ")\n"
+  ++ "\t(:predicates" ++ (concatMap (\p -> "\n\t\t" ++ ppPred p) preds) ++ "\n\t)"
+  ++ (concatMap (\a -> "\n\n\t" ++ ppAction a) actions) ++ "\n"
   ++ ")"
 
 ppReq :: Req -> String 
@@ -20,19 +20,19 @@ ppReq Typing = ":typing"
 
 ppPred :: Predicate -> String 
 ppPred (PredAtom a)= "(" ++ a ++ ")"
-ppPred (PredSpec p vars qm) = "(" ++  p ++ (concat $ map ((if qm then " ?" else " ") ++) vars) ++ ")"
-ppPred (PredDef p varTypes) = "(" ++  p ++ (concat $ map (\v -> " " ++ ppVars v) varTypes) ++ ")"
+ppPred (PredSpec p vars qm) = "(" ++  p ++ (concatMap ((if qm then " ?" else " ") ++) vars) ++ ")"
+ppPred (PredDef p varTypes) = "(" ++  p ++ (concatMap (\v -> " " ++ ppVars v) varTypes) ++ ")"
 
 ppVars :: VarType -> String
-ppVars (VTL vars typedObjs) = (concat $ map (" ?" ++) vars) ++ " - " ++ typedObjs
+ppVars (VTL vars typedObjs) = (concatMap (" ?" ++) vars) ++ " - " ++ typedObjs
 
 ppAction :: Action -> String
 ppAction (Action name params actor events obss) = 
      "(:action " ++ name ++ "\n\t\t"
-  ++ ":parameters (" ++ (concat $ map (\v -> "" ++ ppVars v) params) ++ ")\n\t\t"
+  ++ ":parameters (" ++ (concatMap (\v -> "" ++ ppVars v) params) ++ ")\n\t\t"
   ++ ":byagent ?" ++ actor ++ "\n\t\t"
-  ++ (concat $ map (\e -> "\n\t\t" ++ ppEvent e) events) ++ "\n\t\t"
-  ++ (concat $ map (\o -> "\n\t\t:observability" ++ ppObs o) obss) ++ "\n\t\t)"
+  ++ (concatMap (\e -> "\n\t\t" ++ ppEvent e) events) ++ "\n\t\t"
+  ++ (concatMap (\o -> "\n\t\t:observability" ++ ppObs o) obss) ++ "\n\t\t)"
 
 ppEvent :: Event -> String 
 ppEvent (Event des "" pres effect) = 
@@ -46,18 +46,18 @@ ppEvent (Event des name pres effect) =
 
 ppObs :: Obs -> String
 ppObs (ObsDef obsType) = ppObsType obsType
-ppObs (ObsSpec obsType ags) = ppObsType obsType ++ (concat $ map (\a -> " ?" ++ a) ags)
+ppObs (ObsSpec obsType ags) = ppObsType obsType ++ (concatMap (" ?" ++) ags)
 
 ppObsType :: ObsType -> String
 ppObsType Full = " full"
 ppObsType None = " none"
-ppObsType (Partition sss) = " (partition" ++ (concat $ map (\ss -> " (" ++ (concat $ map (\s -> " " ++ s) ss ) ++ ")") sss) ++ ")"
+ppObsType (Partition sss) = " (partition" ++ (concatMap (\ss -> " (" ++ (concatMap (" " ++) ss ) ++ ")") sss) ++ ")"
 
 ppForm :: Form -> String
 ppForm (Atom a) = ppPred a
 ppForm (Not f) = "(not " ++ (ppForm f) ++ ")"
-ppForm (And fs) = "(and " ++ (concat $ map (\f -> "\n\t\t" ++ ppForm f) fs) ++ ")"
-ppForm (Or fs) = "(or " ++ (concat $ map (\f -> "\n\t\t" ++ ppForm f) fs) ++ ")"
+ppForm (And fs) = "(and " ++ (concatMap (\f -> "\n\t\t" ++ ppForm f) fs) ++ ")"
+ppForm (Or fs) = "(or " ++ (concatMap (\f -> "\n\t\t" ++ ppForm f) fs) ++ ")"
 ppForm (Imply f1 f2) = "(imply " ++ "\n\t\t\t" ++ (ppForm f1) ++ "\n\t\t\t" ++ (ppForm f2) ++ "\n\t\t)"
 ppForm (Knows ag f) = "(knows ?" ++ ag ++ " " ++ (ppForm f) ++ ")"
 ppForm (Forall vt f) = "(forall \n\t\t(" ++ (ppVars vt) ++ ")\n\t\t\t" ++ (ppForm f) ++ "\n\t\t)"
@@ -69,19 +69,19 @@ ppProblem :: Problem -> String
 ppProblem (Problem problemName domainName objects init worlds obss goal) =
      "(define (problem " ++ problemName ++ ")\n\t"
   ++ "(:domain " ++ domainName ++ ")\n\t"
-  ++ "(:objects" ++ (concat $ map (\o -> "\n\t\t" ++ ppObj o) objects) ++ ")\n\t"
-  ++ "(:init" ++ (concat $ map (\p -> "\n\t\t" ++ ppPred p) init) ++ ")\n\t"
-  ++ "(:worlds " ++ (concat $ map (\w -> "\n\t\t" ++ ppWorld w) worlds) ++ ")\n\t"
-  ++ "( " ++ (concat $ map (\o -> "\n\t:observability" ++ ppObs o) obss) ++ ")\n\t"
+  ++ "(:objects" ++ (concatMap (\o -> "\n\t\t" ++ ppObj o) objects) ++ ")\n\t"
+  ++ "(:init" ++ (concatMap (\p -> "\n\t\t" ++ ppPred p) init) ++ ")\n\t"
+  ++ "(:worlds " ++ (concatMap (\w -> "\n\t\t" ++ ppWorld w) worlds) ++ ")\n\t"
+  ++ "( " ++ (concatMap (\o -> "\n\t:observability" ++ ppObs o) obss) ++ ")\n\t"
   ++ "(:goal\n\t" ++ (ppForm goal) ++ "\n\t)\n)\n"
 
 ppObj :: TypedObjs -> String 
-ppObj (TO objs typedObjs) = (concat $ map (" " ++) objs) ++ " - " ++ typedObjs
+ppObj (TO objs typedObjs) = (concatMap (" " ++) objs) ++ " - " ++ typedObjs
 
 ppWorld :: World -> String
 ppWorld (World des name truePreds) = 
-  "(:world-" ++ dess ++ "designated " ++ name ++ (concat $ map (\p -> "\n\t\t" ++ ppPred p) truePreds) ++ "\n\t\t)\n"
+  "(:world-" ++ dess ++ "designated " ++ name ++ (concatMap (\p -> "\n\t\t" ++ ppPred p) truePreds) ++ "\n\t\t)\n"
     where dess = if des then "" else "non"
 
 ppStringListList :: [[String]] -> String
-ppStringListList sss = (concat $ map (\ss -> "\n\t\t(" ++ (concat $ map (\s -> " " ++ s) ss) ++ ")") sss)
+ppStringListList sss = (concatMap (\ss -> "\n\t\t(" ++ (concatMap (" " ++) ss) ++ ")") sss)
