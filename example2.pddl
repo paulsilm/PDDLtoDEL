@@ -13,36 +13,38 @@
 	(:action move
 		:parameters (?a1 ?a2 - agent ?l - letter)
 		:byagent ?a1
-		:precondition (and 
-		(connected ?a1 ?a2)
-		(at ?l ?a1)
-		(knows ?a1 (not (destined ?l ?a1))))
-			:effect (and 
-		(not (at ?l ?a1))
-		(at ?l ?a2))
-			
-		
-		)
+		:precondition 
+			(and
+				(connected ?a1 ?a2)
+				(at ?l ?a1)
+				(knows ?a1 (not (destined ?l ?a1))))
+		:effect 
+			(and
+				(not (at ?l ?a1))
+				(at ?l ?a2))
+	)
 
 	(:action check
 		:parameters (?a - agent ?l - letter)
 		:byagent ?a
 		(:event-designated check-succ
-			:precondition (and 
-		(at ?l ?a)
-		(destined ?l ?a))
+			:precondition 
+				(and
+					(at ?l ?a)
+					(destined ?l ?a))
 			:effect (received ?l)
-			)
+		)
 		(:event-nondesignated check-unsucc
-			:precondition (and 
-		(at ?l ?a)
-		(not (destined ?l ?a)))
-			:effect (and )
-			)
-		
+			:precondition 
+				(and
+					(at ?l ?a)
+					(not (destined ?l ?a)))
+			:effect 
+				(and)
+		)
 		:observability none
 		:observability full ?a
-		)
+	)
 )
 
 (define (problem post-simple-5-1)
@@ -77,8 +79,7 @@
 	(:observability none
 	 :observability full ?A1)
 	(:goal
-	(forall 
-		(?l - letter)
+		(forall ?l - letter
 			(received ?l - letter)
 		)
 	)

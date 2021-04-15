@@ -31,17 +31,17 @@ ppAction (Action name params actor events obss) =
      "(:action " ++ name ++ "\n\t\t"
   ++ ":parameters (" ++ ppVars (head params) ++ (concatMap (\p -> " " ++ ppVars p) $ tail params) ++ ")\n\t\t"
   ++ ":byagent ?" ++ actor
-  ++ (concatMap (\e -> "\n\t\t" ++ ppEvent e) events) ++ "\n\t\t"
-  ++ (concatMap (\o -> "\n\t\t:observability" ++ ppObs o) obss) ++ "\n\t\t)"
+  ++ (concatMap (\e -> "\n\t\t" ++ ppEvent e) events) 
+  ++ (concatMap (\o -> "\n\t\t:observability" ++ ppObs o) obss) ++ "\n\t)"
 
 ppEvent :: Event -> String 
 ppEvent (Event des "" pres effect) = 
-     ":precondition " ++ (ppForm pres) ++ "\n\t\t\t"
-  ++ ":effect " ++ (ppForm effect) ++ "\n\t\t\t"
+     ":precondition " ++ (ppForm pres "\t\t\t") ++ "\n\t\t"
+  ++ ":effect " ++ (ppForm effect "\t\t\t")
 ppEvent (Event des name pres effect) = 
      "(:event-" ++ dess ++ "designated " ++ name ++ "\n\t\t\t"
-  ++ ":precondition " ++ (ppForm pres) ++ "\n\t\t\t"
-  ++ ":effect " ++ (ppForm effect) ++ "\n\t\t\t)"
+  ++ ":precondition " ++ (ppForm pres "\t\t\t\t") ++ "\n\t\t\t"
+  ++ ":effect " ++ (ppForm effect "\t\t\t\t") ++ "\n\t\t)"
     where dess = if des then "" else "non"
 
 ppObs :: Obs -> String
@@ -53,16 +53,26 @@ ppObsType Full = " full"
 ppObsType None = " none"
 ppObsType (Partition sss) = " (partition" ++ (concatMap (\ss -> " (" ++ (concatMap (" " ++) ss ) ++ ")") sss) ++ ")"
 
-ppForm :: Form -> String
-ppForm (Atom a) = ppPred a
-ppForm (Not f) = "(not " ++ (ppForm f) ++ ")"
-ppForm (And fs) = "(and " ++ (concatMap (\f -> "\n\t\t" ++ ppForm f) fs) ++ ")"
-ppForm (Or fs) = "(or " ++ (concatMap (\f -> "\n\t\t" ++ ppForm f) fs) ++ ")"
-ppForm (Imply f1 f2) = "(imply " ++ "\n\t\t\t" ++ (ppForm f1) ++ "\n\t\t\t" ++ (ppForm f2) ++ "\n\t\t)"
-ppForm (Knows ag f) = "(knows ?" ++ ag ++ " " ++ (ppForm f) ++ ")"
-ppForm (Forall vt f) = "(forall \n\t\t(" ++ (ppVars vt) ++ ")\n\t\t\t" ++ (ppForm f) ++ "\n\t\t)"
-ppForm (ForallWhen vt fw ft) = "(forall " ++ (ppVars vt) ++ "\n\t\t\twhen " ++ (ppForm fw) ++ "\n\t\t\t\t" ++ (ppForm ft) ++ "\n\t\t)"
-ppForm (Exists vt f) = "(exists " ++ (ppVars vt) ++ "\n\t\t\t" ++ (ppForm f) ++ "\n\t\t)"
+ppForm :: Form -> String -> String
+ppForm (Atom a) _ = ppPred a
+ppForm (Not f) indent = "(not " ++ (ppForm f $ indent ++ "\t") ++ ")"
+ppForm (And fs) indent = "\n" ++ indent ++ "(and" ++ (concatMap (\f -> "\n\t" ++ indent ++ (ppForm f $ indent ++ "\t")) fs) ++ ")"
+ppForm (Or fs) indent = "\n" ++ indent ++ "(or" ++ (concatMap (\f -> "\n\t" ++ indent ++ (ppForm f $ indent ++ "\t")) fs) ++ ")"
+ppForm (Imply f1 f2) indent = "(imply " ++ (ppForm f1 $ indent ++ "\t") ++ (ppForm f2 $ indent ++ "\t") ++ ")"
+ppForm (Knows ag f) indent = "(knows ?" ++ ag ++ " " ++ (ppForm f $ indent ++ "\t") ++ ")"
+ppForm (Forall vt f) indent = 
+  "(forall " ++ (ppVars vt) ++ 
+  "\n" ++ indent ++ "\t" ++ (ppForm f $ indent ++ "\t") ++ 
+  "\n" ++ indent ++ ")"
+ppForm (ForallWhen vt fw ft) indent = 
+  "(forall " ++ (ppVars vt) ++ 
+  "\n" ++ indent ++ "\twhen " ++ (ppForm fw $ indent ++ "\t") ++ 
+  "\n" ++ indent ++ "\t\t" ++ (ppForm ft $ indent ++ "\t\t") ++ 
+  "\n" ++ indent ++ ")"
+ppForm (Exists vt f) indent = 
+  "(exists " ++ (ppVars vt) ++ 
+  "\n" ++ indent ++ "\t" ++ (ppForm f $ indent ++ "\t") ++ 
+  "\n" ++ indent ++ ")"
 
 --Problem String String [TypedObjs] [[String]] [World] [Obs] Form
 ppProblem :: Problem -> String 
@@ -73,7 +83,7 @@ ppProblem (Problem problemName domainName objects init worlds obss goal) =
   ++ "(:init" ++ (concatMap (\p -> "\n\t\t" ++ ppPred p) init) ++ ")\n\t"
   ++ "(:worlds\n" ++ (concatMap ppWorld worlds) ++ "\t)\n\n\t"
   ++ "(:observability" ++ ppObs (head obss) ++ (concatMap (\o -> "\n\t :observability" ++ ppObs o) $ tail obss) ++ ")\n\t"
-  ++ "(:goal\n\t" ++ (ppForm goal) ++ "\n\t)\n)\n"
+  ++ "(:goal\n\t\t" ++ (ppForm goal "\t\t") ++ "\n\t)\n)\n"
 
 ppObj :: TypedObjs -> String 
 ppObj (TO objs typedObjs) = (concatMap (" " ++) objs) ++ " - " ++ typedObjs
