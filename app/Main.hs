@@ -17,7 +17,7 @@ main = do
         let (actionModelMap,problem) = pddlToDEL pddl
         --disp $ (map snd) actionModelMap
         --putStrLn $ tex problem
-        putStrLn $ ppInput pddl
+        pdfTo problem "problem.pdf"
         --putStrLn $ problem
         --putStrLn $ (map snd) actionModelMap
         --print domain

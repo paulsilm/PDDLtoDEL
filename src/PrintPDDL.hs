@@ -19,7 +19,7 @@ ppReq Strips = ":strips"
 ppReq Typing = ":typing"
 
 ppPred :: Predicate -> String 
-ppPred (PredAtom a)= "(" ++ a ++ ")"
+ppPred (PredAtom a) = "(" ++ a ++ ")"
 ppPred (PredSpec p vars qm) = "(" ++  p ++ (concatMap ((if qm then " ?" else " ") ++) vars) ++ ")"
 ppPred (PredDef p varTypes) = "(" ++  p ++ (concatMap (\v -> " " ++ ppVars v) varTypes) ++ ")"
 
