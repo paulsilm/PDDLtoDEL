@@ -3,26 +3,47 @@ module SemanticChecker where
 import PDDL 
 import Translate
 
-validInput :: PDDL -> Bool
-validInput (CheckPDDL (Domain name reqs types preds actions) (Problem _ domName objects initPreds worlds obss goal)) =
-     and [objType `elem` types | (TO _ objType) <- objects]
-  && all (predTypesExist types) preds
-  && all requirementSupported reqs
-  && name == domName 
-  && allDifferent [name | (World _ name _) <- worlds]
-  && allDifferent [name | (Action name _ _ _ _) <- actions]
-  && formInCorrectFormat goal
-  && all (\p -> p `elem` concatMap (predToProps objects) preds) (initPreds ++ concat [preds | (World _ _ preds) <- worlds]) --check all predicates are legit
-  && [des | (World des _ _) <- worlds, des] == [True] --Just one designated world
+validInput :: PDDL -> Maybe String
+validInput (CheckPDDL 
+            (Domain name reqs types preds actions) 
+            (Problem _ domName objects initPreds worlds obss goal)) =
+              let
+                tests = 
+                  [(and [objType `elem` types | (TO _ objType) <- objects], "Object type is not declared in :types"), 
+                    (all (predTypesExist types) preds, "Predicate type is missing"),
+                    (all requirementSupported reqs, "requirements not supported"), --TODO which one
+                    (name == domName, "Problem's domain-name does not match domain's name"),
+                    (allDifferent [name | (World _ name _) <- worlds], "Multiple worlds have the same name"),
+                    (allDifferent [name | (Action name _ _ _ _) <- actions], "Multiple actions have the same name"),
+                    (formInCorrectFormat goal, "Goal format is incorrect"),
+                    (all (\p -> p `elem` concatMap (predToProps objects) preds) (concat [preds | (World _ _ preds) <- worlds]), 
+                      "Some world has undefined/incorrect predicates"),
+                    (all (\p -> p `elem` concatMap (predToProps objects) preds) initPreds, 
+                      "Init has undefined/incorrect predicates"),
+                    ([des | (World des _ _) <- worlds, des] == [True], "Either too many or too few designated worlds")
+                  ] ++ map (checkAction types) actions
+                in
+                  case [ error | (False,error) <- tests ] of
+                    [] -> Nothing
+                    errors -> Just $ concatMap (\e -> e ++ "\n") errors
 
-validAction :: [String] -> Action -> Bool
-validAction typeList (Action name params actor events obss) =
-     and [formInCorrectFormat pre | (Event _ _ pre _) <- events]
-  && and [effInCorrectFormat eff | (Event _ _ _ eff) <- events]
-  && allDifferent [name | (Event _ name _ _) <- events]
+     
+
+checkAction :: [String] -> Action -> (Bool,String) --TODO Check observability legitness
+checkAction typeList (Action name params actor events obss) =
+  let tuples = 
+            [ (and [formInCorrectFormat pre | (Event _ _ pre _) <- events], "Precondition is in an incorrect format"),
+              (and [effInCorrectFormat eff | (Event _ _ _ eff) <- events], "Effect is in incorrect format"),
+              (allDifferent [name | (Event _ name _ _) <- events], "Multiple events have the same name"),
+              (or [des | (Event des _ _ _) <- events, des], "There needs to be at least one designated event"),
+              (and [paramType `elem` typeList | (VTL _ paramType) <- params], "Some parameter type is not defined in :types")
+            ]
+  in 
+    (all fst tuples, concatMap (\e -> "Error in action \"" ++ name ++ "\": " ++ e ++ "\n") [error | (False, error) <- tuples])
+
+
+               
   -- && observabilitiesOnlyForAgents (getObjNames "agent" typeList) obss --TODO add objectlist to validAction params
-  && or [des | (Event des _ _ _) <- events, des] --at least one designated event
-  && and [paramType `elem` typeList | (VTL _ paramType) <- params]
 
 
 --converts predicate to its type --TODO requires parameters of action to convert PredSpecc v
@@ -67,11 +88,13 @@ formInCorrectFormat f = isPred f
 --TODO same goes for this one
 effInCorrectFormat :: Form -> Bool
 effInCorrectFormat (And preds) = all isPred preds
-effInCorrectFormat (Atom pred) = True
+effInCorrectFormat (Atom _) = True
 effInCorrectFormat _ = False
 
 isPred :: Form -> Bool
 isPred (Atom _) = True
+isPred (Knows _ _) = True
+isPred (Not p) = isPred p
 isPred _ = False
 
 requirementSupported :: Req -> Bool --TODO add more reqs to parser and language

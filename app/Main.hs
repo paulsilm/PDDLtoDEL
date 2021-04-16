@@ -15,7 +15,10 @@ main = do
   case parse $ alexScanTokens input of
       Left (lin,col) -> error ("Parse error in line " ++ show lin ++ ", column " ++ show col)
       Right pddl -> do
-        putStrLn $ show $ validInput pddl
+        case validInput pddl of
+          Nothing -> putStrLn "Succesful parsing"
+          Just str -> putStrLn $ str ++ show pddl
+
         --let (actionModelMap,problem) = pddlToDEL pddl
         --disp $ (map snd) actionModelMap
         --putStrLn $ tex problem
