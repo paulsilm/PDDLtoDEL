@@ -12,22 +12,25 @@ validInput (CheckPDDL (Domain name reqs types preds actions) (Problem _ domName 
   && allDifferent [name | (World _ name _) <- worlds]
   && allDifferent [name | (Action name _ _ _ _) <- actions]
   && formInCorrectFormat goal
-  && checkPreds --TODO see other TODOs
-  && all (elem $ concatMap (predToProps objects) preds) (initPreds ++ concat [preds | (World _ _ preds) <- worlds]) --check all predicates are legit
+  && all (\p -> p `elem` concatMap (predToProps objects) preds) (initPreds ++ concat [preds | (World _ _ preds) <- worlds]) --check all predicates are legit
   && [des | (World des _ _) <- worlds, des] == [True] --Just one designated world
 
 validAction :: [String] -> Action -> Bool
 validAction typeList (Action name params actor events obss) =
      and [formInCorrectFormat pre | (Event _ _ pre _) <- events]
-     and [effInCorrectFormat pre | (Event _ _ _ eff) <- events]
-  && allDifferent [name | (Event _ name _ _)]
-  && observabilitiesOnlyForAgents (getObjNames "agent" typeList) obss
+  && and [effInCorrectFormat eff | (Event _ _ _ eff) <- events]
+  && allDifferent [name | (Event _ name _ _) <- events]
+  -- && observabilitiesOnlyForAgents (getObjNames "agent" typeList) obss --TODO add objectlist to validAction params
   && or [des | (Event des _ _ _) <- events, des] --at least one designated event
   && and [paramType `elem` typeList | (VTL _ paramType) <- params]
 
-getObjNames :: String -> [Obs] -> [String]
-getObjNames _ [] = []
-getObjNames objType ((TO names objName):objs) = if objType == objName then names else getObjNames objType objs
+
+--converts predicate to its type --TODO requires parameters of action to convert PredSpecc v
+--predConvert :: Predicate -> Predicate
+--predConvert (PredDef name vars) = 
+--  PredSpec name (map snd $ concatMap typify vars) False
+--predConvert (PredSpec name vars _) = predConvert $ PredDef name [VTL varNames | ]
+--predConvert (PredAtom name) = predConvert $ PredDef name []
 
 observabilitiesOnlyForAgents :: [String] -> [Obs] -> Bool
 observabilitiesOnlyForAgents _ [] = True
@@ -37,8 +40,8 @@ observabilitiesOnlyForAgents ags ((ObsSpec _ ags2):obss) =
   && observabilitiesOnlyForAgents ags obss
 
 observabilityPartitionCorrect :: [String] -> Obs -> Bool
-observabilityPartitionCorrect legitNames (ObsDef (Partition part)) = and $ map (map (\s -> s `elem` legitNames)) part 
-observabilityPartitionCorrect legitNames (ObsSpec (Partition part) _) = and $ map (map (\s -> s `elem` legitNames)) part 
+observabilityPartitionCorrect legitNames (ObsDef (Partition part)) = and $ concatMap (map (\s -> s `elem` legitNames)) part 
+observabilityPartitionCorrect legitNames (ObsSpec (Partition part) _) = and $ concatMap (map (\s -> s `elem` legitNames)) part 
 observabilityPartitionCorrect _ _ = True
 
 predTypesExist :: [String] -> Predicate -> Bool
@@ -59,6 +62,7 @@ formInCorrectFormat (Forall _ f) = formInCorrectFormat f
 formInCorrectFormat (ForallWhen _ _ f) = formInCorrectFormat f
 formInCorrectFormat (Exists _ f) = formInCorrectFormat f
 formInCorrectFormat (Knows _ f) = formInCorrectFormat f
+formInCorrectFormat f = isPred f
 
 --TODO same goes for this one
 effInCorrectFormat :: Form -> Bool

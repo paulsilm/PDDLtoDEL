@@ -175,10 +175,7 @@ FormList : Form { [$1] }
 String : STR { $1 }
 VarName : VAR { tail $1 }
 
-
 {
-
-
 type ParseResult a = Either (Int,Int) a
 
 parseError :: [Token AlexPosn] -> ParseResult a

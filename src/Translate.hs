@@ -18,6 +18,8 @@ pddlToDEL (CheckPDDL (Domain _ _ _ preds actions) (Problem _ _ objects initPreds
   in
     (actionModelMap,kripkeModel)
 
+--TODO use definitions of Owned and Labelled
+
 --Problem: Observabilities are yet to be translated.
 --Translates the PDDL actions to a list of actionModels
 translateActions :: [(Predicate, Prp)] -> [TypedObjs] -> [PDDL.Action] -> [(String, MultipointedActionModelS5)]

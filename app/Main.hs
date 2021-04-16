@@ -5,6 +5,7 @@ import Lex
 import PrintPDDL
 import Translate
 import PDDL
+import SemanticChecker
 import SMCDEL.Internal.TexDisplay
 
 
@@ -14,10 +15,11 @@ main = do
   case parse $ alexScanTokens input of
       Left (lin,col) -> error ("Parse error in line " ++ show lin ++ ", column " ++ show col)
       Right pddl -> do
-        let (actionModelMap,problem) = pddlToDEL pddl
+        putStrLn $ show $ validInput pddl
+        --let (actionModelMap,problem) = pddlToDEL pddl
         --disp $ (map snd) actionModelMap
         --putStrLn $ tex problem
-        pdfTo problem "problem.pdf"
+        --pdfTo problem "problem.pdf"
         --putStrLn $ problem
         --putStrLn $ (map snd) actionModelMap
         --print domain
