@@ -1,48 +1,49 @@
 module SemanticChecker where
 
-import PDDL 
+import PDDL
 import Translate
 
+--Checks whether the input is semantically consistent, if not returns a Just String with
+--an error message
 validInput :: PDDL -> Maybe String
-validInput (CheckPDDL 
-            (Domain name reqs types preds actions) 
+validInput (CheckPDDL
+            (Domain name reqs types preds actions)
             (Problem _ domName objects initPreds worlds obss goal)) =
               let
-                tests = 
-                  [(and [objType `elem` types | (TO _ objType) <- objects], "Object type is not declared in :types"), 
+                tests =
+                  [(and [objType `elem` types | (TO _ objType) <- objects], "Object type is not declared in :types"),
                     (all (predTypesExist types) preds, "Predicate type is missing"),
                     (all requirementSupported reqs, "requirements not supported"), --TODO which one
                     (name == domName, "Problem's domain-name does not match domain's name"),
                     (allDifferent [name | (World _ name _) <- worlds], "Multiple worlds have the same name"),
                     (allDifferent [name | (Action name _ _ _ _) <- actions], "Multiple actions have the same name"),
                     (formInCorrectFormat goal, "Goal format is incorrect"),
-                    (all (\p -> p `elem` concatMap (predToProps objects) preds) (concat [preds | (World _ _ preds) <- worlds]), 
+                    (all (\p -> p `elem` concatMap (predToProps objects) preds) (concat [preds | (World _ _ preds) <- worlds]),
                       "Some world has undefined/incorrect predicates"),
-                    (all (\p -> p `elem` concatMap (predToProps objects) preds) initPreds, 
+                    (all (\p -> p `elem` concatMap (predToProps objects) preds) initPreds,
                       "Init has undefined/incorrect predicates"),
                     ([des | (World des _ _) <- worlds, des] == [True], "Either too many or too few designated worlds")
                   ] ++ map (checkAction types) actions
                 in
                   case [ error | (False,error) <- tests ] of
                     [] -> Nothing
-                    errors -> Just $ concatMap (\e -> e ++ "\n") errors
+                    errors -> Just $ unlines errors
 
-     
 
 checkAction :: [String] -> Action -> (Bool,String) --TODO Check observability legitness
 checkAction typeList (Action name params actor events obss) =
-  let tuples = 
+  let tuples =
             [ (and [formInCorrectFormat pre | (Event _ _ pre _) <- events], "Precondition is in an incorrect format"),
               (and [effInCorrectFormat eff | (Event _ _ _ eff) <- events], "Effect is in incorrect format"),
               (allDifferent [name | (Event _ name _ _) <- events], "Multiple events have the same name"),
               (or [des | (Event des _ _ _) <- events, des], "There needs to be at least one designated event"),
               (and [paramType `elem` typeList | (VTL _ paramType) <- params], "Some parameter type is not defined in :types")
             ]
-  in 
+  in
     (all fst tuples, concatMap (\e -> "Error in action \"" ++ name ++ "\": " ++ e ++ "\n") [error | (False, error) <- tuples])
 
 
-               
+
   -- && observabilitiesOnlyForAgents (getObjNames "agent" typeList) obss --TODO add objectlist to validAction params
 
 
@@ -56,13 +57,13 @@ checkAction typeList (Action name params actor events obss) =
 observabilitiesOnlyForAgents :: [String] -> [Obs] -> Bool
 observabilitiesOnlyForAgents _ [] = True
 observabilitiesOnlyForAgents ags ((ObsDef _):obss) = observabilitiesOnlyForAgents ags obss
-observabilitiesOnlyForAgents ags ((ObsSpec _ ags2):obss) = 
-     all (\ag -> ag `elem` ags) ags2
+observabilitiesOnlyForAgents ags ((ObsSpec _ ags2):obss) =
+     all (`elem` ags) ags2
   && observabilitiesOnlyForAgents ags obss
 
 observabilityPartitionCorrect :: [String] -> Obs -> Bool
-observabilityPartitionCorrect legitNames (ObsDef (Partition part)) = and $ concatMap (map (\s -> s `elem` legitNames)) part 
-observabilityPartitionCorrect legitNames (ObsSpec (Partition part) _) = and $ concatMap (map (\s -> s `elem` legitNames)) part 
+observabilityPartitionCorrect legitNames (ObsDef (Partition part)) = and $ concatMap (map (`elem` legitNames)) part
+observabilityPartitionCorrect legitNames (ObsSpec (Partition part) _) = and $ concatMap (map (`elem` legitNames)) part
 observabilityPartitionCorrect _ _ = True
 
 predTypesExist :: [String] -> Predicate -> Bool

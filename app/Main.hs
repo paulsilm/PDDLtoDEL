@@ -7,16 +7,22 @@ import Translate
 import PDDL
 import SemanticChecker
 import SMCDEL.Internal.TexDisplay
+import SMCDEL.Other.Planning
 
 
 main :: IO ()
 main = do
-  input <- readFile "example.pddl"
+  let fileName = "examples/key.pddl"
+  input <- readFile fileName
   case parse $ alexScanTokens input of
       Left (lin,col) -> error ("Parse error in line " ++ show lin ++ ", column " ++ show col)
       Right pddl -> do
         case validInput pddl of
-          Nothing -> putStrLn "Succesful parsing"
+          Nothing -> do
+            putStrLn "Succesful parsing"
+            --putStrLn $ show $ pddlToDEL pddl
+            writeFile fileName $ ppInput pddl
+            putStrLn $ concatMap unlines $ map (map ppICPlan) $ map (\i -> findSequentialIcPlan i $ pddlToDEL pddl) [1..]
           Just str -> putStrLn $ str ++ show pddl
 
         --let (actionModelMap,problem) = pddlToDEL pddl

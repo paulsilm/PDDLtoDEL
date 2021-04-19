@@ -4,36 +4,38 @@ import PDDL
 import SMCDEL.Explicit.S5 
 import SMCDEL.Language (Prp(..), Form(..))
 import SMCDEL.Internal.Help ((!))
+import SMCDEL.Other.Planning
 
-type DEL = ([(String, MultipointedActionModelS5)], MultipointedModelS5)
+
 type DelEvent = (Bool,String,SMCDEL.Language.Form,[(Prp,SMCDEL.Language.Form)])
 
+
 --Top level translation function, takes a valid PDDL problem and domain combo and returns 
-pddlToDEL :: PDDL -> DEL
+pddlToDEL :: PDDL -> CoopTask MultipointedModelS5 MultipointedActionModelS5
 pddlToDEL (CheckPDDL (Domain _ _ _ preds actions) (Problem _ _ objects initPreds parsedWorlds obss goal)) =
   let
     atomMap = getAtomMap objects preds 
     actionModelMap = translateActions atomMap objects actions
     kripkeModel = problemToKripkeModel atomMap (Problem "" "" objects initPreds parsedWorlds obss goal)
   in
-    (actionModelMap,kripkeModel)
+    CoopTask kripkeModel actionModelMap (pddlFormToDelForm goal atomMap [(o,o) | (TO os _) <- objects, o <- os] objects)
 
 --TODO use definitions of Owned and Labelled
 
 --Problem: Observabilities are yet to be translated.
 --Translates the PDDL actions to a list of actionModels
-translateActions :: [(Predicate, Prp)] -> [TypedObjs] -> [PDDL.Action] -> [(String, MultipointedActionModelS5)]
+translateActions :: [(Predicate, Prp)] -> [TypedObjs] -> [PDDL.Action] -> [Owned MultipointedActionModelS5]
 translateActions _ _ [] = []
 translateActions atomMap objs ((Action name params actor events obss):actions) =
   let 
     paramMaps = parameterMaps params objs
     actionModels = map (actionToActionModel atomMap objs (Action name params actor events obss)) paramMaps 
-    namedModels = map (\model -> (name,model)) actionModels
+    ownedModels = map (\(actress,model) -> (actress, (name,model))) actionModels
   in
-    namedModels ++ (translateActions atomMap objs actions)
+    ownedModels ++ (translateActions atomMap objs actions)
 
-actionToActionModel :: [(Predicate, Prp)] -> [TypedObjs] -> PDDL.Action -> [(String,String)] -> MultipointedActionModelS5
-actionToActionModel atomMap objs (Action _ _ _ events obss) varMap =
+actionToActionModel :: [(Predicate, Prp)] -> [TypedObjs] -> PDDL.Action -> [(String,String)] -> (String,MultipointedActionModelS5)
+actionToActionModel atomMap objs (Action _ _ actor events obss) varMap =
   let
     convertedEvents = [(b,n,pddlFormToDelForm pre atomMap varMap objs,
                             formToMap (pddlFormToDelForm eff atomMap varMap objs)) 
@@ -48,8 +50,9 @@ actionToActionModel atomMap objs (Action _ _ _ events obss) varMap =
             eventPart (getObs convertedObss ag) convertedEvents)) -- get agent's partition of events and convert to names
           allAgents
     actualEvents = [i | ((des,_,_,_), i) <- eventMap, des]
+    actress = varMap ! actor
   in
-    (ActMS5 [(i, (pre, eff)) | ((_,_,pre,eff), i) <- eventMap ] agentRels, actualEvents)
+    (actress, (ActMS5 [(i, (pre, eff)) | ((_,_,pre,eff), i) <- eventMap ] agentRels, actualEvents))
 
 --translates the effect formula to a list of predicate tuples
 formToMap :: SMCDEL.Language.Form -> [(Prp,SMCDEL.Language.Form)]

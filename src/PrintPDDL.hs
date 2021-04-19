@@ -61,12 +61,12 @@ ppForm (Or fs) indent = "\n" ++ indent ++ "(or" ++ (concatMap (\f -> "\n\t" ++ i
 ppForm (Imply f1 f2) indent = "(imply " ++ (ppForm f1 $ indent ++ "\t") ++ (ppForm f2 $ indent ++ "\t") ++ ")"
 ppForm (Knows ag f) indent = "(knows ?" ++ ag ++ " " ++ (ppForm f $ indent ++ "\t") ++ ")"
 ppForm (Forall vt f) indent = 
-  "(forall " ++ (ppVars vt) ++ 
-  "\n" ++ indent ++ "\t" ++ (ppForm f $ indent ++ "\t") ++ 
+  "(forall (" ++ (ppVars vt) ++ 
+  ")\n" ++ indent ++ "\t" ++ (ppForm f $ indent ++ "\t") ++ 
   "\n" ++ indent ++ ")"
 ppForm (ForallWhen vt fw ft) indent = 
-  "(forall " ++ (ppVars vt) ++ 
-  "\n" ++ indent ++ "\twhen " ++ (ppForm fw $ indent ++ "\t") ++ 
+  "(forall (" ++ (ppVars vt) ++ 
+  ")\n" ++ indent ++ "\twhen " ++ (ppForm fw $ indent ++ "\t") ++ 
   "\n" ++ indent ++ "\t\t" ++ (ppForm ft $ indent ++ "\t\t") ++ 
   "\n" ++ indent ++ ")"
 ppForm (Exists vt f) indent = 

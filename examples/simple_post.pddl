@@ -34,7 +34,7 @@
 					(destined ?l ?a))
 			:effect (received ?l)
 		)
-		(:event-nondesignated check-unsucc
+		(:event-designated check-unsucc
 			:precondition 
 				(and
 					(at ?l ?a)
@@ -76,12 +76,10 @@
 		)
 	)
 
-	(:observability none
-	 :observability full ?A1)
+	(:observability none)
 	(:goal
-		(forall ?l - letter
-			(received ?l - letter)
+		(forall (?l - letter)
+			(received ?l)
 		)
 	)
 )
-
