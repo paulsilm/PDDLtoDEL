@@ -10,6 +10,7 @@ validInput (CheckPDDL
             (Domain name reqs types preds actions)
             (Problem _ domName objects initPreds worlds obss goal)) =
               let
+                allPreds = concatMap (predToProps objects) preds
                 tests =
                   [(and [objType `elem` types | (TO _ objType) <- objects], "Object type is not declared in :types"),
                     (all (predTypesExist types) preds, "Predicate type is missing"),
@@ -17,18 +18,26 @@ validInput (CheckPDDL
                     (name == domName, "Problem's domain-name does not match domain's name"),
                     (allDifferent [name | (World _ name _) <- worlds], "Multiple worlds have the same name"),
                     (allDifferent [name | (Action name _ _ _ _) <- actions], "Multiple actions have the same name"),
-                    (formInCorrectFormat goal, "Goal format is incorrect"),
-                    (all (\p -> p `elem` concatMap (predToProps objects) preds) (concat [preds | (World _ _ preds) <- worlds]),
-                      "Some world has undefined/incorrect predicates"),
-                    (all (\p -> p `elem` concatMap (predToProps objects) preds) initPreds,
-                      "Init has undefined/incorrect predicates"),
-                    ([des | (World des _ _) <- worlds, des] == [True], "Either too many or too few designated worlds")
+                    (formInCorrectFormat goal, "Goal format is incorrect")] ++
+                    [ (convertPred pred `elem` allPreds
+                      , "World " ++ name ++ " has invalid predicate: " ++ show pred)
+                      | (World _ name worldPreds) <- worlds, pred <- worldPreds] ++
+                    [ (convertPred pred `elem` allPreds
+                      , "Init has invalid predicate: " ++ show pred)
+                      | pred <- initPreds] ++
+                    [([des | (World des _ _) <- worlds, des] == [True], "Either too many or too few designated worlds")
                   ] ++ map (checkAction types) actions
                 in
                   case [ error | (False,error) <- tests ] of
                     [] -> Nothing
                     errors -> Just $ unlines errors
 
+--
+convertPred :: Predicate -> Predicate 
+convertPred (PredAtom name) = PredSpec name [] False
+convertPred (PredDef name vars) = error $ "Error in checking semantics, predicate " ++ name ++ " is defined in problem." ++
+  " Maybe you need to remove the types?"
+convertPred pred = pred
 
 checkAction :: [String] -> Action -> (Bool,String) --TODO Check observability legitness
 checkAction typeList (Action name params actor events obss) =

@@ -1,54 +1,80 @@
 (define (domain doormat)
-  (:agents (anne)
-           (bob))
-  (:predicates (key-under-mat)
-               (has-key ?x - agent))
-  
-  (:action put-key
-           :observability full anne
-           :observability none bob
-           (:event-nondesignated trivial 
-                :precondition (and)
-                :effect (and))
-           (:event-designated actual
-                :precondition (has-key anne)
-                :effect (and (key-under-mat)
-                        (not (has-key anne))))
-  )
+	(:requirements :strips)
+	(:types agent)
+	(:predicates
+		(key-under-mat)
+		(useless)
+		(has-key ?a - agent)
+	)
 
-  (:action announce
-           :observability full anne
-           :observability full bob
-           (:event-designated actual
-                :precondition (has-key anne)
-                :effect (and (key-under-mat)
-                        (not (has-key anne)))))
+	(:action put-key
+		:parameters (?a - agent)
+		:byagent ?a
+		(:event-nondesignated trivial
+			:precondition 
+				(and)
+			:effect 
+				(and)
+		)
+		(:event-designated actual
+			:precondition (has-key ?a)
+			:effect 
+				(and
+					(key-under-mat)
+					(not (has-key ?a)))
+		)
+		:observability full ?a
+		:observability none
+	)
 
-  (:action try-take
-          :observability none anne
-          :observability full bob
-          (:event-designated e1
-	       :precondition (not (key-under-mat))
-              :effect T)
-          (:event-designated e2
-	       :precondition (key-under-mat)
-              :effect and (not (key-under-mat)) (has-key bob)))
+	(:action announce
+		:parameters (?a - agent)
+		:byagent ?a
+		:precondition (key-under-mat)
+		:effect 
+			(and)
+	)
 
-## Problem
+	(:action try-take
+		:parameters (?a - agent)
+		:byagent ?a
+		(:event-designated e1
+			:precondition (not (key-under-mat))
+			:effect 
+				(and)
+		)
+		(:event-designated e2
+			:precondition (key-under-mat)
+			:effect 
+				(and
+					(not (key-under-mat))
+					(has-key ?a))
+		)
+		:observability none
+		:observability full ?a
+	)
+)
 
 (define (problem doormat-1)
-   (:domain doormat)
-   (:objects anne bob - agent) 
-   (:init )
-    (:worlds
-     (:world-designated w1 
-          (not (key-under-mat))
-          (has-key anne)
-          (not (has-key bob)))
-     (:world-nondesignated w2 
-          (key-under-mat)
-          (not (has-key anne))
-          (not (has-key bob))))
-          (:observability full anne
-     :observability none bob)
-   (:goal (has-key bob))
+	(:domain doormat)
+	(:objects
+		 anne bob - agent)
+	(:init
+		(useless))
+	(:worlds
+		(:world-designated w1
+			(has-key anne)
+		)
+		(:world-nondesignated w2
+			(key-under-mat)
+		)
+	)
+
+	(:observability full ?anne
+	 :observability none ?bob)
+	(:goal
+		
+		(and
+			(has-key bob))
+	)
+)

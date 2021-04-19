@@ -174,8 +174,11 @@ FormList : Form { [$1] }
 
 String : STR { $1 }
 VarName : VAR { tail $1 }
-
+--TODO make requirements optional
+--TODO same with init predicates
+--TODO try and fix the observability requiring ?var instead of OBJ as parameter (or call it a feature)
 {
+     
 type ParseResult a = Either (Int,Int) a
 
 parseError :: [Token AlexPosn] -> ParseResult a

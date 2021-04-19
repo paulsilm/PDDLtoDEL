@@ -155,7 +155,7 @@ typify (VTL objs objType) = zip objs $ replicate (length objs) objType
 --  mapping between variable names and the specific object it refers to in the DEL action instance
 --  objects in the problem file, used for forall and exists statements
 pddlFormToDelForm :: PDDL.Form -> [(Predicate, Prp)] -> [(String, String)] -> [TypedObjs] -> SMCDEL.Language.Form 
-pddlFormToDelForm (Atom (PredSpec name vars True)) atomMap objectMap _ = 
+pddlFormToDelForm (Atom (PredSpec name vars _)) atomMap objectMap _ = 
   PrpF $ atomMap ! PredSpec name (map (objectMap !) vars) False
 pddlFormToDelForm (Atom (PredAtom name)) atomMap _ _ = 
   PrpF $ atomMap ! PredSpec name [] False
