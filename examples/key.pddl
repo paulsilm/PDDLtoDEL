@@ -69,12 +69,9 @@
 			(key-under-mat)
 		)
 	)
-
 	(:observability full ?anne
 	 :observability none ?bob)
 	(:goal
-		
-		(and
-			(has-key bob))
+		(has-key bob)
 	)
 )

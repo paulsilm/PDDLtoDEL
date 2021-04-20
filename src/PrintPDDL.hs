@@ -81,7 +81,7 @@ ppProblem (Problem problemName domainName objects init worlds obss goal) =
   ++ "(:domain " ++ domainName ++ ")\n\t"
   ++ "(:objects" ++ (concatMap (\o -> "\n\t\t" ++ ppObj o) objects) ++ ")\n\t"
   ++ "(:init" ++ (concatMap (\p -> "\n\t\t" ++ ppPred p) init) ++ ")\n\t"
-  ++ "(:worlds\n" ++ (concatMap ppWorld worlds) ++ "\t)\n\n\t"
+  ++ "(:worlds\n" ++ (concatMap ppWorld worlds) ++ "\t)\n\t"
   ++ "(:observability" ++ ppObs (head obss) ++ (concatMap (\o -> "\n\t :observability" ++ ppObs o) $ tail obss) ++ ")\n\t"
   ++ "(:goal\n\t\t" ++ (ppForm goal "\t\t") ++ "\n\t)\n)\n"
 

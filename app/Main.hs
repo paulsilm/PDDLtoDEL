@@ -22,7 +22,7 @@ main = do
             putStrLn "Succesful parsing"
             --putStrLn $ show $ pddlToDEL pddl
             writeFile fileName $ ppInput pddl
-            putStrLn $ concatMap unlines $ map (map ppICPlan) $ map (\i -> findSequentialIcPlan i $ pddlToDEL pddl) [5]
+            putStrLn $ concatMap unlines $ map (map ppICPlan) $ map (\i -> findSequentialIcPlan i $ pddlToDEL pddl) [3]
           Just str -> putStrLn $ str ++ show pddl
 
         --let (actionModelMap,problem) = pddlToDEL pddl
