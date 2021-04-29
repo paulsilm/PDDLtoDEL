@@ -5,14 +5,17 @@ import Lex
 import PrintPDDL
 import Translate
 import PDDL
+import System.Exit (exitFailure)
 import SemanticChecker
 import SMCDEL.Internal.TexDisplay
 import SMCDEL.Other.Planning
+import System.Environment (getArgs,getProgName)
+import System.IO (hPutStrLn, stderr)
 
 
 main :: IO ()
 main = do
-  let fileName = "examples/simple_post.pddl"
+  (fileName,_) <- getFilenameAndSettings
   input <- readFile fileName
   case parse $ alexScanTokens input of
       Left (lin,col) -> error ("Parse error in line " ++ show lin ++ ", column " ++ show col)
@@ -33,18 +36,26 @@ main = do
         --putStrLn $ (map snd) actionModelMap
         --print domain
         --print problem
-        {-
-        let mykns = KnS (map P vocabInts) (boolBddOf lawform) (map (second (map P)) obs)
-        when texMode $
-          hPutStrLn outHandle $ unlines
-            [ "\\section{Given Knowledge Structure}", "\\[ (\\mathcal{F},s) = (" ++ tex ((mykns,[])::KnowScene) ++ ") \\]", "\n\n\\section{Results}" ]
-        mapM_ (doJob outHandle texMode mykns) jobs
-        when texMode $ hPutStrLn outHandle texEnd
-        when showMode $ do
-          hClose outHandle
-          let command = "cd /tmp && pdflatex -interaction=nonstopmode " ++ takeBaseName texFilePath ++ ".tex > " ++ takeBaseName texFilePath ++ ".pdflatex.log && xdg-open "++ takeBaseName texFilePath ++ ".pdf"
-          putStrLn $ "Now running: " ++ command
-          _ <- system command
-          return ()
-        putStrLn "\nDoei!"
-        -}
+
+getFilenameAndSettings :: IO (String,[String])
+getFilenameAndSettings = do
+  args <- getArgs
+  case args of
+    ("-":options) -> do
+      let filename = "examples/key.pddl"
+      return (filename,options)
+    (filename:options) -> do
+      return (filename,options)
+    _ -> do
+      name <- getProgName
+      mapM_ (hPutStrLn stderr)
+        [ infoline
+        , "usage: " ++ name ++ " <filename> {options}"
+        , "       (use filename - for STDIN)\n"
+        --, "  -tex   generate LaTeX code\n"
+        --, "  -show  write to /tmp, generate PDF and show it (implies -tex)\n" 
+        ]
+      exitFailure
+
+infoline :: String
+infoline = "PDDLtoDEL " ++ "1.0.0" ++ " -- https://github.com/paulsilm/PDDLtoDEL\n"
