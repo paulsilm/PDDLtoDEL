@@ -20,8 +20,6 @@ pddlToDEL (CheckPDDL (Domain _ _ _ preds actions) (Problem _ _ objects initPreds
   in
     CoopTask kripkeModel actionModelMap (pddlFormToDelForm goal atomMap [(o,o) | (TO os _) <- objects, o <- os] objects)
 
---TODO use definitions of Owned and Labelled
-
 --Problem: Observabilities are yet to be translated.
 --Translates the PDDL actions to a list of actionModels
 translateActions :: [(Predicate, Prp)] -> [TypedObjs] -> [PDDL.Action] -> [Owned MultipointedActionModelS5]
@@ -40,15 +38,11 @@ actionToActionModel atomMap objs (Action _ _ actor events obss) varMap =
     convertedEvents = [(b,n,pddlFormToDelForm pre atomMap varMap objs,
                             formToMap (pddlFormToDelForm eff atomMap varMap objs)) 
                       | (Event b n pre eff) <- events]
-    --furtherConvertedEvents = [ (b,n,pre,map ((!) atomMap) preds) | (b,n,pre,(And preds)) <- convertedEvents]
     convertedObss = map (translateObs varMap) obss 
     eventMap = zip convertedEvents [0..]
-    allAgents = getObjNames "agent" objs
     translateEvent s = head [ i | ((_,name,_,_), i) <- eventMap, name == s ] -- takes name s of event and returns its index (unsafe)
-    agentRels = 
-      map (\ag -> (ag, map (map translateEvent) $ -- take the agent's partition with eventnames and map names to ints
-            eventPart (getObs convertedObss ag) convertedEvents)) -- get agent's partition of events and convert to names
-          allAgents
+    agentRels = [ (ag, map (map translateEvent) $ eventPart (getObs convertedObss ag) convertedEvents) -- translate partition (String->Int)
+                | ag <- getObjNames "agent" objs]
     actualEvents = [i | ((des,_,_,_), i) <- eventMap, des]
     actress = varMap ! actor
   in
@@ -74,18 +68,15 @@ problemToKripkeModel atomMap (Problem _ _ objects initialPreds parsedWorlds obss
                 | (statement, P k) <- atomMap ])
           | (World _ _ trueHere, i)  <- worldMap ]
     worlds = map snd worldMap
-    allAgents = getObjNames "agent" objects
     --get all agents alongside their worldpartition, mapped onto worlds::[Int]
     translateWorld s = head [ i | (World _ name _, i) <- worldMap, name == s ] -- takes name s of world and returns its index (unsafe)
-    agentRels = 
-      map (\ag -> (ag, map (map translateWorld) $ -- take the agent's partition with worldnames and map names to ints
-            worldPart (getObs obss ag) parsedWorlds)) -- get agent's partition of worlds and convert to names
-          allAgents
+    agentRels = [ (ag, map (map translateWorld) $ worldPart (getObs obss ag) parsedWorlds) -- translate partition (String->Int)
+                | ag <- getObjNames "agent" objects]
     actualWorlds = [i | (World des _ _, i) <- worldMap, des]
   in
     (KrMS5 worlds agentRels val, actualWorlds)
 
---Takes observartions and returns partition
+--Takes observations and returns partition
 getObs :: [Obs] -> String -> ObsType
 getObs [] _ = Full -- The default case
 getObs (ObsDef ot:obss) ag 
