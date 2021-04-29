@@ -6,9 +6,9 @@ data Form = Atom Predicate
           | Or [Form]
           | Not Form 
           | Imply Form Form
-          | Forall VarType Form
-          | ForallWhen VarType Form Form
-          | Exists VarType Form 
+          | Forall [VarType] Form
+          | ForallWhen [VarType] Form Form
+          | Exists [VarType] Form 
           | Knows String Form
           deriving (Show, Eq)
 

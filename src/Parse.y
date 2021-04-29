@@ -164,9 +164,9 @@ Form : '(' Predicate ')' { Atom $2 }
      | '(' OR FormList ')' { Or $3 }
      | '(' '~' Form ')' { Not $3 }
      | '(' '->' Form Form ')' { Imply $3 $4 }
-     | '(' 'Forall' '(' VarType ')' Form ')' { Forall $4 $6 }
-     | '(' 'Forall' '(' VarType ')' WHEN Form Form ')' { ForallWhen $4 $7 $8 } 
-     | '(' 'Exists' '(' VarType ')' Form ')' { Exists $4 $6 }
+     | '(' 'Forall' '(' VarTypeList ')' Form ')' { Forall $4 $6 }
+     | '(' 'Forall' '(' VarTypeList ')' WHEN Form Form ')' { ForallWhen $4 $7 $8 } 
+     | '(' 'Exists' '(' VarTypeList ')' Form ')' { Exists $4 $6 }
      | '(' KNOWS VarName Form ')' { Knows $3 $4 }
 
 FormList : Form { [$1] } 

@@ -163,17 +163,27 @@ pddlFormToDelForm (Not f) pm om os = Neg $ pddlFormToDelForm f pm om os
 pddlFormToDelForm (And fs) pm om os = Conj $ map (\f -> pddlFormToDelForm f pm om os) fs
 pddlFormToDelForm (Or fs) pm om os = Disj $ map (\f -> pddlFormToDelForm f pm om os) fs
 pddlFormToDelForm (Imply f1 f2) pm om os = Impl (pddlFormToDelForm f1 pm om os) (pddlFormToDelForm f2 pm om os)
-pddlFormToDelForm (PDDL.Forall (VTL [var] objType) f) pmap oMap ojs = 
+--Singleton cases (Forall, ForallWhen, Exists) e.g. forall (?b - bricks) ...
+pddlFormToDelForm (PDDL.Forall [(VTL [var] objType)] f) pmap oMap ojs = 
   Conj $ map (\s -> pddlFormToDelForm f pmap ((var,s):oMap) ojs) $ getObjNames objType ojs
-pddlFormToDelForm (PDDL.Exists (VTL [var] objType) f) pmap oMap ojs = 
+pddlFormToDelForm (PDDL.Exists [(VTL [var] objType)] f) pmap oMap ojs = 
   Disj $ map (\s -> pddlFormToDelForm f pmap ((var,s):oMap) ojs) $ getObjNames objType ojs
-pddlFormToDelForm (ForallWhen (VTL [var] objType) f1 f2) pmap oMap ojs = 
+pddlFormToDelForm (ForallWhen [(VTL [var] objType)] f1 f2) pmap oMap ojs = 
   Conj $ map 
         (\s -> Impl 
                 (pddlFormToDelForm f1 pmap ((var,s):oMap) ojs) 
                 (pddlFormToDelForm f2 pmap ((var,s):oMap) ojs)
         ) $ getObjNames objType ojs
+--Permutation cases (Forall, ForallWhen, Exists) e.g. forall (?b - bricks ?a - agent) ...
+pddlFormToDelForm (PDDL.Forall ((VTL [var] objType):vts) f) pmap oMap ojs = 
+  Conj $ map (\s -> pddlFormToDelForm (PDDL.Forall vts f) pmap ((var,s):oMap) ojs) $ getObjNames objType ojs
+pddlFormToDelForm (PDDL.Exists ((VTL [var] objType):vts) f) pmap oMap ojs = 
+  Disj $ map (\s -> pddlFormToDelForm (PDDL.Exists vts f) pmap ((var,s):oMap) ojs) $ getObjNames objType ojs
+pddlFormToDelForm (ForallWhen ((VTL [var] objType):vts) f1 f2) pmap oMap ojs = 
+  Conj $ map (\s -> pddlFormToDelForm (ForallWhen vts f1 f2) pmap ((var,s):oMap) ojs) $ getObjNames objType ojs
+--Agent knows about something
 pddlFormToDelForm (Knows ag f) pmap oMap ojs = K (oMap ! ag) $ pddlFormToDelForm f pmap oMap ojs
+
 
 -- Takes the list of all variables, and returns the permutation (list of lists) 
 -- of mappings from variable to object names

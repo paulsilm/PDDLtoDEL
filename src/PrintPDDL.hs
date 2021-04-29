@@ -60,17 +60,17 @@ ppForm (And fs) indent = "\n" ++ indent ++ "(and" ++ (concatMap (\f -> "\n\t" ++
 ppForm (Or fs) indent = "\n" ++ indent ++ "(or" ++ (concatMap (\f -> "\n\t" ++ indent ++ (ppForm f $ indent ++ "\t")) fs) ++ ")"
 ppForm (Imply f1 f2) indent = "(imply " ++ (ppForm f1 $ indent ++ "\t") ++ (ppForm f2 $ indent ++ "\t") ++ ")"
 ppForm (Knows ag f) indent = "(knows ?" ++ ag ++ " " ++ (ppForm f $ indent ++ "\t") ++ ")"
-ppForm (Forall vt f) indent = 
-  "(forall (" ++ (ppVars vt) ++ 
+ppForm (Forall vts f) indent = 
+  "(forall (" ++ ppVars (head vts) ++ (concatMap (\vt -> " " ++ ppVars vt) $ tail vts) ++ 
   ")\n" ++ indent ++ "\t" ++ (ppForm f $ indent ++ "\t") ++ 
   "\n" ++ indent ++ ")"
-ppForm (ForallWhen vt fw ft) indent = 
-  "(forall (" ++ (ppVars vt) ++ 
+ppForm (ForallWhen vts fw ft) indent = 
+  "(forall (" ++ ppVars (head vts) ++ (concatMap (\vt -> " " ++ ppVars vt) $ tail vts) ++ 
   ")\n" ++ indent ++ "\twhen " ++ (ppForm fw $ indent ++ "\t") ++ 
   "\n" ++ indent ++ "\t\t" ++ (ppForm ft $ indent ++ "\t\t") ++ 
   "\n" ++ indent ++ ")"
-ppForm (Exists vt f) indent = 
-  "(exists " ++ (ppVars vt) ++ 
+ppForm (Exists vts f) indent = 
+  "(exists " ++ ppVars (head vts) ++ (concatMap (\vt -> " " ++ ppVars vt) $ tail vts) ++ 
   "\n" ++ indent ++ "\t" ++ (ppForm f $ indent ++ "\t") ++ 
   "\n" ++ indent ++ ")"
 
