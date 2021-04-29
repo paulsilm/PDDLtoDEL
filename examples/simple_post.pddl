@@ -75,7 +75,6 @@
 			(not-destined L1 A2)
 		)
 	)
-
 	(:observability none)
 	(:goal
 		(forall (?l - letter)

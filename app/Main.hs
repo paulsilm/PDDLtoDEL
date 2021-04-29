@@ -12,7 +12,7 @@ import SMCDEL.Other.Planning
 
 main :: IO ()
 main = do
-  let fileName = "examples/key.pddl"
+  let fileName = "examples/simple_post.pddl"
   input <- readFile fileName
   case parse $ alexScanTokens input of
       Left (lin,col) -> error ("Parse error in line " ++ show lin ++ ", column " ++ show col)
@@ -22,7 +22,7 @@ main = do
             putStrLn "Succesful parsing"
             --putStrLn $ show $ pddlToDEL pddl
             writeFile fileName $ ppInput pddl
-            putStrLn $ concatMap unlines $ map (map ppICPlan) $ map (\i -> findSequentialIcPlan i $ pddlToDEL pddl) [3]
+            putStrLn $ concatMap unlines $ map (map ppICPlan) $ map (\i -> findSequentialIcPlan i $ pddlToDEL pddl) [30]
           Just str -> putStrLn $ str ++ show pddl
 
         --let (actionModelMap,problem) = pddlToDEL pddl

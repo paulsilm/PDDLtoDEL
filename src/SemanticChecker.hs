@@ -39,7 +39,7 @@ convertPred (PredDef name vars) = error $ "Error in checking semantics, predicat
   " Maybe you need to remove the types?"
 convertPred pred = pred
 
-checkAction :: [String] -> Action -> (Bool,String) --TODO Check observability legitness
+checkAction :: [String] -> Action -> (Bool,String) --TODO Check observability legitness, also that actor is a listed agent
 checkAction typeList (Action name params actor events obss) =
   let tuples =
             [ (and [formInCorrectFormat pre | (Event _ _ pre _) <- events], "Precondition is in an incorrect format"),
