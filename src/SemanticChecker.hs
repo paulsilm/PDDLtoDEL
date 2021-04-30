@@ -22,8 +22,8 @@ validInput (CheckPDDL
                     (all requirementSupported reqs, "requirements not supported"), --TODO which one
                     (name == domName, "Problem's domain-name does not match domain's name"),
                     (allDifferent [name | (World _ name _) <- worlds], "Multiple worlds have the same name"),
-                    (allDifferent [name | (Action name _ _ _ _) <- actions], "Multiple actions have the same name"),
-                    (formInCorrectFormat goal, "Goal format is incorrect")] ++
+                    (allDifferent [name | (Action name _ _ _ _) <- actions], "Multiple actions have the same name")
+                    ] ++ --(formInCorrectFormat goal, "Goal format is incorrect")] ++
                     [ (convertPred pred `elem` allPreds
                       , "World " ++ name ++ " has invalid predicate: " ++ show pred)
                       | (World _ name worldPreds) <- worlds, pred <- worldPreds] ++
@@ -47,7 +47,7 @@ convertPred pred = pred
 checkAction :: [String] -> Action -> (Bool,String) --TODO Check observability legitness, also that actor is a listed agent
 checkAction typeList (Action name params actor events obss) =
   let tuples =
-            [ (and [formInCorrectFormat pre | (Event _ _ pre _) <- events], "Precondition is in an incorrect format"),
+            [ --(and [formInCorrectFormat pre | (Event _ _ pre _) <- events], "Precondition is in an incorrect format"),
               (and [effInCorrectFormat eff | (Event _ _ _ eff) <- events], "Effect is in incorrect format"),
               (allDifferent [name | (Event _ name _ _) <- events], "Multiple events have the same name"),
               (or [des | (Event des _ _ _) <- events, des], "There needs to be at least one designated event"),

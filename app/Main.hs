@@ -15,8 +15,8 @@ import System.IO (hPutStrLn, stderr)
 
 main :: IO ()
 main = do
-  (fileName,_) <- getFilenameAndSettings
-  input <- readFile fileName
+  input <- getInput
+  --input <- readFile fileName
   case parse $ alexScanTokens input of
       Left (lin,col) -> error ("Parse error in line " ++ show lin ++ ", column " ++ show col)
       Right pddl -> do
@@ -44,23 +44,26 @@ findShortestICPlan pddl =
         , plan /= []] -- :: [[String]]
     
 
-getFilenameAndSettings :: IO (String,[String])
-getFilenameAndSettings = do
+getInput :: IO String
+getInput = do
   args <- getArgs
   case args of
-    ("-":options) -> do
-      let filename = "examples/key.pddl"
-      return (filename,options)
-    (filename:options) -> do
-      return (filename,options)
+    ("-dom":domfile:"-prb":problemfile:[]) -> do
+      dom <- readFile domfile
+      problem <- readFile problemfile
+      let input = dom ++ problem
+      return input
+    ([filename]) -> do
+      input <- readFile filename
+      return input
     _ -> do
       name <- getProgName
       mapM_ (hPutStrLn stderr)
         [ infoline
         , "usage: " ++ name ++ " <filename> {options}"
         , "       (use filename - for STDIN)\n"
-        --, "  -tex   generate LaTeX code\n"
-        --, "  -show  write to /tmp, generate PDF and show it (implies -tex)\n" 
+        , "  -dom <filename>   parse the domain file\n"
+        , "  -pr  <filename>   parse the problem file\n" 
         ]
       exitFailure
 
