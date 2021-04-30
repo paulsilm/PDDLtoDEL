@@ -88,7 +88,8 @@ Requirement : STRIPS { Strips }
 TypeList : String { [$1] }
          | String StringList { $1:$2 }
 
-PredicateList : '(' Predicate ')' { [$2] }
+PredicateList : { [] }
+              | '(' Predicate ')' { [$2] }
               | '(' Predicate ')' PredicateList { $2:$4 }
 
 Predicate : String { PredAtom $1 }
@@ -128,15 +129,17 @@ Effect : EFF Form { $2 }
 
 DomainName : DOMNAME String { $2 }
 
+getInit : INIT PredicateList ')' '(' { $2 }
+
 Problem : '(' DEF
                    '(' PROBLEMNAME String ')'
                    '(' DOM String ')'
                    '(' OBJ TypedObjsList ')'
-                   '(' INIT PredicateList ')'
-                   '(' WORLDS WorldList ')'
+                   '(' opt(getInit)
+                    WORLDS WorldList ')'
                    '(' ObsList ')' 
                    '(' GOAL Form ')'
-                ')' { Problem $5 $9 $13 $17 $21 $24 $28 }
+                ')' { Problem $5 $9 $13 $16 $18 $21 $25 }
 
 TypedObjsList : TypedObjs { [$1] }
             | TypedObjs TypedObjsList { $1:$2 }

@@ -60,8 +60,7 @@
 	(:domain doormat)
 	(:objects
 		 anne bob - agent)
-	(:init
-		(useless))
+	(:init )
 	(:worlds
 		(:world-designated w1
 			(has-key anne)
