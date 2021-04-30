@@ -1,10 +1,7 @@
 (define (domain doormat)
-	; (:requirements :strips :typing)
-	(:types agent useless)
-	; (:constants I - useless)
+	(:types agent)
 	(:predicates
 		(key-under-mat)
-		(useless)
 		(has-key ?a - agent)
 	)
 
@@ -60,17 +57,14 @@
 	(:domain doormat)
 	(:objects
 		 anne bob - agent)
-	(:init )
-	(:worlds
-		(:world-designated w1
-			(has-key anne)
-		)
-		(:world-nondesignated w2
-			(key-under-mat)
-		)
+	(:world-designated w1
+		(has-key anne)
 	)
-	(:observability full ?anne
-	 :observability none ?bob)
+	(:world-nondesignated w2
+		(key-under-mat)
+	)
+	(:observability full anne
+	 :observability none bob)
 	(:goal
 		(has-key bob)
 	)

@@ -41,7 +41,7 @@ data Event = Event Bool String Form Form
 
 -- Action or world observabilities: (Default|Specific_per_agent) (full|none|partitioned) [agents]
 data Obs = ObsDef ObsType 
-         | ObsSpec ObsType [String]
+         | ObsSpec ObsType [String] Bool
          deriving (Show, Eq)
 
 --Observability type: (Full|None|Partitioned partition)

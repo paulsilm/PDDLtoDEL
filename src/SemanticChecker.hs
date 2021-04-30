@@ -71,13 +71,13 @@ checkAction typeList (Action name params actor events obss) =
 observabilitiesOnlyForAgents :: [String] -> [Obs] -> Bool
 observabilitiesOnlyForAgents _ [] = True
 observabilitiesOnlyForAgents ags ((ObsDef _):obss) = observabilitiesOnlyForAgents ags obss
-observabilitiesOnlyForAgents ags ((ObsSpec _ ags2):obss) =
+observabilitiesOnlyForAgents ags ((ObsSpec _ ags2 _):obss) =
      all (`elem` ags) ags2
   && observabilitiesOnlyForAgents ags obss
 
 observabilityPartitionCorrect :: [String] -> Obs -> Bool
 observabilityPartitionCorrect legitNames (ObsDef (Partition part)) = and $ concatMap (map (`elem` legitNames)) part
-observabilityPartitionCorrect legitNames (ObsSpec (Partition part) _) = and $ concatMap (map (`elem` legitNames)) part
+observabilityPartitionCorrect legitNames (ObsSpec (Partition part) _ _) = and $ concatMap (map (`elem` legitNames)) part
 observabilityPartitionCorrect _ _ = True
 
 predTypesExist :: [String] -> Predicate -> Bool

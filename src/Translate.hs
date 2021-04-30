@@ -63,7 +63,7 @@ addConstantsToObjs ((TO cNames cType):cs) objs =
 
 --Translates the observabilities to specific agents
 translateObs :: [(String,String)] -> Obs -> Obs
-translateObs varMap (ObsSpec ot ags) = ObsSpec ot $ map (varMap !) ags
+translateObs varMap (ObsSpec ot ags b) = ObsSpec ot (map (varMap !) ags) b
 translateObs _ obs = obs
 
 --translates the PDDL problem to a Kripke model
@@ -89,14 +89,14 @@ getObs [] _ = Full -- The default case
 getObs (ObsDef ot:obss) ag 
   | any (isInObs ag) obss = getObs obss ag
   | otherwise = ot
-getObs ((ObsSpec ot ags):obss) ag 
+getObs ((ObsSpec ot ags _):obss) ag 
   | ag `elem` ags = ot
   | otherwise = getObs obss ag
 
 --Checks if the observability is defined for the agent
 isInObs :: String -> Obs -> Bool
 isInObs _ (ObsDef _) = False
-isInObs ag (ObsSpec _ ags) = ag `elem` ags
+isInObs ag (ObsSpec _ ags _) = ag `elem` ags
 
 --Takes in list of all worlds and the obstype of the agent, returns the partition in strings
 worldPart :: ObsType -> [PDDL.World] -> [[String]]

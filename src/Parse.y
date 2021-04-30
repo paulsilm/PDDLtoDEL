@@ -37,7 +37,6 @@ import PDDL
   ENON         { TokenEventNonDes      _ }
   WDES         { TokenWorldDes         _ }
   WNON         { TokenWorldNonDes      _ }
-  WORLDS       { TokenWorlds           _ }
   INIT         { TokenInit             _ }
   GOAL         { TokenGoal             _ }
   REQS         { TokenRequirements     _ }
@@ -131,23 +130,25 @@ DomainName : DOMNAME String { $2 }
 
 getInit : INIT PredicateList ')' '(' { $2 }
 
+getObsList : ObsList ')' '(' { $1 }
+
 Problem : '(' DEF
                    '(' PROBLEMNAME String ')'
                    '(' DOM String ')'
                    '(' OBJ TypedObjsList ')'
                    '(' opt(getInit)
-                    WORLDS WorldList ')'
-                   '(' ObsList ')' 
-                   '(' GOAL Form ')'
-                ')' { Problem $5 $9 $13 $16 $18 $21 $25 }
+                    WorldList 
+                    opt(getObsList) 
+                    GOAL Form ')'
+                ')' { Problem $5 $9 $13 $16 $17 $18 $20 }
 
 TypedObjsList : TypedObjs { [$1] }
             | TypedObjs TypedObjsList { $1:$2 }
 
 TypedObjs : StringList '-' String { TO $1 $3 }
 
-WorldList : '(' IsWorldDesignated String PredicateList ')' { [World $2 $3 $4] }
-          | '(' IsWorldDesignated String PredicateList ')' WorldList { (World $2 $3 $4):$6 }
+WorldList : IsWorldDesignated String PredicateList ')' '(' { [World $1 $2 $3] }
+          | IsWorldDesignated String PredicateList ')' '(' WorldList { (World $1 $2 $3):$6 }
 
 IsWorldDesignated : WDES { True }
                   | WNON { False }
@@ -155,7 +156,8 @@ IsWorldDesignated : WDES { True }
 ObsList : ObsType { [$1] }
         | ObsType ObsList { $1:$2 }
 
-ObsType : Obs VarList { ObsSpec $1 $2 }
+ObsType : Obs VarList { ObsSpec $1 $2 True }
+        | Obs StringList { ObsSpec $1 $2 False }
         | Obs { ObsDef $1 }
 
 Obs : OBS 'full' { Full }

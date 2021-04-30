@@ -57,7 +57,8 @@ ppEvent (Event des name pres effect) =
 
 ppObs :: Obs -> String
 ppObs (ObsDef obsType) = ppObsType obsType
-ppObs (ObsSpec obsType ags) = ppObsType obsType ++ (concatMap (" ?" ++) ags)
+ppObs (ObsSpec obsType ags True) = ppObsType obsType ++ (concatMap (" ?" ++) ags)
+ppObs (ObsSpec obsType ags False) = ppObsType obsType ++ (concatMap (" " ++) ags)
 
 ppObsType :: ObsType -> String
 ppObsType Full = " full"
@@ -90,18 +91,22 @@ ppProblem :: Problem -> String
 ppProblem (Problem problemName domainName objects init worlds obss goal) =
      "(define (problem " ++ problemName ++ ")\n\t"
   ++ "(:domain " ++ domainName ++ ")\n\t"
-  ++ "(:objects" ++ (concatMap (\o -> "\n\t\t" ++ ppObj o) objects) ++ ")\n\t"
-  ++ "(:init" ++ (concatMap (\p -> "\n\t\t" ++ ppPred p) init) ++ ")\n\t"
-  ++ "(:worlds\n" ++ (concatMap ppWorld worlds) ++ "\t)\n\t"
+  ++ "(:objects" ++ (concatMap (\o -> "\n\t\t" ++ ppObj o) objects) ++ ")"
+  ++ ppInit init
+  ++ (concatMap ppWorld worlds) ++ "\n\t"
   ++ "(:observability" ++ ppObs (head obss) ++ (concatMap (\o -> "\n\t :observability" ++ ppObs o) $ tail obss) ++ ")\n\t"
   ++ "(:goal\n\t\t" ++ (ppForm goal "\t\t") ++ "\n\t)\n)\n"
+
+ppInit :: [Predicate] -> String
+ppInit [] = ""
+ppInit init = "\n\t(:init" ++ (concatMap (\p -> "\n\t\t" ++ ppPred p) init) ++ ")\n"
 
 ppObj :: TypedObjs -> String 
 ppObj (TO objs typedObjs) = (concatMap (" " ++) objs) ++ " - " ++ typedObjs
 
 ppWorld :: World -> String
 ppWorld (World des name truePreds) = 
-  "\t\t(:world-" ++ dess ++ "designated " ++ name ++ (concatMap (\p -> "\n\t\t\t" ++ ppPred p) truePreds) ++ "\n\t\t)\n"
+  "\n\t(:world-" ++ dess ++ "designated " ++ name ++ (concatMap (\p -> "\n\t\t" ++ ppPred p) truePreds) ++ "\n\t)"
     where dess = if des then "" else "non"
 
 ppStringListList :: [[String]] -> String
