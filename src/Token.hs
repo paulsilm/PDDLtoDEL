@@ -10,6 +10,7 @@ data Token a -- == AlexPn
   | TokenInit              {apn :: a}
   | TokenGoal              {apn :: a}
   | TokenRequirements      {apn :: a}
+  | TokenConss             {apn :: a}
   | TokenDomain            {apn :: a}
   | TokenAction            {apn :: a}
   | TokenObservability     {apn :: a}

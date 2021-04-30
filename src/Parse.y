@@ -41,6 +41,7 @@ import PDDL
   INIT         { TokenInit             _ }
   GOAL         { TokenGoal             _ }
   REQS         { TokenRequirements     _ }
+  CONSS        { TokenConss            _ }
   DOM          { TokenDomain           _ }
   ACT          { TokenAction           _ }
   OBS          { TokenObservability    _ }
@@ -62,13 +63,21 @@ import PDDL
 %%
 PDDL : Domain Problem { CheckPDDL $1 $2 }
 
+opt(p) : p  { $1 }
+       |    { [] }
+
+getReqs : REQS RequirementList ')' '(' { $2 }
+
+getConstants : CONSS TypedObjsList ')' '(' { $2 }
+
 Domain : '(' DEF 
                  '(' DomainName ')' 
-                 '(' REQS RequirementList ')'    
-                 '(' TYPES TypeList ')'    
-                 '(' PREDS PredicateList ')' 
+                 '(' opt(getReqs)
+                 TYPES TypeList ')'    
+                 '(' opt(getConstants)
+                 PREDS PredicateList ')' 
                  ActionList         
-             ')'  { Domain $4 $8 $12 $16 $18 }
+             ')'  { Domain $4 $7 $9 $12 $14 $16 }
 
 RequirementList : Requirement { [$1] }
                 | Requirement RequirementList { $1:$2 }
@@ -174,7 +183,6 @@ FormList : Form { [$1] }
 
 String : STR { $1 }
 VarName : VAR { tail $1 }
---TODO make requirements optional
 --TODO same with init predicates
 --TODO try and fix the observability requiring ?var instead of OBJ as parameter (or call it a feature)
 {

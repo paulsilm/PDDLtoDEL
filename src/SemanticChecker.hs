@@ -2,17 +2,22 @@ module SemanticChecker where
 
 import PDDL
 import Translate
+import Lib
 
 --Checks whether the input is semantically consistent, if not returns a Just String with
 --an error message
 validInput :: PDDL -> Maybe String
 validInput (CheckPDDL
-            (Domain name reqs types preds actions)
+            (Domain name reqs types conss preds actions)
             (Problem _ domName objects initPreds worlds obss goal)) =
               let
-                allPreds = concatMap (predToProps objects) preds
+                allObjects = addConstantsToObjs conss objects
+                allPreds = concatMap (predToProps allObjects) preds
                 tests =
-                  [(and [objType `elem` types | (TO _ objType) <- objects], "Object type is not declared in :types"),
+                  [ (and [objType `elem` types | (TO _ objType) <- allObjects], "Object type is not declared in :types"),
+                    (and [count objType [objType | (TO _ objType) <- allObjects] == 1 | (TO _ objType) <- allObjects],
+                      "Multiple definitions of same object type, sorry for limited translation"),
+                    --(and [consType `elem` types | (VTL _ consType) <- conss], "Constant type is not declared in :types"),
                     (all (predTypesExist types) preds, "Predicate type is missing"),
                     (all requirementSupported reqs, "requirements not supported"), --TODO which one
                     (name == domName, "Problem's domain-name does not match domain's name"),

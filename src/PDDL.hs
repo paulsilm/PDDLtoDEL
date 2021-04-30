@@ -12,8 +12,8 @@ data Form = Atom Predicate
           | Knows String Form
           deriving (Show, Eq)
 
--- PDDL Domain: name requirements types all_predicates actions
-data Domain = Domain String [Req] [String] [Predicate] [Action]
+-- PDDL Domain: name requirements types constants all_predicates actions
+data Domain = Domain String [Req] [String] [TypedObjs] [Predicate] [Action]
           deriving (Show, Eq)
 
 -- Requirement for PDDL parser (:strips|:typing)

@@ -23,6 +23,7 @@ tokens :-
   ":init"                 { \ p _ -> TokenInit              p }
   ":goal"                 { \ p _ -> TokenGoal              p }
   ":requirements"         { \ p _ -> TokenRequirements      p }
+  ":constants"            { \ p _ -> TokenConss             p }
   ":domain"               { \ p _ -> TokenDomain            p }
   ":action"               { \ p _ -> TokenAction            p }
   ":observability"        { \ p _ -> TokenObservability     p }

@@ -1,6 +1,7 @@
 (define (domain doormat)
-	(:requirements :strips)
-	(:types agent)
+	; (:requirements :strips :typing)
+	(:types agent useless)
+	; (:constants I - useless)
 	(:predicates
 		(key-under-mat)
 		(useless)

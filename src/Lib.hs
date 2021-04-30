@@ -8,3 +8,6 @@ import Data.Tuple (swap)
 
 translationForPP :: [(Predicate, Prp)] -> (Prp -> String)
 translationForPP atomMap = \p -> ppPred $ map swap atomMap ! p
+
+count :: Eq a => a -> [a] -> Int
+count x = length . filter (==x)

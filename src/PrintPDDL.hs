@@ -6,13 +6,24 @@ ppInput :: PDDL -> String
 ppInput (CheckPDDL domain problem) = ppDomain domain ++ "\n\n" ++ ppProblem problem
 
 ppDomain :: Domain -> String
-ppDomain (Domain str reqs types preds actions) = 
+ppDomain (Domain str reqs types conss preds actions) = 
      "(define (domain " ++ str ++ ")\n" 
-  ++ "\t(:requirements" ++ (concatMap (\r -> " " ++ ppReq r) reqs) ++ ")\n"
+  ++ ppReqs reqs
   ++ "\t(:types" ++ (concatMap (" " ++) types) ++ ")\n"
+  ++ ppConss conss
   ++ "\t(:predicates" ++ (concatMap (\p -> "\n\t\t" ++ ppPred p) preds) ++ "\n\t)"
   ++ (concatMap (\a -> "\n\n\t" ++ ppAction a) actions) ++ "\n"
   ++ ")"
+
+ppReqs :: [Req] -> String
+ppReqs [] = ""
+ppReqs reqs = 
+  "\t(:requirements" ++ (concatMap (\r -> " " ++ ppReq r) reqs) ++ ")\n"
+
+ppConss :: [TypedObjs] -> String
+ppConss [] = ""
+ppConss conss = 
+  "\t(:constants" ++ (concatMap (\o -> "\n\t" ++ ppObj o) conss) ++ ")\n"
 
 ppReq :: Req -> String 
 ppReq Strips = ":strips"

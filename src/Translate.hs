@@ -12,13 +12,14 @@ type DelEvent = (Bool,String,SMCDEL.Language.Form,[(Prp,SMCDEL.Language.Form)])
 
 --Top level translation function, takes a valid PDDL problem and domain combo and returns 
 pddlToDEL :: PDDL -> CoopTask MultipointedModelS5 MultipointedActionModelS5
-pddlToDEL (CheckPDDL (Domain _ _ _ preds actions) (Problem _ _ objects initPreds parsedWorlds obss goal)) =
+pddlToDEL (CheckPDDL (Domain _ _ _ conss preds actions) (Problem _ _ objects initPreds parsedWorlds obss goal)) =
   let
-    atomMap = getAtomMap objects preds 
-    actionModelMap = translateActions atomMap objects actions
-    kripkeModel = problemToKripkeModel atomMap (Problem "" "" objects initPreds parsedWorlds obss goal)
+    allObjects = addConstantsToObjs conss objects
+    atomMap = getAtomMap allObjects preds 
+    actionModelMap = translateActions atomMap allObjects actions
+    kripkeModel = problemToKripkeModel atomMap (Problem "" "" allObjects initPreds parsedWorlds obss goal)
   in
-    CoopTask kripkeModel actionModelMap (pddlFormToDelForm goal atomMap [(o,o) | (TO os _) <- objects, o <- os] objects)
+    CoopTask kripkeModel actionModelMap (pddlFormToDelForm goal atomMap [(o,o) | (TO os _) <- allObjects, o <- os] allObjects)
 
 --Problem: Observabilities are yet to be translated.
 --Translates the PDDL actions to a list of actionModels
@@ -53,6 +54,12 @@ formToMap :: SMCDEL.Language.Form -> [(Prp,SMCDEL.Language.Form)]
 formToMap (Conj preds) = concatMap formToMap preds
 formToMap (Neg (PrpF p)) = [(p,Bot)]
 formToMap (PrpF p) = [(p,Top)]
+
+--Adds objects to their suiting types
+addConstantsToObjs :: [TypedObjs] -> [TypedObjs] -> [TypedObjs]
+addConstantsToObjs [] objs = objs
+addConstantsToObjs ((TO cNames cType):cs) objs =
+  addConstantsToObjs cs $ (TO ((getObjNames cType objs) ++ cNames) cType):objs
 
 --Translates the observabilities to specific agents
 translateObs :: [(String,String)] -> Obs -> Obs

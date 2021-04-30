@@ -24,18 +24,25 @@ main = do
           Nothing -> do
             putStrLn "Succesful parsing"
             --putStrLn $ show $ pddlToDEL pddl
-            writeFile fileName $ ppInput pddl
-            putStrLn $ concatMap unlines $ map (map ppICPlan) $ map (\i -> findSequentialIcPlan i $ pddlToDEL pddl) [30]
+            --writeFile fileName $ ppInput pddl --Useful for formatting the file, but loses comments
+            putStrLn $ findShortestICPlan $ pddl
           Just str -> putStrLn $ str ++ show pddl
 
-        --let (actionModelMap,problem) = pddlToDEL pddl
-        --disp $ (map snd) actionModelMap
-        --putStrLn $ tex problem
-        --pdfTo problem "problem.pdf"
-        --putStrLn $ problem
-        --putStrLn $ (map snd) actionModelMap
-        --print domain
-        --print problem
+        {- let (actionModelMap,problem) = pddlToDEL pddl
+        disp $ (map snd) actionModelMap
+        putStrLn $ tex problem
+        pdfTo problem "problem.pdf"
+        putStrLn $ problem
+        putStrLn $ (map snd) actionModelMap
+        print domain
+        print problem -}
+
+findShortestICPlan :: PDDL -> String
+findShortestICPlan pddl = 
+  head [concatMap ppICPlan plan 
+        | plan <- [findSequentialIcPlan i $ pddlToDEL pddl | i <- [1..]] -- plan :: [[ICPlan Action]]
+        , plan /= []] -- :: [[String]]
+    
 
 getFilenameAndSettings :: IO (String,[String])
 getFilenameAndSettings = do
