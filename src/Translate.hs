@@ -29,12 +29,12 @@ translateActions atomMap objs ((Action name params actor events obss):actions) =
   let 
     paramMaps = parameterMaps params objs
     actionModels = map (actionToActionModel atomMap objs (Action name params actor events obss)) paramMaps 
-    ownedModels = map (\(actress,model) -> (actress, (name,model))) actionModels
+    ownedModels = map (\((actress,model), paramNames) -> (actress, (actress ++ ": " ++ name ++ " " ++ show paramNames,model))) actionModels
   in
     ownedModels ++ (translateActions atomMap objs actions)
 
-actionToActionModel :: [(Predicate, Prp)] -> [TypedObjs] -> PDDL.Action -> [(String,String)] -> (String,MultipointedActionModelS5)
-actionToActionModel atomMap objs (Action _ _ actor events obss) varMap =
+actionToActionModel :: [(Predicate, Prp)] -> [TypedObjs] -> PDDL.Action -> [(String,String)] -> ((String,MultipointedActionModelS5), [String])
+actionToActionModel atomMap objs (Action name params actor events obss) varMap =
   let
     convertedEvents = [(b,n,pddlFormToDelForm pre atomMap varMap objs,
                             formToMap (pddlFormToDelForm eff atomMap varMap objs)) 
@@ -47,7 +47,7 @@ actionToActionModel atomMap objs (Action _ _ actor events obss) varMap =
     actualEvents = [i | ((des,_,_,_), i) <- eventMap, des]
     actress = varMap ! actor
   in
-    (actress, (ActMS5 [(i, (pre, eff)) | ((_,_,pre,eff), i) <- eventMap ] agentRels, actualEvents))
+    ((actress, (ActMS5 [(i, (pre, eff)) | ((_,_,pre,eff), i) <- eventMap ] agentRels, actualEvents)), [ varMap ! p | (VTL ps _) <- params, p <- ps])
 
 --translates the effect formula to a list of predicate tuples
 formToMap :: SMCDEL.Language.Form -> [(Prp,SMCDEL.Language.Form)]
