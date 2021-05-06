@@ -51,6 +51,7 @@ processPDDL pddl depth icSolves =
       putStrLn $ str ++ show pddl -- print error messages
     Nothing -> do
       putStrLn "Succesful parsing"
+      --putStrLn $ ppInput pddl
       --putStrLn $ show $ pddlToDEL pddl
       --writeFile fileName $ ppInput pddl --Useful for formatting the file, but loses comments
       putStrLn $ findShortestICPlan pddl icSolves depth
@@ -76,7 +77,8 @@ getInput = do
         ]
       exitFailure
 
---TODO? add - for stdin
+--TODO? add - for stdin 
+--TODO add -verbose option for more detailed error messages (for semantic checker, possibly also for parser)
 --Returns filenames and stuff
 inputFromArgs :: Either (String, Int, Bool) (String, String, Int, Bool) -> [String] -> Maybe (Either (String, Int, Bool) (String, String, Int, Bool))
 inputFromArgs (Left (fn, d, b)) [] 

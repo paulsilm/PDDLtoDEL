@@ -12,6 +12,7 @@ data Form = Atom Predicate
           | Knows String Form
           deriving (Show, Eq)
 
+-- TODO enable subtyping
 -- PDDL Domain: name requirements types constants all_predicates actions
 data Domain = Domain String [Req] [String] [TypedObjs] [Predicate] [Action]
           deriving (Show, Eq)
@@ -19,8 +20,11 @@ data Domain = Domain String [Req] [String] [TypedObjs] [Predicate] [Action]
 -- Requirement for PDDL parser (:strips|:typing)
 data Req = Strips
          | Typing
+         | Equality
+         | Adl
           deriving (Show, Eq)
 
+-- ? TODO maybe can remove the need for var? Also in Obs
 -- Predicate: Atomic name | Definition name typed_variables | Specific name object_names var?
 data Predicate = PredAtom String
                | PredDef String [VarType]

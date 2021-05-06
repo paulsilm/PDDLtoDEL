@@ -46,6 +46,8 @@ import PDDL
   OBS          { TokenObservability    _ }
   STRIPS       { TokenStrips           _ }
   TYPING       { TokenTyping           _ }
+  EQUALITY     { TokenEquality         _ }
+  ADL          { TokenADL              _ }
   PRECON       { TokenPrecondition     _ }
   EFF          { TokenEffect           _ }
   BYA          { TokenByagent          _ }
@@ -83,6 +85,8 @@ RequirementList : Requirement { [$1] }
 
 Requirement : STRIPS { Strips }
             | TYPING { Typing }
+            | ADL { Adl }
+            | EQUALITY { Equality }
 
 TypeList : String { [$1] }
          | String StringList { $1:$2 }

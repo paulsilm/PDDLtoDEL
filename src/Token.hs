@@ -22,6 +22,8 @@ data Token a -- == AlexPn
   | TokenKnows             {apn :: a}
   | TokenStrips            {apn :: a}
   | TokenTyping            {apn :: a}
+  | TokenEquality          {apn :: a}
+  | TokenADL               {apn :: a}
   | TokenPartition         {apn :: a}
   | TokenNone              {apn :: a}
   | TokenFull              {apn :: a}

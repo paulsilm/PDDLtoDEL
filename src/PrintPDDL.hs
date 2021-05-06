@@ -28,20 +28,22 @@ ppConss conss =
 ppReq :: Req -> String 
 ppReq Strips = ":strips"
 ppReq Typing = ":typing"
+ppReq Equality = ":equality"
+ppReq Adl = ":adl"
 
 ppPred :: Predicate -> String 
 ppPred (PredAtom a) = "(" ++ a ++ ")"
-ppPred (PredSpec p vars qm) = "(" ++  p ++ (concatMap ((if qm then " ?" else " ") ++) vars) ++ ")"
+ppPred (PredSpec p vars qm) = "(" ++  p ++ (concatMap (" " ++) vars) ++ ")"
 ppPred (PredDef p varTypes) = "(" ++  p ++ (concatMap (\v -> " " ++ ppVars v) varTypes) ++ ")"
 
 ppVars :: VarType -> String
-ppVars (VTL vars typedObjs) = "?" ++ head vars ++ (concatMap (" ?" ++) $ tail vars) ++ " - " ++ typedObjs
+ppVars (VTL vars typedObjs) = concatMapTail (" " ++) vars ++ " - " ++ typedObjs
 
 ppAction :: Action -> String
 ppAction (Action name params actor events obss) = 
      "(:action " ++ name ++ "\n\t\t"
-  ++ ":parameters (" ++ ppVars (head params) ++ (concatMap (\p -> " " ++ ppVars p) $ tail params) ++ ")\n\t\t"
-  ++ ":byagent ?" ++ actor
+  ++ ":parameters (" ++ concatMapTail (\p -> " " ++ ppVars p) params ++ ")\n\t\t"
+  ++ ":byagent " ++ actor
   ++ (concatMap (\e -> "\n\t\t" ++ ppEvent e) events) 
   ++ (concatMap (\o -> "\n\t\t:observability" ++ ppObs o) obss) ++ "\n\t)"
 
@@ -57,8 +59,7 @@ ppEvent (Event des name pres effect) =
 
 ppObs :: Obs -> String
 ppObs (ObsDef obsType) = ppObsType obsType
-ppObs (ObsSpec obsType ags True) = ppObsType obsType ++ (concatMap (" ?" ++) ags)
-ppObs (ObsSpec obsType ags False) = ppObsType obsType ++ (concatMap (" " ++) ags)
+ppObs (ObsSpec obsType ags _) = ppObsType obsType ++ (concatMap (" " ++) ags)
 
 ppObsType :: ObsType -> String
 ppObsType Full = " full"
@@ -71,18 +72,18 @@ ppForm (Not f) indent = "(not " ++ (ppForm f $ indent ++ "\t") ++ ")"
 ppForm (And fs) indent = "\n" ++ indent ++ "(and" ++ (concatMap (\f -> "\n\t" ++ indent ++ (ppForm f $ indent ++ "\t")) fs) ++ ")"
 ppForm (Or fs) indent = "\n" ++ indent ++ "(or" ++ (concatMap (\f -> "\n\t" ++ indent ++ (ppForm f $ indent ++ "\t")) fs) ++ ")"
 ppForm (Imply f1 f2) indent = "(imply " ++ (ppForm f1 $ indent ++ "\t") ++ (ppForm f2 $ indent ++ "\t") ++ ")"
-ppForm (Knows ag f) indent = "(knows ?" ++ ag ++ " " ++ (ppForm f $ indent ++ "\t") ++ ")"
+ppForm (Knows ag f) indent = "(knows " ++ ag ++ " " ++ (ppForm f $ indent ++ "\t") ++ ")"
 ppForm (Forall vts f) indent = 
-  "(forall (" ++ ppVars (head vts) ++ (concatMap (\vt -> " " ++ ppVars vt) $ tail vts) ++ 
+  "(forall (" ++ concatMapTail (\vt -> " " ++ ppVars vt) vts ++ 
   ")\n" ++ indent ++ "\t" ++ (ppForm f $ indent ++ "\t") ++ 
   "\n" ++ indent ++ ")"
 ppForm (ForallWhen vts fw ft) indent = 
-  "(forall (" ++ ppVars (head vts) ++ (concatMap (\vt -> " " ++ ppVars vt) $ tail vts) ++ 
+  "(forall (" ++ concatMapTail (\vt -> " " ++ ppVars vt) vts ++ 
   ")\n" ++ indent ++ "\twhen " ++ (ppForm fw $ indent ++ "\t") ++ 
   "\n" ++ indent ++ "\t\t" ++ (ppForm ft $ indent ++ "\t\t") ++ 
   "\n" ++ indent ++ ")"
 ppForm (Exists vts f) indent = 
-  "(exists " ++ ppVars (head vts) ++ (concatMap (\vt -> " " ++ ppVars vt) $ tail vts) ++ 
+  "(exists " ++ concatMapTail (\vt -> " " ++ ppVars vt) vts ++ 
   "\n" ++ indent ++ "\t" ++ (ppForm f $ indent ++ "\t") ++ 
   "\n" ++ indent ++ ")"
 
@@ -94,7 +95,7 @@ ppProblem (Problem problemName domainName objects init worlds obss goal) =
   ++ "(:objects" ++ (concatMap (\o -> "\n\t\t" ++ ppObj o) objects) ++ ")"
   ++ ppInit init
   ++ (concatMap ppWorld worlds) ++ "\n\t"
-  ++ "(:observability" ++ ppObs (head obss) ++ (concatMap (\o -> "\n\t :observability" ++ ppObs o) $ tail obss) ++ ")\n\t"
+  ++ "(:observability" ++ concatMapTail (\o -> "\n\t :observability" ++ ppObs o) obss ++ ")\n\t"
   ++ "(:goal\n\t\t" ++ (ppForm goal "\t\t") ++ "\n\t)\n)\n"
 
 ppInit :: [Predicate] -> String
@@ -109,5 +110,7 @@ ppWorld (World des name truePreds) =
   "\n\t(:world-" ++ dess ++ "designated " ++ name ++ (concatMap (\p -> "\n\t\t" ++ ppPred p) truePreds) ++ "\n\t)"
     where dess = if des then "" else "non"
 
-ppStringListList :: [[String]] -> String
-ppStringListList sss = (concatMap (\ss -> "\n\t\t(" ++ (concatMap (" " ++) ss) ++ ")") sss)
+concatMapTail :: (a -> String) -> [a] -> String
+concatMapTail _ [] = []
+concatMapTail pp (a:as) = pp a ++ concatMap pp as
+

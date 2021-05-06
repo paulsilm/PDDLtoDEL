@@ -112,6 +112,7 @@ isPred (Knows _ _) = True
 isPred (Not p) = isPred p
 isPred _ = False
 
-requirementSupported :: Req -> Bool --TODO add more reqs to parser and language
-requirementSupported Strips = True
-requirementSupported Typing = True
+requirementSupported :: Req -> Bool --TODO add equality capability
+requirementSupported Equality = False
+requirementSupported _ = True
+

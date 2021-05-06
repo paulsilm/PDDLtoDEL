@@ -35,6 +35,8 @@ tokens :-
   ":objects"              { \ p _ -> TokenObjects           p }
   ":strips"               { \ p _ -> TokenStrips            p }
   ":typing"               { \ p _ -> TokenTyping            p }
+  ":equality"             { \ p _ -> TokenEquality          p }
+  ":adl"                  { \ p _ -> TokenADL               p }
   "domain"                { \ p _ -> TokenDomainName        p }
   "problem"               { \ p _ -> TokenProblemName       p }
   "knows"                 { \ p _ -> TokenKnows             p }
@@ -57,7 +59,7 @@ tokens :-
   "exists"                { \ p _ -> TokenExists            p }
   "imply"                 { \ p _ -> TokenImpl              p }
   -- Integers and Strings:
-  \? $alf [$alf $dig \-]* { \ p s -> TokenVar s             p }
+  \? $alf [$alf $dig \-]* { \ p s -> TokenVar ('?':s)          p }
   $alf [$alf $dig \-]*       { \ p s -> TokenStr s             p }
 
 {
