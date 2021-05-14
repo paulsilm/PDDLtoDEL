@@ -23,6 +23,7 @@ data Token a -- == AlexPn
   | TokenStrips            {apn :: a}
   | TokenTyping            {apn :: a}
   | TokenEquality          {apn :: a}
+  | TokenEq                {apn :: a}
   | TokenADL               {apn :: a}
   | TokenPartition         {apn :: a}
   | TokenNone              {apn :: a}

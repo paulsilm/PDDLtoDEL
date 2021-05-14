@@ -64,7 +64,7 @@ addConstantsToObjs ((TO cNames cType):cs) objs =
 
 --Translates the observabilities to specific agents
 translateObs :: [(String,String)] -> Obs -> Obs
-translateObs varMap (ObsSpec ot ags b) = ObsSpec ot (map (varMap !) ags) b
+translateObs varMap (ObsSpec ot ags) = ObsSpec ot (map (varMap !) ags)
 translateObs _ obs = obs
 
 --translates the PDDL problem to a Kripke model
@@ -90,14 +90,14 @@ getObs [] _ = Full -- The default case
 getObs (ObsDef ot:obss) ag 
   | any (isInObs ag) obss = getObs obss ag
   | otherwise = ot
-getObs ((ObsSpec ot ags _):obss) ag 
+getObs ((ObsSpec ot ags):obss) ag 
   | ag `elem` ags = ot
   | otherwise = getObs obss ag
 
 --Checks if the observability is defined for the agent
 isInObs :: String -> Obs -> Bool
 isInObs _ (ObsDef _) = False
-isInObs ag (ObsSpec _ ags _) = ag `elem` ags
+isInObs ag (ObsSpec _ ags) = ag `elem` ags
 
 --Takes in list of all worlds and the obstype of the agent, returns the partition in strings
 worldPart :: ObsType -> [PDDL.World] -> [[String]]
@@ -122,10 +122,10 @@ predToProps objects (PredDef name vars) =
     objMap = concatMap typify vars 
     objTypes = map snd objMap -- [letter agent agent]
     allObjectedVarLists = foldr (objectify objects) [[]] objTypes -- [[L1,A1,A1], [L2,A1,A1], ...]
-    allPreds = map (\as -> PredSpec name as False) allObjectedVarLists -- [(PredSpec name [L1,A1,A1] False), 
-                                                                       --  (PredSpec name [L2,A1,A1] False)...]
+    allPreds = map (\as -> PredSpec name as) allObjectedVarLists -- [(PredSpec name [L1,A1,A1]), 
+                                                                       --  (PredSpec name [L2,A1,A1])...]
   in allPreds
-predToProps _ (PredAtom name) = [PredSpec name [] False]
+predToProps _ (PredAtom name) = [PredSpec name []]
 
 
 --function that augments the existing varListList by all objects
@@ -155,10 +155,13 @@ typify (VTL objs objType) = zip objs $ replicate (length objs) objType
 --  mapping between variable names and the specific object it refers to in its corresponding DEL action/state instance
 --  objects in the problem file, used for forall and exists statements
 pddlFormToDelForm :: PDDL.Form -> [(Predicate, Prp)] -> [(String, String)] -> [TypedObjs] -> SMCDEL.Language.Form 
-pddlFormToDelForm (Atom (PredSpec name vars _)) atomMap objectMap _ = 
-  PrpF $ atomMap ! PredSpec name (map (objectMap !) vars) False
+pddlFormToDelForm (Atom (PredEq n1 n2)) atomMap objectMap _
+  | objectMap ! n1 == objectMap ! n2 = Top
+  | otherwise = Bot
+pddlFormToDelForm (Atom (PredSpec name vars)) atomMap objectMap _ = 
+  PrpF $ atomMap ! PredSpec name (map (objectMap !) vars)
 pddlFormToDelForm (Atom (PredAtom name)) atomMap _ _ = 
-  PrpF $ atomMap ! PredSpec name [] False
+  PrpF $ atomMap ! PredSpec name []
 pddlFormToDelForm (Not f) pm om os = Neg $ pddlFormToDelForm f pm om os 
 pddlFormToDelForm (And fs) pm om os = Conj $ map (\f -> pddlFormToDelForm f pm om os) fs
 pddlFormToDelForm (Or fs) pm om os = Disj $ map (\f -> pddlFormToDelForm f pm om os) fs

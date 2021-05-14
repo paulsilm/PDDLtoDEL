@@ -24,12 +24,12 @@ validInput (CheckPDDL
                     (allDifferent [name | (World _ name _) <- worlds], "Multiple worlds have the same name"),
                     (allDifferent [name | (Action name _ _ _ _) <- actions], "Multiple actions have the same name")
                     ] ++ --(formInCorrectFormat goal, "Goal format is incorrect")] ++
-                    [ (convertPred pred `elem` allPreds
+                    {-[ (convertPred pred `elem` allPreds --TODO adjust for PredEq too
                       , "World " ++ name ++ " has invalid predicate: " ++ show pred)
                       | (World _ name worldPreds) <- worlds, pred <- worldPreds] ++
                     [ (convertPred pred `elem` allPreds
                       , "Init has invalid predicate: " ++ show pred)
-                      | pred <- initPreds] ++
+                      | pred <- initPreds] ++ -}
                     [([des | (World des _ _) <- worlds, des] == [True], "Either too many or too few designated worlds")
                   ] ++ map (checkAction types) actions
                 in
@@ -39,7 +39,7 @@ validInput (CheckPDDL
 
 --
 convertPred :: Predicate -> Predicate 
-convertPred (PredAtom name) = PredSpec name [] False
+convertPred (PredAtom name) = PredSpec name []
 convertPred (PredDef name vars) = error $ "Error in checking semantics, predicate " ++ name ++ " is defined in problem." ++
   " Maybe you need to remove the types?"
 convertPred pred = pred
@@ -64,20 +64,20 @@ checkAction typeList (Action name params actor events obss) =
 --converts predicate to its type --TODO requires parameters of action to convert PredSpecc v
 --predConvert :: Predicate -> Predicate
 --predConvert (PredDef name vars) = 
---  PredSpec name (map snd $ concatMap typify vars) False
---predConvert (PredSpec name vars _) = predConvert $ PredDef name [VTL varNames | ]
+--  PredSpec name (map snd $ concatMap typify vars)
+--predConvert (PredSpec name vars) = predConvert $ PredDef name [VTL varNames | ]
 --predConvert (PredAtom name) = predConvert $ PredDef name []
 
 observabilitiesOnlyForAgents :: [String] -> [Obs] -> Bool
 observabilitiesOnlyForAgents _ [] = True
 observabilitiesOnlyForAgents ags ((ObsDef _):obss) = observabilitiesOnlyForAgents ags obss
-observabilitiesOnlyForAgents ags ((ObsSpec _ ags2 _):obss) =
+observabilitiesOnlyForAgents ags ((ObsSpec _ ags2):obss) =
      all (`elem` ags) ags2
   && observabilitiesOnlyForAgents ags obss
 
 observabilityPartitionCorrect :: [String] -> Obs -> Bool
 observabilityPartitionCorrect legitNames (ObsDef (Partition part)) = and $ concatMap (map (`elem` legitNames)) part
-observabilityPartitionCorrect legitNames (ObsSpec (Partition part) _ _) = and $ concatMap (map (`elem` legitNames)) part
+observabilityPartitionCorrect legitNames (ObsSpec (Partition part) _) = and $ concatMap (map (`elem` legitNames)) part
 observabilityPartitionCorrect _ _ = True
 
 predTypesExist :: [String] -> Predicate -> Bool

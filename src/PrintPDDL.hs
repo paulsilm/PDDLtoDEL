@@ -33,8 +33,9 @@ ppReq Adl = ":adl"
 
 ppPred :: Predicate -> String 
 ppPred (PredAtom a) = "(" ++ a ++ ")"
-ppPred (PredSpec p vars qm) = "(" ++  p ++ (concatMap (" " ++) vars) ++ ")"
-ppPred (PredDef p varTypes) = "(" ++  p ++ (concatMap (\v -> " " ++ ppVars v) varTypes) ++ ")"
+ppPred (PredSpec p vars) = "(" ++ p ++ (concatMap (" " ++) vars) ++ ")"
+ppPred (PredDef p varTypes) = "(" ++ p ++ (concatMap (\v -> " " ++ ppVars v) varTypes) ++ ")"
+ppPred (PredEq p1 p2) = "(= " ++ p1 ++ " " ++ p2 ++ ")"
 
 ppVars :: VarType -> String
 ppVars (VTL vars typedObjs) = concatMapTail (" " ++) vars ++ " - " ++ typedObjs
@@ -59,7 +60,7 @@ ppEvent (Event des name pres effect) =
 
 ppObs :: Obs -> String
 ppObs (ObsDef obsType) = ppObsType obsType
-ppObs (ObsSpec obsType ags _) = ppObsType obsType ++ (concatMap (" " ++) ags)
+ppObs (ObsSpec obsType ags) = ppObsType obsType ++ (concatMap (" " ++) ags)
 
 ppObsType :: ObsType -> String
 ppObsType Full = " full"

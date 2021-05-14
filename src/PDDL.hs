@@ -25,10 +25,11 @@ data Req = Strips
           deriving (Show, Eq)
 
 -- ? TODO maybe can remove the need for var? Also in Obs
--- Predicate: Atomic name | Definition name typed_variables | Specific name object_names var?
+-- Predicate: Atomic name | Definition name typed_variables | Specific name object_names
 data Predicate = PredAtom String
                | PredDef String [VarType]
-               | PredSpec String [String] Bool
+               | PredSpec String [String]
+               | PredEq String String
                deriving (Show, Eq)
 
 --Typed variables: variables type
@@ -45,7 +46,7 @@ data Event = Event Bool String Form Form
 
 -- Action or world observabilities: Default ObsType | Specific_per_agent ObsType agents var?
 data Obs = ObsDef ObsType 
-         | ObsSpec ObsType [String] Bool
+         | ObsSpec ObsType [String]
          deriving (Show, Eq)
 
 --Observability type: (Full|None|Partitioned partition)

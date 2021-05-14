@@ -49,6 +49,7 @@ tokens :-
   "("                     { \ p _ -> TokenOB                p }
   ")"                     { \ p _ -> TokenCB                p }
   -- PDDL Formulas:
+  "="                     { \ p _ -> TokenEq                p }
   "T"                     { \ p _ -> TokenTop               p }
   "F"                     { \ p _ -> TokenBot               p }
   "not"                   { \ p _ -> TokenNeg               p }
@@ -59,8 +60,8 @@ tokens :-
   "exists"                { \ p _ -> TokenExists            p }
   "imply"                 { \ p _ -> TokenImpl              p }
   -- Integers and Strings:
-  \? $alf [$alf $dig \-]* { \ p s -> TokenVar ('?':s)          p }
-  $alf [$alf $dig \-]*       { \ p s -> TokenStr s             p }
+  \? $alf [$alf $dig \-]*    { \ p s -> TokenVar s          p }
+  $alf [$alf $dig \-]*       { \ p s -> TokenStr s          p }
 
 {
 type LexResult a = Either (Int,Int) a

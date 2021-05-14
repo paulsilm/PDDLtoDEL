@@ -11,6 +11,7 @@ import SMCDEL.Internal.TexDisplay
 import Plan
 import System.Environment (getArgs,getProgName)
 import System.IO (hPutStrLn, stderr)
+--import Data.Text
 
 main :: IO ()
 main = do
@@ -21,7 +22,7 @@ main = do
       problem <- readFile prbFile
       let splitIndex = length $ lines domain
       let contents = domain ++ "\n" ++ problem
-      case parse $ alexScanTokens contents of
+      case parse $ alexScanTokens contents of -- $ map toLower contents of
           Left (lin,col) -> do
             let fileT = if lin < splitIndex then "domain" else "problem"
             let lineNo = if lin < splitIndex then lin else lin - splitIndex
@@ -30,7 +31,7 @@ main = do
             processPDDL pddl depth icSolves
     Left (filename,depth,icSolves) -> do
       contents <- readFile filename
-      case parse $ alexScanTokens contents of
+      case parse $ alexScanTokens $ contents of --map toLower contents of
           Left (lin,col) -> error ("Parse error in line " ++ show lin ++ ", column " ++ show col)
           Right pddl -> do
             processPDDL pddl depth icSolves

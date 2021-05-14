@@ -22,6 +22,7 @@ import PDDL
   '~'          { TokenNeg              _ }
   '-'          { TokenDash             _ }
   '->'         { TokenImpl             _ }
+  '='          { TokenEq               _ }
   AND          { TokenCon              _ }
   OR           { TokenDis              _ }
   STR          { TokenStr         $$   _ }
@@ -96,9 +97,13 @@ PredicateList : { [] }
               | '(' Predicate ')' PredicateList { $2:$4 }
 
 Predicate : String { PredAtom $1 }
-          | String VarList { PredSpec $1 $2 True }
-          | String StringList { PredSpec $1 $2 False }
+          | String VarList { PredSpec $1 $2}
+          | String StringList { PredSpec $1 $2}
           | String VarTypeList { PredDef $1 $2 }
+          | '=' Name Name { PredEq $2 $3 }
+
+Name : VarName { $1 }
+     | String { $1 }
 
 ActionList : '(' ACT Action ')'  { [$3] }
            | '(' ACT Action ')' ActionList { $3:$5 }
@@ -108,13 +113,14 @@ Action : String Params ByAgent EventList ObsList { Action $1 $2 $3 $4 $5 }
 
 Params : PARAMS '(' VarTypeList ')' { $3 }
 
-VarTypeList : VarType { [$1] } 
+VarTypeList : { [] }
+            | VarType { [$1] } 
             | VarType VarTypeList { $1:$2 } 
 
 VarType : VarList '-' String { VTL $1 $3 } 
 
 VarList : VarName { [$1] }
-     | VarName VarList { $1:$2 }
+        | VarName VarList { $1:$2 }
 
 ByAgent : BYA VarName { $2 }
 
@@ -160,8 +166,8 @@ IsWorldDesignated : WDES { True }
 ObsList : ObsType { [$1] }
         | ObsType ObsList { $1:$2 }
 
-ObsType : Obs VarList { ObsSpec $1 $2 True }
-        | Obs StringList { ObsSpec $1 $2 False }
+ObsType : Obs VarList { ObsSpec $1 $2}
+        | Obs StringList { ObsSpec $1 $2}
         | Obs { ObsDef $1 }
 
 Obs : OBS 'full' { Full }
@@ -191,9 +197,10 @@ FormList : Form { [$1] }
          | Form FormList { $1:$2 }
 
 String : STR { $1 }
-VarName : VAR { tail $1 }
---TODO same with init predicates
---TODO try and fix the observability requiring ?var instead of OBJ as parameter (or call it a feature)
+VarName : VAR { $1 }
+
+--TODO fix byagent being required
+--TODO add equal measuring things
 {
      
 type ParseResult a = Either (Int,Int) a
