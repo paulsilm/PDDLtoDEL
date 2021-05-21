@@ -82,11 +82,11 @@ getInput = do
 --TODO add -verbose option for more detailed error messages (for semantic checker, possibly also for parser)
 --Returns filenames and stuff
 inputFromArgs :: Either (String, Int, Bool) (String, String, Int, Bool) -> [String] -> Maybe (Either (String, Int, Bool) (String, String, Int, Bool))
-inputFromArgs (Left (fn, d, b)) [] 
-  | fn /= "" = Just (Left (fn, d, b))
+inputFromArgs i@(Left (fn, _, _)) [] 
+  | fn /= "" = Just i
   | otherwise = Nothing
-inputFromArgs (Right (dom, prb, d, b)) [] 
-  | dom /= "" && prb /= "" = Just (Right (dom, prb, d, b))
+inputFromArgs i@(Right (dom, prb, _, _)) [] 
+  | dom /= "" && prb /= "" = Just i
   | otherwise = Nothing
 inputFromArgs (Left (fn, _, b)) ("-d":i:args) = 
   inputFromArgs (Left (fn, read i :: Int, b)) args

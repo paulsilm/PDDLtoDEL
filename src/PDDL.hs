@@ -44,7 +44,7 @@ data Action = Action String [VarType] String [Event] [Obs]
 data Event = Event Bool String Form Form 
           deriving (Show, Eq)
 
--- Action or world observabilities: Default ObsType | Specific_per_agent ObsType agents var?
+-- Action or world observabilities: Default ObsType | Specific_per_agent ObsType agents
 data Obs = ObsDef ObsType 
          | ObsSpec ObsType [String]
          deriving (Show, Eq)

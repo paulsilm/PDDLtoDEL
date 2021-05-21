@@ -6,6 +6,7 @@ import PDDL
 import Data.Dynamic
 import Data.List
 import Translate
+import Debug.Trace
 
 --Takes in a PDDL file, whether the plan should have the condition that each agent knows
 --before taking an action that it will lead to the goal, and maximum depth of search
@@ -48,9 +49,10 @@ bfs maxDepth (CoopTask start acts goal) = loop [([],start)] where
     | otherwise   = loop $ rest ++
                       [ (done ++ [a], update now act) 
                       | length done < maxDepth     -- do not use more than maxDepth actions
-                      , a@(agent,(_,act)) <- acts
+                      , a@(agent,(name,act)) <- acts
                       , now |= preOf act           -- action must be executable
                       , now |= K agent (preOf act) -- agent must know that it is executable!
+                      , trace (name ++ "\t" ++ show now) True
                       , now /= update now act      -- ignore useless actions
                       ]
 

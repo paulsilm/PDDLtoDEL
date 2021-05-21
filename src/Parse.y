@@ -108,13 +108,18 @@ Name : VarName { $1 }
 ActionList : '(' ACT Action ')'  { [$3] }
            | '(' ACT Action ')' ActionList { $3:$5 }
 
-Action : String Params ByAgent EventList ObsList { Action $1 $2 $3 $4 $5 }
+Action : String Params ByAgent EventList OptObsList { Action $1 $2 $3 $4 $5 }
        | String Params ByAgent Event { Action $1 $2 $3 [$4] [] }
 
-Params : PARAMS '(' VarTypeList ')' { $3 }
+OptObsList : { [] }
+           | ObsType OptObsList { $1:$2 }
 
-VarTypeList : { [] }
-            | VarType { [$1] } 
+Params : PARAMS '(' OptVarTypeList ')' { $3 }
+
+OptVarTypeList : { [] }
+               | VarType OptVarTypeList { $1:$2 } 
+
+VarTypeList : VarType { [$1] } 
             | VarType VarTypeList { $1:$2 } 
 
 VarType : VarList '-' String { VTL $1 $3 } 
@@ -178,7 +183,7 @@ PartList : '(' StringList ')' { [$2] }
          | '(' StringList ')' PartList { $2:$4 }
 
 StringList : String { [$1] }
-     | String StringList { $1:$2 }
+           | String StringList { $1:$2 }
 
 
 Form : '(' Predicate ')' { Atom $2 }

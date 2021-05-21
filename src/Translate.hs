@@ -25,10 +25,10 @@ pddlToDEL (CheckPDDL (Domain _ _ _ conss preds actions) (Problem _ _ objects ini
 --Translates the PDDL actions to a list of actionModels
 translateActions :: [(Predicate, Prp)] -> [TypedObjs] -> [PDDL.Action] -> [Owned MultipointedActionModelS5]
 translateActions _ _ [] = []
-translateActions atomMap objs ((Action name params actor events obss):actions) =
+translateActions atomMap objs (a@(Action name params _ _ _):actions) =
   let 
     paramMaps = parameterMaps params objs
-    actionModels = map (actionToActionModel atomMap objs (Action name params actor events obss)) paramMaps 
+    actionModels = map (actionToActionModel atomMap objs a) paramMaps 
     ownedModels = map (\(actress,model, paramNames) -> (actress, (actress ++ ": " ++ name ++ " " ++ show paramNames,model))) actionModels
   in
     ownedModels ++ (translateActions atomMap objs actions)
@@ -158,6 +158,7 @@ pddlFormToDelForm :: PDDL.Form -> [(Predicate, Prp)] -> [(String, String)] -> [T
 pddlFormToDelForm (Atom (PredEq n1 n2)) atomMap objectMap _
   | objectMap ! n1 == objectMap ! n2 = Top
   | otherwise = Bot
+--pddlFormToDelForm (Atom (PredDef name vars)) atomMap objectMap _ = Bot
 pddlFormToDelForm (Atom (PredSpec name vars)) atomMap objectMap _ = 
   PrpF $ atomMap ! PredSpec name (map (objectMap !) vars)
 pddlFormToDelForm (Atom (PredAtom name)) atomMap _ _ = 
@@ -166,7 +167,7 @@ pddlFormToDelForm (Not f) pm om os = Neg $ pddlFormToDelForm f pm om os
 pddlFormToDelForm (And fs) pm om os = Conj $ map (\f -> pddlFormToDelForm f pm om os) fs
 pddlFormToDelForm (Or fs) pm om os = Disj $ map (\f -> pddlFormToDelForm f pm om os) fs
 pddlFormToDelForm (Imply f1 f2) pm om os = Impl (pddlFormToDelForm f1 pm om os) (pddlFormToDelForm f2 pm om os)
---Singleton cases (Forall, ForallWhen, Exists) e.g. forall (?b1 ?b2 - bricks) ...
+--Singleton cases (Forall, ForallWhen, Exists) e.g. forall (?b1 ?b2 - bricks) ...--TODO add semantic checker to avoid forall []
 pddlFormToDelForm (PDDL.Forall [(VTL vars objType)] f) pmap oMap ojs = 
   Conj [pddlFormToDelForm f pmap ((var,objName):oMap) ojs 
         | objName <- (getObjNames objType ojs)
@@ -196,7 +197,14 @@ pddlFormToDelForm (ForallWhen ((VTL vars objType):vts) f1 f2) pmap oMap ojs =
         , var <- vars]
 --Agent knows about something
 pddlFormToDelForm (Knows ag f) pmap oMap ojs = K (oMap ! ag) $ pddlFormToDelForm f pmap oMap ojs
-
+{-
+data Form = Atom Predicate 
+          | Imply Form Form
+          | Forall [VarType] Form
+          | ForallWhen [VarType] Form Form
+          | Exists [VarType] Form 
+          | Knows String Form
+-}
 
 -- Takes the list of all variables, and returns the permutation (list of lists) 
 -- of mappings from variable to object names

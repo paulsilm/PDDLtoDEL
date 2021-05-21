@@ -1,35 +1,142 @@
 (define (domain muddy)
     (:requirements :strips :typing)
-    (:types agent uselessObj)
+    (:types agent)
+    ;(:constants A1 A2 A3 - agent)
     (:predicates
-        (muddy ?a1 - agent)
+        (muddy ?a - agent)
+        (aware ?a - agent);whether the agent knows the other agents know their muddiness
+        (roundtime)
+    )
+
+    (:action beginning-state
+        :parameters (?a - agent)
+        :byagent ?a
+        :precondition
+        (and 
+            (not (roundtime))
+            (not (aware ?a))
+            (forall (?b - agent) 
+                when (not (= ?b ?a)) 
+                    (or
+                        (and
+                            (muddy ?a)
+                            (knows ?b (muddy ?a))
+                        )
+                        (and
+                            (not (muddy ?a))
+                            (knows ?b (not (muddy ?a)))
+                        )
+                    )
+            )
+        )
+        :effect (and (aware ?a))
     )
 
     (:action announce-at-least-one
         :parameters (?a - agent)
         :byagent ?a
         :precondition
-            (exists (?b - agent) (muddy ?b))
+            (and 
+                (forall (?a1 - agent) (aware ?a1))
+                (exists (?b - agent) (muddy ?b))
+            )
         :effect
-            (and)
+            (and (roundtime))
     )
 
-; "Do you know if you are muddy?" - nobody reacts.
-; ==
-; "Nobody knows whether they are muddy."
-; ==
-; "Everyone does not know whether they are muddy."
+; step in front
 
-    (:action announce-nobody-knows
-        :parameters (?a - agent)
-        :byagent ?a
-        :precondition 
-                (forall (?b - agent)
-                        (and (not (knows ?b (muddy ?b)))
-                             (not (knows ?b (not (muddy ?b))))
-                        )
+;    (:action announce-dont-know
+;        :parameters (?a - agent)
+;        :byagent ?a
+;        :precondition 
+;            (and (not (knows ?a (muddy ?a)))
+;                    (not (knows ?a (not (muddy ?a))))
+;            )
+;        :effect (and)
+;    )
+;
+;; don't step in front
+;    (:action announce-do-know
+;        :parameters (?a - agent)
+;        :byagent ?a
+;        :precondition 
+;            (or (knows ?a (muddy ?a))
+;                    (knows ?a (not (muddy ?a)))
+;            )
+;        :effect (and)
+;    )
+;
+    (:action round-kkk
+        :parameters (?a1 ?a2 ?a3 - agent)
+        :byagent ?a1
+        :precondition
+            (and
+                (or 
+                    (knows ?a1 (muddy ?a1))
+                    (knows ?a1 (not (muddy ?a1)))
                 )
-            :effect (and)
+                (or 
+                    (knows ?a2 (muddy ?a2))
+                    (knows ?a2 (not (muddy ?a2)))
+                )
+                (or 
+                    (knows ?a3 (muddy ?a3))
+                    (knows ?a3 (not (muddy ?a3)))
+                )
+            )
+        :effect (and)
+    )
+    
+    (:action round-kkn
+        :parameters (?a1 ?a2 ?a3 - agent)
+        :byagent ?a1
+        :precondition
+            (and
+                (or 
+                    (knows ?a1 (muddy ?a1))
+                    (knows ?a1 (not (muddy ?a1)))
+                )
+                (or 
+                    (knows ?a2 (muddy ?a2))
+                    (knows ?a2 (not (muddy ?a2)))
+                )
+                (not (knows ?a3 (muddy ?a3)))
+                (not (knows ?a3 (not (muddy ?a3))))
+            )
+        :effect (and)
+    )
+
+    (:action round-knn
+        :parameters (?a1 ?a2 ?a3 - agent)
+        :byagent ?a1
+        :precondition
+            (and
+                (or 
+                    (knows ?a1 (muddy ?a1))
+                    (knows ?a1 (not (muddy ?a1)))
+                )
+                (not (knows ?a2 (muddy ?a2)))
+                (not (knows ?a2 (not (muddy ?a2))))
+                (not (knows ?a3 (muddy ?a3)))
+                (not (knows ?a3 (not (muddy ?a3))))
+            )
+        :effect (and)
+    )
+    
+    (:action round-nnn
+        :parameters (?a1 ?a2 ?a3 - agent)
+        :byagent ?a1
+        :precondition
+            (and
+                (not (knows ?a1 (muddy ?a1)))
+                (not (knows ?a1 (not (muddy ?a1))))
+                (not (knows ?a2 (muddy ?a2)))
+                (not (knows ?a2 (not (muddy ?a2))))
+                (not (knows ?a3 (muddy ?a3)))
+                (not (knows ?a3 (not (muddy ?a3))))
+            )
+        :effect (and)
     )
 )
 
@@ -38,15 +145,15 @@
     (:domain muddy)
     (:objects
          A1 A2 A3 - agent
-         O - uselessObj
     )
+    ; All agents know that other agents know whether they're muddy or not
     (:init)
-        (:world-designated mmm
+        (:world-nondesignated mmm
             (muddy A1)
             (muddy A2)
             (muddy A3)
         )
-        (:world-nondesignated mmc
+        (:world-designated mmc
             (muddy A1)
             (muddy A2)
         )
@@ -69,9 +176,9 @@
         )
         (:world-nondesignated ccc
         )
-    (:observability (partition (ccm ccc) (cmc cmm) (mmm mmc) (mcm mcc)) A3
+    (:observability (partition (cmm mmm) (cmc mmc) (mcm ccm) (mcc ccc)) A1
     :observability (partition (cmm ccm) (ccc cmc) (mcm mmm) (mmc mcc)) A2
-    :observability (partition (cmm mmm) (cmc mmc) (mcm ccm) (mcc ccc)) A1)
+    :observability (partition (ccm ccc) (cmc cmm) (mmm mmc) (mcm mcc)) A3)
     (:goal
         (forall (?a - agent)
             (or (knows ?a (muddy ?a))

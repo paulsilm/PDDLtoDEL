@@ -19,7 +19,6 @@ validInput (CheckPDDL
                       "Multiple definitions of same object type, sorry for limited translation"),
                     --(and [consType `elem` types | (VTL _ consType) <- conss], "Constant type is not declared in :types"),
                     (all (predTypesExist types) preds, "Predicate type is missing"),
-                    (all requirementSupported reqs, "requirements not supported"), --TODO which one
                     (name == domName, "Problem's domain-name does not match domain's name"),
                     (allDifferent [name | (World _ name _) <- worlds], "Multiple worlds have the same name"),
                     (allDifferent [name | (Action name _ _ _ _) <- actions], "Multiple actions have the same name")
@@ -111,8 +110,3 @@ isPred (Atom _) = True
 isPred (Knows _ _) = True
 isPred (Not p) = isPred p
 isPred _ = False
-
-requirementSupported :: Req -> Bool --TODO add equality capability
-requirementSupported Equality = False
-requirementSupported _ = True
-
