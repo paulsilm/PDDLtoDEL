@@ -16,60 +16,45 @@
 
 function deleteRules(n)
 {
-    var css = document.styleSheets[0];
-    for (var i = 0; i < n; i++)
-        css.deleteRule(css.cssRules.length-1);
+	var css = document.styleSheets[0];
+	for (var i = 0; i < n; i++)
+		css.deleteRule(css.cssRules.length-1);
 }
 
 function insertRule(s)
 {
-    var css = document.styleSheets[0];
-    css.insertRule(s, css.cssRules.length);
+	var css = document.styleSheets[0];
+	css.insertRule(s, css.cssRules.length);
 }
 
 // SHOW/HIDE LOGIC //
 
-/**
- * @param {bool} [initialise=false] - Used to signal we are loading the page, so
- the current location doesn't match our presumed state.
- */
-function show(id, initialise=false)
+var last = "";
+
+function show(id)
 {
-    var last;
-    if (initialise)
-    {
-        last = "";
-    }
-    else
-    {
-        last = document.location.hash.slice(1);
-    }
+	if (id == last) return;
+	if (id == "")
+	{
+		deleteRules(3);
+		insertRule(".all {font-weight: bold;}");
+	}
+	else
+	{
+		if (last == "")
+		{
+			deleteRules(1);
+			insertRule("#content div {display:none;}");
+		}
+		else
+		{
+			deleteRules(2);
+		}
+		insertRule("#content div." + id + " {display:block;}");
+		insertRule("#" + id + "{font-weight:bold;}");
+	}
 
-    if (id === last) return;
-    if (id.length === 0)
-    {
-        deleteRules(3);
-        insertRule(".all {font-weight: bold;}");
-    }
-    else
-    {
-        if (last.length === 0)
-        {
-            deleteRules(1);
-            insertRule("#content div {display:none;}");
-        }
-        else
-        {
-            deleteRules(2);
-        }
-        insertRule("#content div." + id + " {display:block;}");
-        insertRule("#" + id + "{font-weight:bold;}");
-    }
-
-    if (window.history)
-        history.replaceState("", document.title, window.location.pathname + window.location.search + (id === "" ? "" : "#" + id));
-    else
-        document.location.hash = '#'.concat(id);
+	last = id;
 }
 
 </script>
@@ -85,43 +70,44 @@ function show(id, initialise=false)
 <style type="text/css">
 /* See http://www.webreference.com/programming/css_frames/ */
 body {
-    margin:0;
-    border:0;
-    padding:0;
-    height:100%;
-    max-height:100%;
-    font-family: sans-serif;
-    font-size:76%;
-    overflow: hidden;
+	margin:0;
+	border:0;
+	padding:0;
+	height:100%;
+	max-height:100%;
+	font-family: sans-serif;
+	font-size:76%;
+	overflow: hidden;
 }
 
 #leftbar {
-    position:absolute;
-    top:0px;
-    left:0px;
-    width: 215px;
-    bottom: 0px;
-    overflow:auto;
-    background:rgb(202,223,255);
-    margin: 10px;
-    padding-top: 0;
-    padding-left: 7px;
-    padding-right: 7px;
-    border-radius: 5px;
+	position:absolute;
+	top:0px;
+	left:0px;
+	width: 215px;
+	bottom: 0px;
+	overflow:auto;
+	background:rgb(202,223,255);
+	margin: 10px;
+	padding-top: 0;
+	padding-left: 7px;
+	padding-right: 7px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
 
-    display:none; /* Override if script present */
+	display:none; /* Override if script present */
 }
 
 #content {
-    position:absolute;
-    top:0;
-    bottom:0;
-    right:0;
-    overflow:auto;
-    padding-bottom: 15px;
-    padding-right: 7px;
+	position:absolute;
+	top:0;
+	bottom:0;
+	right:0;
+	overflow:auto;
+	padding-bottom: 15px;
+	padding-right: 7px;
 
-    left:10px; /* Override if script present */
+	left:10px; /* Override if script present */
 }
 
 #leftbar ul {margin-top: 0px; padding-left: 15px;}
@@ -129,16 +115,16 @@ body {
 .note {color: gray; font-size: smaller;}
 
 pre {
-    font-family: "lucida console", monospace;
-    padding-left: 15px;
-    margin: 2px;
+	font-family: "lucida console", monospace;
+	padding-left: 15px;
+	margin: 2px;
 }
 
 #content div {
-    margin-bottom: 10px;
-    margin-right: 10px;
-    padding-top: 4px;
-    border-top: 1px solid #ccc;
+	margin-bottom: 10px;
+	margin-right: 10px;
+	padding-top: 4px;
+	border-top: 1px solid #ccc;
 }
 
 .script #content {left:250px;}
@@ -161,606 +147,90 @@ document.body.className = "script";
 
 <p><a class="all" href="javascript:show('')">All hints</a></p>
 <ul>
-<li><a id="hint0" href="javascript:show('hint0')">Warning: Redundant lambda (1)</a></li>
-<li><a id="hint1" href="javascript:show('hint1')">Suggestion: Move brackets to avoid $ (13)</a></li>
-<li><a id="hint2" href="javascript:show('hint2')">Suggestion: Redundant bracket (32)</a></li>
-<li><a id="hint3" href="javascript:show('hint3')">Suggestion: Use tuple-section (1)</a></li>
+<li><a id="hint0" href="javascript:show('hint0')">Warning: Redundant do (4)</a></li>
+<li><a id="hint1" href="javascript:show('hint1')">Warning: Use isJust (1)</a></li>
+<li><a id="hint2" href="javascript:show('hint2')">Suggestion: Avoid lambda (1)</a></li>
+<li><a id="hint3" href="javascript:show('hint3')">Suggestion: Redundant $ (1)</a></li>
 </ul>
 
 <p><a class="all" href="javascript:show('')">All files</a></p>
 <ul>
-<li><a id="file0" href="javascript:show('file0')">./src/Lib.hs (1)</a></li>
-<li><a id="file1" href="javascript:show('file1')">./src/PrintPDDL.hs (41)</a></li>
-<li><a id="file2" href="javascript:show('file2')">./src/Translate.hs (5)</a></li>
+<li><a id="file0" href="javascript:show('file0')">./app/Main.hs (5)</a></li>
+<li><a id="file1" href="javascript:show('file1')">./src/Plan.hs (1)</a></li>
+<li><a id="file2" href="javascript:show('file2')">./src/Translate.hs (1)</a></li>
 </ul>
 
 </div>
 <div id="content" valign="top" width="100%">
 <p>
-    Report generated by <a href="http://community.haskell.org/~ndm/hlint/">HLint</a>
-v2.1.17
-    - a tool to suggest improvements to your Haskell code.
+	Report generated by <a href="http://community.haskell.org/~ndm/hlint/">HLint</a>
+v2.0.11
+	- a tool to suggest improvements to your Haskell code.
 </p>
 
 <div class="hint0 file0">
-./src/Lib.hs:10:1: Warning: Redundant lambda<br/>
+./app/Main.hs:30:25: Warning: Redundant do<br/>
 Found<br/>
-<pre><span class='hs-definition'>translationForPP</span> <span class='hs-varid'>atomMap</span> <span class='hs-keyglyph'>=</span> <span class='hs-keyglyph'>\</span> <span class='hs-varid'>p</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>ppPred</span> <span class='hs-varop'>$</span> <span class='hs-varid'>map</span> <span class='hs-varid'>swap</span> <span class='hs-varid'>atomMap</span> <span class='hs-varop'>!</span> <span class='hs-varid'>p</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>translationForPP</span> <span class='hs-varid'>atomMap</span> <span class='hs-varid'>p</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>ppPred</span> <span class='hs-varop'>$</span> <span class='hs-varid'>map</span> <span class='hs-varid'>swap</span> <span class='hs-varid'>atomMap</span> <span class='hs-varop'>!</span> <span class='hs-varid'>p</span></pre>
+<pre><span class='hs-keyword'>do</span> <span class='hs-varid'>processPDDL</span> <span class='hs-varid'>pddl</span> <span class='hs-varid'>depth</span> <span class='hs-varid'>icSolves</span></pre>
+Why not<br/>
+<pre><span class='hs-definition'>processPDDL</span> <span class='hs-varid'>pddl</span> <span class='hs-varid'>depth</span> <span class='hs-varid'>icSolves</span></pre>
 
 </div>
 
-<div class="hint2 file1">
-./src/PrintPDDL.hs:11:28: Suggestion: Redundant bracket<br/>
+<div class="hint3 file0">
+./app/Main.hs:34:20: Suggestion: Redundant $<br/>
 Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>r</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>" "</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppReq</span> <span class='hs-varid'>r</span><span class='hs-layout'>)</span> <span class='hs-varid'>reqs</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>")\n"</span> <span class='hs-varop'>++</span>
-    <span class='hs-str'>"\t(:types"</span> <span class='hs-varop'>++</span>
-      <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-str'>" "</span> <span class='hs-varop'>++</span><span class='hs-layout'>)</span> <span class='hs-varid'>types</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-        <span class='hs-str'>")\n"</span> <span class='hs-varop'>++</span>
-          <span class='hs-str'>"\t(:predicates"</span> <span class='hs-varop'>++</span>
-            <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>p</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppPred</span> <span class='hs-varid'>p</span><span class='hs-layout'>)</span> <span class='hs-varid'>preds</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-              <span class='hs-str'>"\n\t)"</span> <span class='hs-varop'>++</span>
-                <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\n\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppAction</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-varid'>actions</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>r</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>" "</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppReq</span> <span class='hs-varid'>r</span><span class='hs-layout'>)</span> <span class='hs-varid'>reqs</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>")\n"</span> <span class='hs-varop'>++</span>
-    <span class='hs-str'>"\t(:types"</span> <span class='hs-varop'>++</span>
-      <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-str'>" "</span> <span class='hs-varop'>++</span><span class='hs-layout'>)</span> <span class='hs-varid'>types</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-        <span class='hs-str'>")\n"</span> <span class='hs-varop'>++</span>
-          <span class='hs-str'>"\t(:predicates"</span> <span class='hs-varop'>++</span>
-            <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>p</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppPred</span> <span class='hs-varid'>p</span><span class='hs-layout'>)</span> <span class='hs-varid'>preds</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-              <span class='hs-str'>"\n\t)"</span> <span class='hs-varop'>++</span>
-                <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\n\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppAction</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-varid'>actions</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
+<pre><span class='hs-definition'>alexScanTokens</span> <span class='hs-varop'>$</span> <span class='hs-varid'>contents</span></pre>
+Why not<br/>
+<pre><span class='hs-definition'>alexScanTokens</span> <span class='hs-varid'>contents</span></pre>
 
 </div>
 
-<div class="hint2 file1">
-./src/PrintPDDL.hs:12:21: Suggestion: Redundant bracket<br/>
+<div class="hint0 file0">
+./app/Main.hs:36:25: Warning: Redundant do<br/>
 Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-str'>" "</span> <span class='hs-varop'>++</span><span class='hs-layout'>)</span> <span class='hs-varid'>types</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>")\n"</span> <span class='hs-varop'>++</span>
-    <span class='hs-str'>"\t(:predicates"</span> <span class='hs-varop'>++</span>
-      <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>p</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppPred</span> <span class='hs-varid'>p</span><span class='hs-layout'>)</span> <span class='hs-varid'>preds</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-        <span class='hs-str'>"\n\t)"</span> <span class='hs-varop'>++</span>
-          <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\n\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppAction</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-varid'>actions</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-str'>" "</span> <span class='hs-varop'>++</span><span class='hs-layout'>)</span> <span class='hs-varid'>types</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>")\n"</span> <span class='hs-varop'>++</span>
-    <span class='hs-str'>"\t(:predicates"</span> <span class='hs-varop'>++</span>
-      <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>p</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppPred</span> <span class='hs-varid'>p</span><span class='hs-layout'>)</span> <span class='hs-varid'>preds</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-        <span class='hs-str'>"\n\t)"</span> <span class='hs-varop'>++</span>
-          <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\n\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppAction</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-varid'>actions</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
+<pre><span class='hs-keyword'>do</span> <span class='hs-varid'>processPDDL</span> <span class='hs-varid'>pddl</span> <span class='hs-varid'>depth</span> <span class='hs-varid'>icSolves</span></pre>
+Why not<br/>
+<pre><span class='hs-definition'>processPDDL</span> <span class='hs-varid'>pddl</span> <span class='hs-varid'>depth</span> <span class='hs-varid'>icSolves</span></pre>
 
 </div>
 
-<div class="hint2 file1">
-./src/PrintPDDL.hs:13:26: Suggestion: Redundant bracket<br/>
+<div class="hint0 file0">
+./app/Main.hs:51:17: Warning: Redundant do<br/>
 Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>p</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppPred</span> <span class='hs-varid'>p</span><span class='hs-layout'>)</span> <span class='hs-varid'>preds</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>"\n\t)"</span> <span class='hs-varop'>++</span>
-    <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\n\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppAction</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-varid'>actions</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>p</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppPred</span> <span class='hs-varid'>p</span><span class='hs-layout'>)</span> <span class='hs-varid'>preds</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>"\n\t)"</span> <span class='hs-varop'>++</span>
-    <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\n\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppAction</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-varid'>actions</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
+<pre><span class='hs-keyword'>do</span> <span class='hs-varid'>putStrLn</span> <span class='hs-varop'>$</span> <span class='hs-varid'>str</span> <span class='hs-varop'>++</span> <span class='hs-varid'>show</span> <span class='hs-varid'>pddl</span></pre>
+Why not<br/>
+<pre><span class='hs-definition'>putStrLn</span> <span class='hs-varop'>$</span> <span class='hs-varid'>str</span> <span class='hs-varop'>++</span> <span class='hs-varid'>show</span> <span class='hs-varid'>pddl</span></pre>
 
 </div>
 
-<div class="hint2 file1">
-./src/PrintPDDL.hs:14:6: Suggestion: Redundant bracket<br/>
+<div class="hint0 file0">
+./app/Main.hs:66:22: Warning: Redundant do<br/>
 Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\n\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppAction</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-varid'>actions</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\n\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppAction</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-varid'>actions</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:23:44: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-layout'>(</span><span class='hs-keyword'>if</span> <span class='hs-varid'>qm</span> <span class='hs-keyword'>then</span> <span class='hs-str'>" ?"</span> <span class='hs-keyword'>else</span> <span class='hs-str'>" "</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span><span class='hs-layout'>)</span> <span class='hs-varid'>vars</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-layout'>(</span><span class='hs-keyword'>if</span> <span class='hs-varid'>qm</span> <span class='hs-keyword'>then</span> <span class='hs-str'>" ?"</span> <span class='hs-keyword'>else</span> <span class='hs-str'>" "</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span><span class='hs-layout'>)</span> <span class='hs-varid'>vars</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:24:44: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>v</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>" "</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppVars</span> <span class='hs-varid'>v</span><span class='hs-layout'>)</span> <span class='hs-varid'>varTypes</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>v</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>" "</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppVars</span> <span class='hs-varid'>v</span><span class='hs-layout'>)</span> <span class='hs-varid'>varTypes</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
+<pre><span class='hs-keyword'>do</span> <span class='hs-varid'>return</span> <span class='hs-varid'>contents</span></pre>
+Why not<br/>
+<pre><span class='hs-definition'>return</span> <span class='hs-varid'>contents</span></pre>
 
 </div>
 
 <div class="hint1 file1">
-./src/PrintPDDL.hs:27:51: Suggestion: Move brackets to avoid $<br/>
+./src/Plan.hs:28:22: Warning: Use isJust<br/>
 Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-str'>" ?"</span> <span class='hs-varop'>++</span><span class='hs-layout'>)</span> <span class='hs-varop'>$</span> <span class='hs-varid'>tail</span> <span class='hs-varid'>vars</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>" - "</span> <span class='hs-varop'>++</span> <span class='hs-varid'>typedObjs</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-str'>" ?"</span> <span class='hs-varop'>++</span><span class='hs-layout'>)</span> <span class='hs-layout'>(</span><span class='hs-varid'>tail</span> <span class='hs-varid'>vars</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>" - "</span> <span class='hs-varop'>++</span> <span class='hs-varid'>typedObjs</span></pre>
-
-</div>
-
-<div class="hint1 file1">
-./src/PrintPDDL.hs:32:49: Suggestion: Move brackets to avoid $<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>p</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>" "</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppVars</span> <span class='hs-varid'>p</span><span class='hs-layout'>)</span> <span class='hs-varop'>$</span> <span class='hs-varid'>tail</span> <span class='hs-varid'>params</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>")\n\t\t"</span> <span class='hs-varop'>++</span>
-    <span class='hs-str'>":byagent ?"</span> <span class='hs-varop'>++</span>
-      <span class='hs-varid'>actor</span> <span class='hs-varop'>++</span>
-        <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>e</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppEvent</span> <span class='hs-varid'>e</span><span class='hs-layout'>)</span> <span class='hs-varid'>events</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-          <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>o</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t:observability"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppObs</span> <span class='hs-varid'>o</span><span class='hs-layout'>)</span> <span class='hs-varid'>obss</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-            <span class='hs-str'>"\n\t)"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>p</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>" "</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppVars</span> <span class='hs-varid'>p</span><span class='hs-layout'>)</span> <span class='hs-layout'>(</span><span class='hs-varid'>tail</span> <span class='hs-varid'>params</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>")\n\t\t"</span> <span class='hs-varop'>++</span>
-    <span class='hs-str'>":byagent ?"</span> <span class='hs-varop'>++</span>
-      <span class='hs-varid'>actor</span> <span class='hs-varop'>++</span>
-        <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>e</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppEvent</span> <span class='hs-varid'>e</span><span class='hs-layout'>)</span> <span class='hs-varid'>events</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-          <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>o</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t:observability"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppObs</span> <span class='hs-varid'>o</span><span class='hs-layout'>)</span> <span class='hs-varid'>obss</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-            <span class='hs-str'>"\n\t)"</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:34:6: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>e</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppEvent</span> <span class='hs-varid'>e</span><span class='hs-layout'>)</span> <span class='hs-varid'>events</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-  <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>o</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t:observability"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppObs</span> <span class='hs-varid'>o</span><span class='hs-layout'>)</span> <span class='hs-varid'>obss</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-    <span class='hs-str'>"\n\t)"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>e</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppEvent</span> <span class='hs-varid'>e</span><span class='hs-layout'>)</span> <span class='hs-varid'>events</span> <span class='hs-varop'>++</span>
-  <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>o</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t:observability"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppObs</span> <span class='hs-varid'>o</span><span class='hs-layout'>)</span> <span class='hs-varid'>obss</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-    <span class='hs-str'>"\n\t)"</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:35:6: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>o</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t:observability"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppObs</span> <span class='hs-varid'>o</span><span class='hs-layout'>)</span> <span class='hs-varid'>obss</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>"\n\t)"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>o</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t:observability"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppObs</span> <span class='hs-varid'>o</span><span class='hs-layout'>)</span> <span class='hs-varid'>obss</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>"\n\t)"</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:39:26: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>pres</span> <span class='hs-str'>"\t\t\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>"\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-str'>":effect "</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>effect</span> <span class='hs-str'>"\t\t\t"</span><span class='hs-layout'>)</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>ppForm</span> <span class='hs-varid'>pres</span> <span class='hs-str'>"\t\t\t"</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>"\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-str'>":effect "</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>effect</span> <span class='hs-str'>"\t\t\t"</span><span class='hs-layout'>)</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:40:6: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-str'>":effect "</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>effect</span> <span class='hs-str'>"\t\t\t"</span><span class='hs-layout'>)</span></pre>
-Perhaps<br/>
-<pre><span class='hs-str'>":effect "</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppForm</span> <span class='hs-varid'>effect</span> <span class='hs-str'>"\t\t\t"</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:43:26: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>pres</span> <span class='hs-str'>"\t\t\t\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>"\n\t\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-str'>":effect "</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>effect</span> <span class='hs-str'>"\t\t\t\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n\t\t)"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>ppForm</span> <span class='hs-varid'>pres</span> <span class='hs-str'>"\t\t\t\t"</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>"\n\t\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-str'>":effect "</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>effect</span> <span class='hs-str'>"\t\t\t\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n\t\t)"</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:44:20: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>effect</span> <span class='hs-str'>"\t\t\t\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n\t\t)"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>ppForm</span> <span class='hs-varid'>effect</span> <span class='hs-str'>"\t\t\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n\t\t)"</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:49:31: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-definition'>ppObsType</span> <span class='hs-varid'>obsType</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-str'>" ?"</span> <span class='hs-varop'>++</span><span class='hs-layout'>)</span> <span class='hs-varid'>ags</span><span class='hs-layout'>)</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>ppObsType</span> <span class='hs-varid'>obsType</span> <span class='hs-varop'>++</span> <span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-str'>" ?"</span> <span class='hs-varop'>++</span><span class='hs-layout'>)</span> <span class='hs-varid'>ags</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:54:46: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>ss</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>" ("</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-str'>" "</span> <span class='hs-varop'>++</span><span class='hs-layout'>)</span> <span class='hs-varid'>ss</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span><span class='hs-layout'>)</span> <span class='hs-varid'>sss</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>ss</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>" ("</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-str'>" "</span> <span class='hs-varop'>++</span><span class='hs-layout'>)</span> <span class='hs-varid'>ss</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span><span class='hs-layout'>)</span> <span class='hs-varid'>sss</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>")"</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:54:73: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-str'>" "</span> <span class='hs-varop'>++</span><span class='hs-layout'>)</span> <span class='hs-varid'>ss</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-str'>" "</span> <span class='hs-varop'>++</span><span class='hs-layout'>)</span> <span class='hs-varid'>ss</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-
-</div>
-
-<div class="hint1 file1">
-./src/PrintPDDL.hs:58:36: Suggestion: Move brackets to avoid $<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>f</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>ppForm</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:59:54: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>f</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>f</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
-   <span class='hs-varid'>fs</span><span class='hs-layout'>)</span>
-  <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>f</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>f</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
-  <span class='hs-varid'>fs</span>
-  <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-
-</div>
-
-<div class="hint1 file1">
-./src/PrintPDDL.hs:59:82: Suggestion: Move brackets to avoid $<br/>
-Found<br/>
-<pre><span class='hs-definition'>indent</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>f</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>indent</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppForm</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:60:52: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>f</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>f</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
-   <span class='hs-varid'>fs</span><span class='hs-layout'>)</span>
-  <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>f</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>f</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
-  <span class='hs-varid'>fs</span>
-  <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-
-</div>
-
-<div class="hint1 file1">
-./src/PrintPDDL.hs:60:80: Suggestion: Move brackets to avoid $<br/>
-Found<br/>
-<pre><span class='hs-definition'>indent</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>f</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>indent</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppForm</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span></pre>
-
-</div>
-
-<div class="hint1 file1">
-./src/PrintPDDL.hs:61:44: Suggestion: Move brackets to avoid $<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>f1</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>f2</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>ppForm</span> <span class='hs-varid'>f1</span> <span class='hs-layout'>(</span><span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>f2</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-
-</div>
-
-<div class="hint1 file1">
-./src/PrintPDDL.hs:61:76: Suggestion: Move brackets to avoid $<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>f2</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>ppForm</span> <span class='hs-varid'>f2</span> <span class='hs-layout'>(</span><span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-
-</div>
-
-<div class="hint1 file1">
-./src/PrintPDDL.hs:62:57: Suggestion: Move brackets to avoid $<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>f</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>ppForm</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:64:17: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>ppVars</span> <span class='hs-varid'>vt</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span>
-    <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span>
-      <span class='hs-str'>"\t"</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>f</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>ppVars</span> <span class='hs-varid'>vt</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span>
-    <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span>
-      <span class='hs-str'>"\t"</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>f</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-
-</div>
-
-<div class="hint1 file1">
-./src/PrintPDDL.hs:65:29: Suggestion: Move brackets to avoid $<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>f</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>ppForm</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:68:17: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>ppVars</span> <span class='hs-varid'>vt</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span>
-    <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span>
-      <span class='hs-str'>"\twhen "</span> <span class='hs-varop'>++</span>
-        <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>fw</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-          <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span>
-            <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span>
-              <span class='hs-str'>"\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>ft</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>ppVars</span> <span class='hs-varid'>vt</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span>
-    <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span>
-      <span class='hs-str'>"\twhen "</span> <span class='hs-varop'>++</span>
-        <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>fw</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-          <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span>
-            <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span>
-              <span class='hs-str'>"\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>ft</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-
-</div>
-
-<div class="hint1 file1">
-./src/PrintPDDL.hs:69:34: Suggestion: Move brackets to avoid $<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>fw</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span>
-    <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span>
-      <span class='hs-str'>"\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>ft</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>ppForm</span> <span class='hs-varid'>fw</span> <span class='hs-layout'>(</span><span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span>
-    <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span>
-      <span class='hs-str'>"\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>ft</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-
-</div>
-
-<div class="hint1 file1">
-./src/PrintPDDL.hs:70:31: Suggestion: Move brackets to avoid $<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>ft</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>ppForm</span> <span class='hs-varid'>ft</span> <span class='hs-layout'>(</span><span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:73:17: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>ppVars</span> <span class='hs-varid'>vt</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span>
-    <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span>
-      <span class='hs-str'>"\t"</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>f</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>ppVars</span> <span class='hs-varid'>vt</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span>
-    <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span>
-      <span class='hs-str'>"\t"</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>f</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-
-</div>
-
-<div class="hint1 file1">
-./src/PrintPDDL.hs:74:29: Suggestion: Move brackets to avoid $<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>f</span> <span class='hs-varop'>$</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>ppForm</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>indent</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:82:21: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>o</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppObj</span> <span class='hs-varid'>o</span><span class='hs-layout'>)</span> <span class='hs-varid'>objects</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>")\n\t"</span> <span class='hs-varop'>++</span>
-    <span class='hs-str'>"(:init"</span> <span class='hs-varop'>++</span>
-      <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>p</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppPred</span> <span class='hs-varid'>p</span><span class='hs-layout'>)</span> <span class='hs-varid'>init</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-        <span class='hs-str'>")\n\t"</span> <span class='hs-varop'>++</span>
-          <span class='hs-str'>"(:worlds\n"</span> <span class='hs-varop'>++</span>
-            <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-varid'>ppWorld</span> <span class='hs-varid'>worlds</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-              <span class='hs-str'>"\t)\n\n\t"</span> <span class='hs-varop'>++</span>
-                <span class='hs-str'>"(:observability"</span> <span class='hs-varop'>++</span>
-                  <span class='hs-varid'>ppObs</span> <span class='hs-layout'>(</span><span class='hs-varid'>head</span> <span class='hs-varid'>obss</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-                    <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>o</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t :observability"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppObs</span> <span class='hs-varid'>o</span><span class='hs-layout'>)</span> <span class='hs-varop'>$</span> <span class='hs-varid'>tail</span> <span class='hs-varid'>obss</span><span class='hs-layout'>)</span>
-                      <span class='hs-varop'>++</span>
-                      <span class='hs-str'>")\n\t"</span> <span class='hs-varop'>++</span> <span class='hs-str'>"(:goal\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>goal</span> <span class='hs-str'>"\t\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n\t)\n)\n"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>o</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppObj</span> <span class='hs-varid'>o</span><span class='hs-layout'>)</span> <span class='hs-varid'>objects</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>")\n\t"</span> <span class='hs-varop'>++</span>
-    <span class='hs-str'>"(:init"</span> <span class='hs-varop'>++</span>
-      <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>p</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppPred</span> <span class='hs-varid'>p</span><span class='hs-layout'>)</span> <span class='hs-varid'>init</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-        <span class='hs-str'>")\n\t"</span> <span class='hs-varop'>++</span>
-          <span class='hs-str'>"(:worlds\n"</span> <span class='hs-varop'>++</span>
-            <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-varid'>ppWorld</span> <span class='hs-varid'>worlds</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-              <span class='hs-str'>"\t)\n\n\t"</span> <span class='hs-varop'>++</span>
-                <span class='hs-str'>"(:observability"</span> <span class='hs-varop'>++</span>
-                  <span class='hs-varid'>ppObs</span> <span class='hs-layout'>(</span><span class='hs-varid'>head</span> <span class='hs-varid'>obss</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-                    <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>o</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t :observability"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppObs</span> <span class='hs-varid'>o</span><span class='hs-layout'>)</span> <span class='hs-varop'>$</span> <span class='hs-varid'>tail</span> <span class='hs-varid'>obss</span><span class='hs-layout'>)</span>
-                      <span class='hs-varop'>++</span>
-                      <span class='hs-str'>")\n\t"</span> <span class='hs-varop'>++</span> <span class='hs-str'>"(:goal\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>goal</span> <span class='hs-str'>"\t\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n\t)\n)\n"</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:83:18: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>p</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppPred</span> <span class='hs-varid'>p</span><span class='hs-layout'>)</span> <span class='hs-varid'>init</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>")\n\t"</span> <span class='hs-varop'>++</span>
-    <span class='hs-str'>"(:worlds\n"</span> <span class='hs-varop'>++</span>
-      <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-varid'>ppWorld</span> <span class='hs-varid'>worlds</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-        <span class='hs-str'>"\t)\n\n\t"</span> <span class='hs-varop'>++</span>
-          <span class='hs-str'>"(:observability"</span> <span class='hs-varop'>++</span>
-            <span class='hs-varid'>ppObs</span> <span class='hs-layout'>(</span><span class='hs-varid'>head</span> <span class='hs-varid'>obss</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-              <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>o</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t :observability"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppObs</span> <span class='hs-varid'>o</span><span class='hs-layout'>)</span> <span class='hs-varop'>$</span> <span class='hs-varid'>tail</span> <span class='hs-varid'>obss</span><span class='hs-layout'>)</span>
-                <span class='hs-varop'>++</span>
-                <span class='hs-str'>")\n\t"</span> <span class='hs-varop'>++</span> <span class='hs-str'>"(:goal\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>goal</span> <span class='hs-str'>"\t\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n\t)\n)\n"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>p</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppPred</span> <span class='hs-varid'>p</span><span class='hs-layout'>)</span> <span class='hs-varid'>init</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>")\n\t"</span> <span class='hs-varop'>++</span>
-    <span class='hs-str'>"(:worlds\n"</span> <span class='hs-varop'>++</span>
-      <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-varid'>ppWorld</span> <span class='hs-varid'>worlds</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-        <span class='hs-str'>"\t)\n\n\t"</span> <span class='hs-varop'>++</span>
-          <span class='hs-str'>"(:observability"</span> <span class='hs-varop'>++</span>
-            <span class='hs-varid'>ppObs</span> <span class='hs-layout'>(</span><span class='hs-varid'>head</span> <span class='hs-varid'>obss</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-              <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>o</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t :observability"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppObs</span> <span class='hs-varid'>o</span><span class='hs-layout'>)</span> <span class='hs-varop'>$</span> <span class='hs-varid'>tail</span> <span class='hs-varid'>obss</span><span class='hs-layout'>)</span>
-                <span class='hs-varop'>++</span>
-                <span class='hs-str'>")\n\t"</span> <span class='hs-varop'>++</span> <span class='hs-str'>"(:goal\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>goal</span> <span class='hs-str'>"\t\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n\t)\n)\n"</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:84:22: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-varid'>ppWorld</span> <span class='hs-varid'>worlds</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>"\t)\n\n\t"</span> <span class='hs-varop'>++</span>
-    <span class='hs-str'>"(:observability"</span> <span class='hs-varop'>++</span>
-      <span class='hs-varid'>ppObs</span> <span class='hs-layout'>(</span><span class='hs-varid'>head</span> <span class='hs-varid'>obss</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-        <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>o</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t :observability"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppObs</span> <span class='hs-varid'>o</span><span class='hs-layout'>)</span> <span class='hs-varop'>$</span> <span class='hs-varid'>tail</span> <span class='hs-varid'>obss</span><span class='hs-layout'>)</span>
-          <span class='hs-varop'>++</span>
-          <span class='hs-str'>")\n\t"</span> <span class='hs-varop'>++</span> <span class='hs-str'>"(:goal\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>goal</span> <span class='hs-str'>"\t\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n\t)\n)\n"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-varid'>ppWorld</span> <span class='hs-varid'>worlds</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>"\t)\n\n\t"</span> <span class='hs-varop'>++</span>
-    <span class='hs-str'>"(:observability"</span> <span class='hs-varop'>++</span>
-      <span class='hs-varid'>ppObs</span> <span class='hs-layout'>(</span><span class='hs-varid'>head</span> <span class='hs-varid'>obss</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-        <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>o</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t :observability"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppObs</span> <span class='hs-varid'>o</span><span class='hs-layout'>)</span> <span class='hs-varop'>$</span> <span class='hs-varid'>tail</span> <span class='hs-varid'>obss</span><span class='hs-layout'>)</span>
-          <span class='hs-varop'>++</span>
-          <span class='hs-str'>")\n\t"</span> <span class='hs-varop'>++</span> <span class='hs-str'>"(:goal\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>goal</span> <span class='hs-str'>"\t\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n\t)\n)\n"</span></pre>
-
-</div>
-
-<div class="hint1 file1">
-./src/PrintPDDL.hs:85:48: Suggestion: Move brackets to avoid $<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>o</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t :observability"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppObs</span> <span class='hs-varid'>o</span><span class='hs-layout'>)</span> <span class='hs-varop'>$</span> <span class='hs-varid'>tail</span> <span class='hs-varid'>obss</span><span class='hs-layout'>)</span>
-  <span class='hs-varop'>++</span>
-  <span class='hs-str'>")\n\t"</span> <span class='hs-varop'>++</span> <span class='hs-str'>"(:goal\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>goal</span> <span class='hs-str'>"\t\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n\t)\n)\n"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>o</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t :observability"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppObs</span> <span class='hs-varid'>o</span><span class='hs-layout'>)</span> <span class='hs-layout'>(</span><span class='hs-varid'>tail</span> <span class='hs-varid'>obss</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>")\n\t"</span> <span class='hs-varop'>++</span> <span class='hs-str'>"(:goal\n\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>goal</span> <span class='hs-str'>"\t\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n\t)\n)\n"</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:86:24: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>ppForm</span> <span class='hs-varid'>goal</span> <span class='hs-str'>"\t\t"</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n\t)\n)\n"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>ppForm</span> <span class='hs-varid'>goal</span> <span class='hs-str'>"\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n\t)\n)\n"</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:89:29: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-str'>" "</span> <span class='hs-varop'>++</span><span class='hs-layout'>)</span> <span class='hs-varid'>objs</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>" - "</span> <span class='hs-varop'>++</span> <span class='hs-varid'>typedObjs</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-str'>" "</span> <span class='hs-varop'>++</span><span class='hs-layout'>)</span> <span class='hs-varid'>objs</span> <span class='hs-varop'>++</span> <span class='hs-str'>" - "</span> <span class='hs-varop'>++</span> <span class='hs-varid'>typedObjs</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:93:54: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>p</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppPred</span> <span class='hs-varid'>p</span><span class='hs-layout'>)</span> <span class='hs-varid'>truePreds</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span>
-  <span class='hs-str'>"\n\t\t)\n"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>p</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t\t"</span> <span class='hs-varop'>++</span> <span class='hs-varid'>ppPred</span> <span class='hs-varid'>p</span><span class='hs-layout'>)</span> <span class='hs-varid'>truePreds</span> <span class='hs-varop'>++</span> <span class='hs-str'>"\n\t\t)\n"</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:97:24: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>ss</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t("</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-str'>" "</span> <span class='hs-varop'>++</span><span class='hs-layout'>)</span> <span class='hs-varid'>ss</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span><span class='hs-layout'>)</span>
-   <span class='hs-varid'>sss</span><span class='hs-layout'>)</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-varid'>ss</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-str'>"\n\t\t("</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-str'>" "</span> <span class='hs-varop'>++</span><span class='hs-layout'>)</span> <span class='hs-varid'>ss</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span><span class='hs-layout'>)</span> <span class='hs-varid'>sss</span></pre>
-
-</div>
-
-<div class="hint2 file1">
-./src/PrintPDDL.hs:97:56: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-str'>" "</span> <span class='hs-varop'>++</span><span class='hs-layout'>)</span> <span class='hs-varid'>ss</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>concatMap</span> <span class='hs-layout'>(</span><span class='hs-str'>" "</span> <span class='hs-varop'>++</span><span class='hs-layout'>)</span> <span class='hs-varid'>ss</span> <span class='hs-varop'>++</span> <span class='hs-str'>")"</span></pre>
+<pre><span class='hs-definition'>plan</span> <span class='hs-varop'>/=</span> <span class='hs-conid'>Nothing</span></pre>
+Why not<br/>
+<pre><span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Maybe</span><span class='hs-varop'>.</span><span class='hs-varid'>isJust</span> <span class='hs-varid'>plan</span></pre>
 
 </div>
 
 <div class="hint2 file2">
-./src/Translate.hs:25:32: Suggestion: Redundant bracket<br/>
+./src/Translate.hs:125:21: Suggestion: Avoid lambda<br/>
 Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-conid'>Action</span> <span class='hs-varid'>name</span> <span class='hs-varid'>params</span> <span class='hs-varid'>actor</span> <span class='hs-varid'>events</span> <span class='hs-varid'>obss</span><span class='hs-layout'>)</span> <span class='hs-conop'>:</span> <span class='hs-varid'>actions</span></pre>
-Perhaps<br/>
-<pre><span class='hs-conid'>Action</span> <span class='hs-varid'>name</span> <span class='hs-varid'>params</span> <span class='hs-varid'>actor</span> <span class='hs-varid'>events</span> <span class='hs-varid'>obss</span> <span class='hs-conop'>:</span> <span class='hs-varid'>actions</span></pre>
-
-</div>
-
-<div class="hint3 file2">
-./src/Translate.hs:29:24: Suggestion: Use tuple-section<br/>
-Found<br/>
-<pre><span class='hs-keyglyph'>\</span> <span class='hs-varid'>model</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-layout'>(</span><span class='hs-varid'>name</span><span class='hs-layout'>,</span> <span class='hs-varid'>model</span><span class='hs-layout'>)</span></pre>
-Perhaps<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-varid'>name</span><span class='hs-layout'>,</span><span class='hs-layout'>)</span></pre>
-<span class='note'>Note: may require <tt>{-# LANGUAGE TupleSections #-}</tt> adding to the top of the file</span>
-</div>
-
-<div class="hint2 file2">
-./src/Translate.hs:31:5: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-definition'>namedModels</span> <span class='hs-varop'>++</span> <span class='hs-layout'>(</span><span class='hs-varid'>translateActions</span> <span class='hs-varid'>atomMap</span> <span class='hs-varid'>objs</span> <span class='hs-varid'>actions</span><span class='hs-layout'>)</span></pre>
-Perhaps<br/>
-<pre><span class='hs-definition'>namedModels</span> <span class='hs-varop'>++</span> <span class='hs-varid'>translateActions</span> <span class='hs-varid'>atomMap</span> <span class='hs-varid'>objs</span> <span class='hs-varid'>actions</span></pre>
-
-</div>
-
-<div class="hint2 file2">
-./src/Translate.hs:89:9: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-conid'>ObsSpec</span> <span class='hs-varid'>ot</span> <span class='hs-varid'>ags</span><span class='hs-layout'>)</span> <span class='hs-conop'>:</span> <span class='hs-varid'>obss</span></pre>
-Perhaps<br/>
-<pre><span class='hs-conid'>ObsSpec</span> <span class='hs-varid'>ot</span> <span class='hs-varid'>ags</span> <span class='hs-conop'>:</span> <span class='hs-varid'>obss</span></pre>
-
-</div>
-
-<div class="hint2 file2">
-./src/Translate.hs:140:22: Suggestion: Redundant bracket<br/>
-Found<br/>
-<pre><span class='hs-layout'>(</span><span class='hs-conid'>TO</span> <span class='hs-varid'>names</span> <span class='hs-varid'>objName</span><span class='hs-layout'>)</span> <span class='hs-conop'>:</span> <span class='hs-varid'>objs</span></pre>
-Perhaps<br/>
-<pre><span class='hs-conid'>TO</span> <span class='hs-varid'>names</span> <span class='hs-varid'>objName</span> <span class='hs-conop'>:</span> <span class='hs-varid'>objs</span></pre>
+<pre><span class='hs-keyglyph'>\</span> <span class='hs-keyword'>as</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>PredSpec</span> <span class='hs-varid'>name</span> <span class='hs-keyword'>as</span></pre>
+Why not<br/>
+<pre><span class='hs-conid'>PredSpec</span> <span class='hs-varid'>name</span></pre>
 
 </div>
 
 </div>
-<script type='text/javascript'>
-show(window.location.hash.slice(1), true);
-</script>
 </body>
 </html>

@@ -17,7 +17,7 @@ main :: IO ()
 main = do
   input <- getInput 
   case input of
-    Right (domFile,prbFile,depth,icSolves) -> do
+    Right (nosemantics, debug, domFile,prbFile,depth,icSolves) -> do
       domain <- readFile domFile
       problem <- readFile prbFile
       let splitIndex = length $ lines domain
@@ -28,13 +28,13 @@ main = do
             let lineNo = if lin < splitIndex then lin else lin - splitIndex
             error ("Parse error in the " ++ fileT ++ " file in line " ++ show lineNo ++ ", column " ++ show col)
           Right pddl -> do
-            processPDDL pddl depth icSolves
-    Left (filename,depth,icSolves) -> do
+            processPDDL pddl depth icSolves debug nosemantics
+    Left (nosemantics, debug, filename,depth,icSolves) -> do
       contents <- readFile filename
       case parse $ alexScanTokens $ contents of --map toLower contents of
           Left (lin,col) -> error ("Parse error in line " ++ show lin ++ ", column " ++ show col)
           Right pddl -> do
-            processPDDL pddl depth icSolves
+            processPDDL pddl depth icSolves debug nosemantics
         {- let (actionModelMap,problem) = pddlToDEL pddl
         disp $ (map snd) actionModelMap
         putStrLn $ tex problem
@@ -45,23 +45,29 @@ main = do
         print problem -}
 
 --A function just for stuff
-processPDDL :: PDDL -> Int -> Bool -> IO ()
-processPDDL pddl depth icSolves = 
+processPDDL :: PDDL -> Int -> Bool -> Bool -> Bool -> IO ()
+processPDDL pddl depth icSolves debug False = 
   case validInput pddl of
     Just str -> do
       putStrLn $ str ++ show pddl -- print error messages
     Nothing -> do
       putStrLn "Succesful parsing"
-      --putStrLn $ ppInput pddl
-      --putStrLn $ show $ pddlToDEL pddl
-      --writeFile fileName $ ppInput pddl --Useful for formatting the file, but loses comments
-      putStrLn $ findShortestICPlan pddl icSolves depth
+      putStrLn $ findShortestICPlan pddl icSolves depth debug
+processPDDL pddl depth icSolves debug True = 
+  putStrLn $ findShortestICPlan pddl icSolves depth debug
+--IF PRINT ENABLED SOME DAY
+--putStrLn $ ppInput pddl
+--putStrLn $ show $ pddlToDEL pddl
+--writeFile fileName $ ppInput pddl --Useful for formatting the file, but loses comments
 
---Returns either (filecontents, depth, icSolves) or (domain, problem, depth, icSolves)
-getInput :: IO (Either (String, Int, Bool) (String, String, Int, Bool))
+
+--Returns 
+--either (nosemanticchecking, debug, filename, depth, icSolves) 
+--or (nosemanticchecking, debug, domainfilename, problemfilename, depth, icSolves)
+getInput :: IO (Either (Bool, Bool, String, Int, Bool) (Bool, Bool, String, String, Int, Bool))
 getInput = do
   args <- getArgs
-  let input = inputFromArgs (Left ("", 0, False)) args
+  let input = inputFromArgs (Left (False, False, "", 0, False)) args
   case input of
     Just contents -> do
       return contents
@@ -75,47 +81,59 @@ getInput = do
         , "  -prb <filename>   parse the problem file\n" 
         , "  -d   <int>        the maximum depth of solution\n" 
         , "  -ic               constrain actions to those where the agent knows it will lead to the goal\n" 
+        , "  --debug           print the states being searched through\n" 
+        , "  --nosemantics     ignore the semantic checker (in case it's buggy)\n" 
         ]
       exitFailure
 
---TODO? add 
 {- TODO add:
-    -verbose option for more detailed error messages (for semantic checker, possibly also for parser)
     -print option with a filename to print out a parsed version of the file
     '-' for stdin 
     -tex to generate a tex file with initial state diagram (non-essential)
     -pdf to generate a pdf file with initial state diagram (non-essential)
 -}
---TODO clean it up lol
---Returns filenames and stuff
-inputFromArgs :: Either (String, Int, Bool) (String, String, Int, Bool) -> [String] -> Maybe (Either (String, Int, Bool) (String, String, Int, Bool))
-inputFromArgs i@(Left (fn, _, _)) [] 
+--TODO clean it up lol (if cabal only worked properly)
+--Returns command line arguments parsed
+inputFromArgs :: Either (Bool, Bool, String, Int, Bool) (Bool, Bool, String, String, Int, Bool) -> [String] -> Maybe (Either (Bool, Bool, String, Int, Bool) (Bool, Bool, String, String, Int, Bool))
+--read nothing
+inputFromArgs i@(Left (_, _, fn, _, _)) [] 
   | fn /= "" = Just i
   | otherwise = Nothing
-inputFromArgs i@(Right (dom, prb, _, _)) [] 
+inputFromArgs i@(Right (_, _, dom, prb, _, _)) [] 
   | dom /= "" && prb /= "" = Just i
   | otherwise = Nothing
-inputFromArgs (Left (fn, _, b)) ("-d":i:args) = 
-  inputFromArgs (Left (fn, read i :: Int, b)) args
-inputFromArgs (Right (df, pf, _, b)) ("-d":i:args) = 
-  inputFromArgs (Right (df, pf, read i :: Int, b)) args
-inputFromArgs (Left (fn, d, b)) ("-dom":dom:args) 
+--Read maximum depth
+inputFromArgs (Left (nos, db, fn, _, b)) ("-d":i:args) = 
+  inputFromArgs (Left (nos, db, fn, read i :: Int, b)) args
+inputFromArgs (Right (nos, db, df, pf, _, b)) ("-d":i:args) = 
+  inputFromArgs (Right (nos, db, df, pf, read i :: Int, b)) args
+--read domain filename
+inputFromArgs (Left (nos, db, fn, d, b)) ("-dom":dom:args) 
   | fn /= "" = Nothing 
-  | otherwise = inputFromArgs (Right (dom, "", d, b)) args
-inputFromArgs (Right (fn, prb, d, b)) ("-dom":dom:args) 
+  | otherwise = inputFromArgs (Right (nos, db, dom, "", d, b)) args
+inputFromArgs (Right (nos, db, fn, prb, d, b)) ("-dom":dom:args) 
   | fn /= "" = Nothing
-  | otherwise = inputFromArgs (Right (dom, prb, d, b)) args
-inputFromArgs (Left (fn, d, b)) ("-prb":prb:args)
+  | otherwise = inputFromArgs (Right (nos, db, dom, prb, d, b)) args
+--read problem filename
+inputFromArgs (Left (nos, db, fn, d, b)) ("-prb":prb:args)
   | fn /= "" = Nothing 
-  | otherwise = inputFromArgs (Right ("", prb, d, b)) args
-inputFromArgs (Right (dom, fn, d, b)) ("-prb":prb:args) 
+  | otherwise = inputFromArgs (Right (nos, db, "", prb, d, b)) args
+inputFromArgs (Right (nos, db, dom, fn, d, b)) ("-prb":prb:args) 
   | fn /= "" = Nothing
-  | otherwise = inputFromArgs (Right (dom, prb, d, b)) args
-inputFromArgs (Left (fn, d, _)) ("-ic":args) = inputFromArgs (Left (fn, d, True)) args
-inputFromArgs (Right (dom, prb, d, _)) ("-ic":args) = inputFromArgs (Right (dom, prb, d, True)) args
-inputFromArgs (Left (fo, d, b)) (fn:args) 
+  | otherwise = inputFromArgs (Right (nos, db, dom, prb, d, b)) args
+--read implicit coordination flag
+inputFromArgs (Left (nos, db, fn, d, _)) ("-ic":args) = inputFromArgs (Left (nos, db, fn, d, True)) args
+inputFromArgs (Right (nos, db, dom, prb, d, _)) ("-ic":args) = inputFromArgs (Right (nos, db, dom, prb, d, True)) args
+--read ignore semantic checker flag
+inputFromArgs (Left (_, db, fn, d, ic)) ("--nosemantics":args) = inputFromArgs (Left (True, db, fn, d, ic)) args
+inputFromArgs (Right (_, db, dom, prb, d, ic)) ("--nosemantics":args) = inputFromArgs (Right (True, db, dom, prb, d, ic)) args
+--read debug flag
+inputFromArgs (Left (nos, _, fn, d, ic)) ("--debug":args) = inputFromArgs (Left (nos, True, fn, d, ic)) args
+inputFromArgs (Right (nos, _, dom, prb, d, ic)) ("--debug":args) = inputFromArgs (Right (nos, True, dom, prb, d, ic)) args
+--Read regular filename
+inputFromArgs (Left (nos, db, fo, d, b)) (fn:args) 
   | fo /= "" = Nothing
-  | otherwise = inputFromArgs (Left (fn, d, b)) args
+  | otherwise = inputFromArgs (Left (nos, db, fn, d, b)) args
 inputFromArgs (Right _) (_:_) = Nothing
 --inputFromArgs _ _ = Nothing
 
