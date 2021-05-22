@@ -78,8 +78,15 @@ getInput = do
         ]
       exitFailure
 
---TODO? add - for stdin 
---TODO add -verbose option for more detailed error messages (for semantic checker, possibly also for parser)
+--TODO? add 
+{- TODO add:
+    -verbose option for more detailed error messages (for semantic checker, possibly also for parser)
+    -print option with a filename to print out a parsed version of the file
+    '-' for stdin 
+    -tex to generate a tex file with initial state diagram (non-essential)
+    -pdf to generate a pdf file with initial state diagram (non-essential)
+-}
+--TODO clean it up lol
 --Returns filenames and stuff
 inputFromArgs :: Either (String, Int, Bool) (String, String, Int, Bool) -> [String] -> Maybe (Either (String, Int, Bool) (String, String, Int, Bool))
 inputFromArgs i@(Left (fn, _, _)) [] 

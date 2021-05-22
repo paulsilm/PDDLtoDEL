@@ -108,8 +108,8 @@ Name : VarName { $1 }
 ActionList : '(' ACT Action ')'  { [$3] }
            | '(' ACT Action ')' ActionList { $3:$5 }
 
-Action : String Params ByAgent EventList OptObsList { Action $1 $2 $3 $4 $5 }
-       | String Params ByAgent Event { Action $1 $2 $3 [$4] [] }
+Action : String Params opt(ByAgent) EventList OptObsList { Action $1 $2 $3 $4 $5 }
+       | String Params opt(ByAgent) Event { Action $1 $2 $3 [$4] [] }
 
 OptObsList : { [] }
            | ObsType OptObsList { $1:$2 }
@@ -204,8 +204,6 @@ FormList : Form { [$1] }
 String : STR { $1 }
 VarName : VAR { $1 }
 
---TODO fix byagent being required
---TODO add equal measuring things
 {
      
 type ParseResult a = Either (Int,Int) a

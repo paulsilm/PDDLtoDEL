@@ -1,6 +1,13 @@
 module PrintPDDL where
 
 import PDDL
+import Lib (concatMapTail)
+import SMCDEL.Language (Prp(..))
+import SMCDEL.Internal.Help ((!))
+import Data.Tuple (swap)
+
+translationForPP :: [(Predicate, Prp)] -> (Prp -> String)
+translationForPP atomMap = \p -> ppPred $ map swap atomMap ! p
 
 ppInput :: PDDL -> String
 ppInput (CheckPDDL domain problem) = ppDomain domain ++ "\n\n" ++ ppProblem problem
@@ -49,7 +56,7 @@ ppAction (Action name params actor events obss) =
   ++ (concatMap (\o -> "\n\t\t:observability" ++ ppObs o) obss) ++ "\n\t)"
 
 ppEvent :: Event -> String 
-ppEvent (Event des "" pres effect) = 
+ppEvent (Event _ "" pres effect) = 
      ":precondition " ++ (ppForm pres "\t\t\t") ++ "\n\t\t"
   ++ ":effect " ++ (ppForm effect "\t\t\t")
 ppEvent (Event des name pres effect) = 
@@ -111,7 +118,4 @@ ppWorld (World des name truePreds) =
   "\n\t(:world-" ++ dess ++ "designated " ++ name ++ (concatMap (\p -> "\n\t\t" ++ ppPred p) truePreds) ++ "\n\t)"
     where dess = if des then "" else "non"
 
-concatMapTail :: (a -> String) -> [a] -> String
-concatMapTail _ [] = []
-concatMapTail pp (a:as) = pp a ++ concatMap pp as
 

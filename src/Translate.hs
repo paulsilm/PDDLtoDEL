@@ -21,7 +21,6 @@ pddlToDEL (CheckPDDL (Domain _ _ _ conss preds actions) (Problem _ _ objects ini
   in
     CoopTask kripkeModel actionModelMap (pddlFormToDelForm goal atomMap [(o,o) | (TO os _) <- allObjects, o <- os] allObjects)
 
---Problem: Observabilities are yet to be translated.
 --Translates the PDDL actions to a list of actionModels
 translateActions :: [(Predicate, Prp)] -> [TypedObjs] -> [PDDL.Action] -> [Owned MultipointedActionModelS5]
 translateActions _ _ [] = []
@@ -29,13 +28,14 @@ translateActions atomMap objs (a@(Action name params _ _ _):actions) =
   let 
     paramMaps = parameterMaps params objs
     actionModels = map (actionToActionModel atomMap objs a) paramMaps 
-    ownedModels = map (\(actress,model, paramNames) -> (actress, (actress ++ ": " ++ name ++ " " ++ show paramNames,model))) actionModels
+    actorName actor = if actor == "" then "" else actor ++ ": " 
+    ownedModels = map (\(actress,model,paramNames) -> (actress, (actorName actress ++ name ++ " " ++ show paramNames,model))) actionModels
   in
     ownedModels ++ (translateActions atomMap objs actions)
 
 --Translates the PDDL action to a tuple (actor,actionmodel,parameter objects), based on a specific parameter to object map
 actionToActionModel :: [(Predicate, Prp)] -> [TypedObjs] -> PDDL.Action -> [(String,String)] -> (String,MultipointedActionModelS5, [String])
-actionToActionModel atomMap objs (Action name params actor events obss) varMap =
+actionToActionModel atomMap objs (Action _ params actor events obss) varMap =
   let
     convertedEvents = [(b,n,pddlFormToDelForm pre atomMap varMap objs,
                             formToMap (pddlFormToDelForm eff atomMap varMap objs)) 
@@ -46,7 +46,7 @@ actionToActionModel atomMap objs (Action name params actor events obss) varMap =
     agentRels = [ (ag, map (map translateEvent) $ eventPart (getObs convertedObss ag) convertedEvents) -- translate partition (String->Int)
                 | ag <- getObjNames "agent" objs]
     actualEvents = [i | ((des,_,_,_), i) <- eventMap, des]
-    actress = varMap ! actor
+    actress = if actor == "" then "" else varMap ! actor
   in
     (actress, (ActMS5 [(i, (pre, eff)) | ((_,_,pre,eff), i) <- eventMap ] agentRels, actualEvents), [varMap ! p | (VTL ps _) <- params, p <- ps])
 
@@ -155,7 +155,7 @@ typify (VTL objs objType) = zip objs $ replicate (length objs) objType
 --  mapping between variable names and the specific object it refers to in its corresponding DEL action/state instance
 --  objects in the problem file, used for forall and exists statements
 pddlFormToDelForm :: PDDL.Form -> [(Predicate, Prp)] -> [(String, String)] -> [TypedObjs] -> SMCDEL.Language.Form 
-pddlFormToDelForm (Atom (PredEq n1 n2)) atomMap objectMap _
+pddlFormToDelForm (Atom (PredEq n1 n2)) _ objectMap _
   | objectMap ! n1 == objectMap ! n2 = Top
   | otherwise = Bot
 --pddlFormToDelForm (Atom (PredDef name vars)) atomMap objectMap _ = Bot
@@ -167,7 +167,7 @@ pddlFormToDelForm (Not f) pm om os = Neg $ pddlFormToDelForm f pm om os
 pddlFormToDelForm (And fs) pm om os = Conj $ map (\f -> pddlFormToDelForm f pm om os) fs
 pddlFormToDelForm (Or fs) pm om os = Disj $ map (\f -> pddlFormToDelForm f pm om os) fs
 pddlFormToDelForm (Imply f1 f2) pm om os = Impl (pddlFormToDelForm f1 pm om os) (pddlFormToDelForm f2 pm om os)
---Singleton cases (Forall, ForallWhen, Exists) e.g. forall (?b1 ?b2 - bricks) ...--TODO add semantic checker to avoid forall []
+--Singleton cases (Forall, ForallWhen, Exists) e.g. forall (?b1 ?b2 - bricks) ...
 pddlFormToDelForm (PDDL.Forall [(VTL vars objType)] f) pmap oMap ojs = 
   Conj [pddlFormToDelForm f pmap ((var,objName):oMap) ojs 
         | objName <- (getObjNames objType ojs)
@@ -181,7 +181,7 @@ pddlFormToDelForm (ForallWhen [(VTL vars objType)] f1 f2) pmap oMap ojs =
           (pddlFormToDelForm f1 pmap ((var,objName):oMap) ojs) 
           (pddlFormToDelForm f2 pmap ((var,objName):oMap) ojs) 
         | objName <- (getObjNames objType ojs)
-        , var <- vars]
+        , var <- vars] --TODO double-check if this is valid
 --Permutation cases (Forall, ForallWhen, Exists) e.g. forall (?b1 ?b2 - bricks ?a - agent) ...
 pddlFormToDelForm (PDDL.Forall ((VTL vars objType):vts) f) pmap oMap ojs = 
   Conj [pddlFormToDelForm (PDDL.Forall vts f) pmap ((var,objName):oMap) ojs 
@@ -194,17 +194,9 @@ pddlFormToDelForm (PDDL.Exists ((VTL vars objType):vts) f) pmap oMap ojs =
 pddlFormToDelForm (ForallWhen ((VTL vars objType):vts) f1 f2) pmap oMap ojs = 
   Conj [pddlFormToDelForm (ForallWhen vts f1 f2) pmap ((var,objName):oMap) ojs 
         | objName <- (getObjNames objType ojs)
-        , var <- vars]
+        , var <- vars] --Add the variables to the object map and move to next type
 --Agent knows about something
 pddlFormToDelForm (Knows ag f) pmap oMap ojs = K (oMap ! ag) $ pddlFormToDelForm f pmap oMap ojs
-{-
-data Form = Atom Predicate 
-          | Imply Form Form
-          | Forall [VarType] Form
-          | ForallWhen [VarType] Form Form
-          | Exists [VarType] Form 
-          | Knows String Form
--}
 
 -- Takes the list of all variables, and returns the permutation (list of lists) 
 -- of mappings from variable to object names
