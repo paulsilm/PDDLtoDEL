@@ -24,7 +24,6 @@ data Req = Strips
          | Adl
           deriving (Show, Eq)
 
--- ? TODO maybe can remove the need for var? Also in Obs
 -- Predicate: Atomic name | Definition name typed_variables | Specific name object_names
 data Predicate = PredAtom String
                | PredDef String [VarType]

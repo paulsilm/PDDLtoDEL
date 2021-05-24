@@ -5,6 +5,10 @@ import Translate
 import Lib
 import SMCDEL.Internal.Help ((!))
 
+--TODO check that preconditions are satisfiable for one and only one designated event in each action
+--TODO Change parsing to allow no worlds be defined.
+--TODO also make sure that it is indeed allowed to not have any agents in an action.
+
 --Checks whether the input is semantically consistent, if not returns a Just String with
 --an error message
 validInput :: PDDL -> Maybe String
