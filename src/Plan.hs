@@ -36,8 +36,8 @@ dls d debug (CoopTask now acts goal)
                   | a@(agent,(label,act)) <- acts
                   , now |= preOf act           -- action must be executable
                   , now |= K agent (preOf act) -- agent must know that it is executable!
-                  , if debug then trace (label ++ "\t" ++ show now) True else True
                   , now /= update now act      -- ignore useless actions
+                  , if debug then trace (label ++ "\t" ++ show now) True else True
                   , continue <- dls (d-1) debug (CoopTask (update now act) acts goal) -- DFS!
                   , icSolves (CoopTask now acts goal) (a:continue) ]
 
@@ -53,8 +53,8 @@ bfs maxDepth debug (CoopTask start acts goal) = loop [([],start)] where
                       , a@(agent,(label,act)) <- acts
                       , now |= preOf act           -- action must be executable
                       , now |= K agent (preOf act) -- agent must know that it is executable!
-                      , if debug then trace (label ++ "\t" ++ show now) True else True
                       , now /= update now act      -- ignore useless actions
+                      , if debug then trace (label ++ "\t" ++ show now) True else True
                       ]
 
 

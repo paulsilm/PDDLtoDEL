@@ -5,6 +5,7 @@ import SMCDEL.Explicit.S5
 import SMCDEL.Language (Prp(..), Form(..))
 import SMCDEL.Internal.Help ((!))
 import SMCDEL.Other.Planning
+import Debug.Trace
 
 
 type DelEvent = (Bool,String,SMCDEL.Language.Form,[(Prp,SMCDEL.Language.Form)])
@@ -29,7 +30,9 @@ translateActions atomMap objs (a@(Action name params _ _ _):actions) =
     paramMaps = parameterMaps params objs
     actionModels = map (actionToActionModel atomMap objs a) paramMaps 
     actorName actor = if actor == "" then "" else actor ++ ": " 
-    ownedModels = map (\(actress,model,paramNames) -> (actress, (actorName actress ++ name ++ " " ++ show paramNames,model))) actionModels
+    addModel ms = if ms == [] then [actionToActionModel atomMap objs a []] else ms
+    allModels = addModel actionModels
+    ownedModels = map (\(actress,model,paramNames) -> (actress, (actorName actress ++ name ++ " " ++ show paramNames,model))) allModels
   in
     ownedModels ++ (translateActions atomMap objs actions)
 
