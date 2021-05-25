@@ -54,10 +54,13 @@ actionToActionModel atomMap objs (Action _ params actor events obss) varMap =
     (actress, (ActMS5 [(i, (pre, eff)) | ((_,_,pre,eff), i) <- eventMap ] agentRels, actualEvents), [varMap ! p | (VTL ps _) <- params, p <- ps])
 
 --translates the effect formula to a list of predicate tuples
+-- TODO: check that no Prp is contained more than once here!
 formToMap :: SMCDEL.Language.Form -> [(Prp,SMCDEL.Language.Form)]
 formToMap (Conj preds) = concatMap formToMap preds
 formToMap (Neg (PrpF p)) = [(p,Bot)]
 formToMap (PrpF p) = [(p,Top)]
+formToMap (Impl f (     PrpF p )) = [(p, Conj [Impl f Top, Impl (Neg f) $ PrpF p])]
+formToMap (Impl f (Neg (PrpF p))) = [(p, Conj [Impl f Bot, Impl (Neg f) $ PrpF p])]
 
 --Adds objects to their suiting types
 addConstantsToObjs :: [TypedObjs] -> [TypedObjs] -> [TypedObjs]
