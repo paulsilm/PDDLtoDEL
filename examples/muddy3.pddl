@@ -1,7 +1,7 @@
 (define (domain muddy)
     (:requirements :strips :typing)
-    (:types agent)
-    ;(:constants A1 A2 A3 - agent)
+    (:types agent useless)
+    (:constants A1 A2 A3 God - agent)
     (:predicates
         (muddy ?a - agent)
         ;(aware ?a - agent);whether the agent knows the other agents know their muddiness
@@ -12,10 +12,10 @@
         :parameters (?a - agent)
         :byagent ?a
         :precondition
-            ;(and 
-                ;(forall (?a1 - agent) (aware ?a1))
+            (and 
+                (= ?a God)
                 (exists (?b - agent) (muddy ?b))
-            ;)
+            )
         :effect
             (and)
     )
@@ -26,9 +26,12 @@
         :parameters (?a - agent)
         :byagent ?a
         :precondition 
-            (not
-                (or (knows ?a (muddy ?a))
-                        (knows ?a (not (muddy ?a)))
+            (and 
+                (not (= ?a God))
+                (not
+                    (or (knows ?a (muddy ?a))
+                            (knows ?a (not (muddy ?a)))
+                    )
                 )
             )
         :effect (and)
@@ -39,8 +42,10 @@
         :parameters (?a - agent)
         :byagent ?a
         :precondition 
-                (or (knows ?a (muddy ?a))
-                        (knows ?a (not (muddy ?a)))
+                (and (not (= ?a God))
+                    (or (knows ?a (muddy ?a))
+                            (knows ?a (not (muddy ?a)))
+                    )
                 )
         :effect (and)
     )
@@ -121,9 +126,7 @@
 
 (define (problem muddy-3)
     (:domain muddy)
-    (:objects
-         A1 A2 A3 - agent
-    )
+    (:objects Uselessobj - useless)
     ; All agents know that other agents know whether they're muddy or not
     (:init)
         (:world-nondesignated ccc)

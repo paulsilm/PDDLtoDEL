@@ -17,24 +17,24 @@ pddlToDEL (CheckPDDL (Domain _ _ _ conss preds actions) (Problem _ _ objects ini
   let
     allObjects = addConstantsToObjs conss objects
     atomMap = getAtomMap allObjects preds 
-    actionModelMap = translateActions atomMap allObjects actions
+    actionModelMap = translateActions atomMap allObjects conss actions
     kripkeModel = problemToKripkeModel atomMap (Problem "" "" allObjects initPreds parsedWorlds obss goal)
   in
     CoopTask kripkeModel actionModelMap (pddlFormToDelForm goal atomMap [(o,o) | (TO os _) <- allObjects, o <- os] allObjects)
 
 --Translates the PDDL actions to a list of actionModels
-translateActions :: [(Predicate, Prp)] -> [TypedObjs] -> [PDDL.Action] -> [Owned MultipointedActionModelS5]
-translateActions _ _ [] = []
-translateActions atomMap objs (a@(Action name params _ _ _):actions) =
+translateActions :: [(Predicate, Prp)] -> [TypedObjs] -> [TypedObjs] -> [PDDL.Action] -> [Owned MultipointedActionModelS5]
+translateActions _ _ _ [] = []
+translateActions atomMap objs conss (a@(Action name params _ _ _):actions) =
   let 
-    paramMaps = parameterMaps params objs
+    paramMaps = map ([(o,o) | (TO os _) <- conss, o <- os] ++) (parameterMaps params objs)
     actionModels = map (actionToActionModel atomMap objs a) paramMaps 
     actorName actor = if actor == "" then "" else actor ++ ": " 
     addModel ms = if ms == [] then [actionToActionModel atomMap objs a []] else ms
     allModels = addModel actionModels
     ownedModels = map (\(actress,model,paramNames) -> (actress, (actorName actress ++ name ++ " " ++ show paramNames,model))) allModels
   in
-    ownedModels ++ (translateActions atomMap objs actions)
+    ownedModels ++ (translateActions atomMap objs conss actions)
 
 --Translates the PDDL action to a tuple (actor,actionmodel,parameter objects), based on a specific parameter to object map
 actionToActionModel :: [(Predicate, Prp)] -> [TypedObjs] -> PDDL.Action -> [(String,String)] -> (String,MultipointedActionModelS5, [String])
