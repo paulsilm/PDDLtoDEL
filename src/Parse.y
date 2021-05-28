@@ -97,10 +97,12 @@ PredicateList : { [] }
               | '(' Predicate ')' PredicateList { $2:$4 }
 
 Predicate : String { PredAtom $1 }
-          | String VarList { PredSpec $1 $2}
-          | String StringList { PredSpec $1 $2}
-          | String VarTypeList { PredDef $1 $2 }
+          | String NameList { PredSpec $1 $2 }
+          | String NameList '-' String opt(VarTypeList) { PredDef $1 ((VTL $2 $4):$5) }
           | '=' Name Name { PredEq $2 $3 }
+
+NameList : Name { [$1] }
+         | Name NameList { $1:$2 }
 
 Name : VarName { $1 }
      | String { $1 }
@@ -145,7 +147,7 @@ DomainName : DOMNAME String { $2 }
 
 getInit : INIT PredicateList ')' '(' { $2 }
 
-getObsList : ObsList ')' '(' { $1 }
+getObsList : ObsList { $1 }
 
 Problem : '(' DEF
                    '(' PROBLEMNAME String ')'
@@ -157,8 +159,9 @@ Problem : '(' DEF
                     GOAL Form ')'
                 ')' { Problem $5 $9 $13 $16 $17 $18 $20 }
 
-TypedObjsList : TypedObjs { [$1] }
-            | TypedObjs TypedObjsList { $1:$2 }
+TypedObjsList : { [] }
+              | TypedObjs { [$1] }
+              | TypedObjs TypedObjsList { $1:$2 }
 
 TypedObjs : StringList '-' String { TO $1 $3 }
 
@@ -168,8 +171,8 @@ WorldList : IsWorldDesignated String PredicateList ')' '(' { [World $1 $2 $3] }
 IsWorldDesignated : WDES { True }
                   | WNON { False }
 
-ObsList : ObsType { [$1] }
-        | ObsType ObsList { $1:$2 }
+ObsList : ObsType ')' '(' { [$1] }
+        | ObsType ')' '(' ObsList { $1:$4 }
 
 ObsType : Obs VarList { ObsSpec $1 $2}
         | Obs StringList { ObsSpec $1 $2}
@@ -196,7 +199,7 @@ Form : '(' Predicate ')' { Atom $2 }
      | '(' 'Forall' '(' VarTypeList ')' Form ')' { Forall $4 $6 }
      | '(' 'Forall' '(' VarTypeList ')' WHEN Form Form ')' { ForallWhen $4 $7 $8 } 
      | '(' 'Exists' '(' VarTypeList ')' Form ')' { Exists $4 $6 }
-     | '(' KNOWS VarName Form ')' { Knows $3 $4 }
+     | '(' KNOWS Name Form ')' { Knows $3 $4 }
 
 FormList : Form { [$1] } 
          | Form FormList { $1:$2 }

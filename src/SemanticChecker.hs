@@ -8,6 +8,7 @@ import SMCDEL.Internal.Help ((!))
 --TODO check that preconditions are satisfiable for one and only one designated event in each action
 --TODO Change parsing to allow no worlds be defined.
 --TODO also make sure that it is indeed allowed to not have any agents in an action.
+--TODO allow wider range of formulas in preconditions again
 
 --Checks whether the input is semantically consistent, if not returns a Just String with
 --an error message
@@ -156,26 +157,26 @@ allDifferent (x:xs) = notElem x xs && allDifferent xs
 --e.g., (PredSpec "connected" ["agent", "agent"]) (achieved by using Translate.typify)
 --and a map from variable names to their corresponding type
 validForm :: [Predicate] -> [(String,String)] -> Form -> (Bool,String)
-validForm ps os (And preds) = 
-  case [ err | (False, err) <- map (validLiteral ps os) preds] of 
+validForm ps os (And forms) = 
+  case [ err | (False, err) <- map (validForm ps os) forms] of 
     [] -> (True, "")
     errors -> (False, "(and " ++ concatMap (\e -> "(" ++ e ++ ") ") errors ++ ")")
-validForm ps os (Or preds) = 
-  case [ err | (False, err) <- map (validLiteral ps os) preds] of 
+validForm ps os (Or forms) = 
+  case [ err | (False, err) <- map (validForm ps os) forms] of 
     [] -> (True, "")
     errors -> (False, "(or " ++ concatMap (\e -> "(" ++ e ++ ") ") errors ++ ")")
 validForm ps os (Not f) = 
   case validForm ps os f of
     (True,_) -> (True,"")
     (False, err) -> (False,"not (" ++ err ++ ")")
-validForm ps os (Imply p1 p2) = 
-  case validLiteral ps os p1 of
+validForm ps os (Imply f1 f2) = 
+  case validForm ps os f1 of
     (True,_) -> 
-      case validLiteral ps os p2 of
+      case validForm ps os f2 of
         (True,_) -> (True,"")
         (False,err) -> (False, "(_ -> (" ++ err ++ "))")
     (False,err1) ->
-      case validLiteral ps os p2 of
+      case validLiteral ps os f2 of
         (True,_) -> (False, "((" ++ err1 ++ ") -> _ )")
         (False,err2) -> (False, "((imply (" ++ err1 ++ ") -> (" ++ err2 ++ ")")
 validForm _ _ (Forall [] _) = (False, "(Forall ### missing typed variables ### _)")

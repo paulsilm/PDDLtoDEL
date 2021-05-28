@@ -54,7 +54,7 @@ actionToActionModel atomMap objs (Action _ params actor events obss) varMap =
     (actress, (ActMS5 [(i, (pre, eff)) | ((_,_,pre,eff), i) <- eventMap ] agentRels, actualEvents), [varMap ! p | (VTL ps _) <- params, p <- ps])
 
 --translates the effect formula to a list of predicate tuples
--- TODO: check that no Prp is contained more than once here!
+-- TODO: check that no Prp is contained more than once here! also check that in this case implication is only applied to a [conj of] predicate
 formToMap :: SMCDEL.Language.Form -> [(Prp,SMCDEL.Language.Form)]
 formToMap (Conj preds) = concatMap formToMap preds
 formToMap (Neg (PrpF p)) = [(p,Bot)]
