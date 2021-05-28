@@ -12,6 +12,7 @@ import SMCDEL.Other.Planning
 import Plan
 import Data.Char
 import SMCDEL.Explicit.S5 
+import Debug.Trace
 
 main :: IO ()
 main = do
@@ -36,6 +37,7 @@ main = do
           Right pddl -> do
             processPDDL args pddl
 
+--TODO clean up
 --A function for processing the pddl file according to the requests of the user
 --Arguments (-pdf, -tex, -print, --debug, --nosemantics, -d, -ic)
 processPDDL :: Arguments -> PDDL -> IO ()
@@ -45,20 +47,20 @@ processPDDL (pdf, texM, printFile, debug, False, depth, ic) pddl =
       printParsedPDDL printFile pddl --print original file
       putStrLn $ str ++ show pddl -- print error messages
       case pddlToDEL pddl of
-        (CoopTask problem _ _) -> 
-          printModel pdf texM problem --print the tex file of the model, if desired
+        (CoopTask problem actions _) -> do
+          printModel pdf texM problem actions --print the tex file of the model, if desired
     Nothing -> do
       putStrLn "Successful parsing"
       printParsedPDDL printFile pddl
       putStrLn $ findShortestICPlan pddl ic depth debug
       case pddlToDEL pddl of
-        (CoopTask problem _ _) -> 
-          printModel pdf texM problem
+        (CoopTask problem actions _) -> do
+          printModel pdf texM problem actions
 processPDDL (pdf, texM, printFile, debug, True, depth, ic) pddl = 
   do
     case pddlToDEL pddl of
-      (CoopTask problem _ _) -> 
-        printModel pdf texM problem
+      (CoopTask problem actions _) -> do
+        printModel pdf texM problem actions
     printParsedPDDL printFile pddl
     putStrLn $ findShortestICPlan pddl ic depth debug
 
@@ -68,9 +70,9 @@ printParsedPDDL "" _ = pure ()
 printParsedPDDL "-" pddl = putStrLn $ ppInput pddl
 printParsedPDDL fname pddl = writeFile fname $ ppInput pddl
 
+--TODO rename predicates in each action using the atomMap, reformat also to include actionlabels
 --Prints the tex file of the model
-printModel :: String -> String -> MultipointedModelS5 -> IO ()
-printModel _ "-" problem = putStrLn $ tex problem 
-printModel _ "" _ = pure ()
-printModel _ fname problem = writeFile fname $ tex problem
-  
+printModel :: String -> String -> MultipointedModelS5 -> [Owned MultipointedActionModelS5] -> IO ()
+printModel _ "-" problem acts = putStrLn $ (tex problem) ++ (unlines $ map (tex.snd.snd) acts)
+printModel _ "" _ _ = pure ()
+printModel _ fname problem acts = writeFile fname $ (tex problem) ++ (unlines $ map (tex.snd.snd) acts)
