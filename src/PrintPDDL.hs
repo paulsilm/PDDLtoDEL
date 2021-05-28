@@ -45,12 +45,12 @@ ppPred (PredDef p varTypes) = "(" ++ p ++ (concatMap (\v -> " " ++ ppVars v) var
 ppPred (PredEq p1 p2) = "(= " ++ p1 ++ " " ++ p2 ++ ")"
 
 ppVars :: VarType -> String
-ppVars (VTL vars typedObjs) = concatMapTail (" " ++) vars ++ " - " ++ typedObjs
+ppVars (VTL vars typedObjs) = concatMapTail id vars (" " ++) ++ " - " ++ typedObjs
 
 ppAction :: Action -> String
 ppAction (Action name params actor events obss) = 
      "(:action " ++ name ++ "\n\t\t"
-  ++ ":parameters (" ++ concatMapTail (\p -> " " ++ ppVars p) params ++ ")\n\t\t"
+  ++ ":parameters (" ++ concatMapTail ppVars params (" " ++) ++ ")\n\t\t"
   ++ ":byagent " ++ actor
   ++ (concatMap (\e -> "\n\t\t" ++ ppEvent e) events) 
   ++ (concatMap (\o -> "\n\t\t:observability" ++ ppObs o) obss) ++ "\n\t)"
@@ -82,16 +82,16 @@ ppForm (Or fs) indent = "\n" ++ indent ++ "(or" ++ (concatMap (\f -> "\n\t" ++ i
 ppForm (Imply f1 f2) indent = "(imply " ++ (ppForm f1 $ indent ++ "\t") ++ (ppForm f2 $ indent ++ "\t") ++ ")"
 ppForm (Knows ag f) indent = "(knows " ++ ag ++ " " ++ (ppForm f $ indent ++ "\t") ++ ")"
 ppForm (Forall vts f) indent = 
-  "(forall (" ++ concatMapTail (\vt -> " " ++ ppVars vt) vts ++ 
+  "(forall (" ++ concatMapTail ppVars vts (" " ++) ++ 
   ")\n" ++ indent ++ "\t" ++ (ppForm f $ indent ++ "\t") ++ 
   "\n" ++ indent ++ ")"
 ppForm (ForallWhen vts fw ft) indent = 
-  "(forall (" ++ concatMapTail (\vt -> " " ++ ppVars vt) vts ++ 
+  "(forall (" ++ concatMapTail ppVars vts (" " ++) ++ 
   ")\n" ++ indent ++ "\twhen " ++ (ppForm fw $ indent ++ "\t") ++ 
   "\n" ++ indent ++ "\t\t" ++ (ppForm ft $ indent ++ "\t\t") ++ 
   "\n" ++ indent ++ ")"
 ppForm (Exists vts f) indent = 
-  "(exists " ++ concatMapTail (\vt -> " " ++ ppVars vt) vts ++ 
+  "(exists " ++ concatMapTail ppVars vts (" " ++) ++ 
   "\n" ++ indent ++ "\t" ++ (ppForm f $ indent ++ "\t") ++ 
   "\n" ++ indent ++ ")"
 
@@ -103,7 +103,7 @@ ppProblem (Problem problemName domainName objects init worlds obss goal) =
   ++ "(:objects" ++ (concatMap (\o -> "\n\t\t" ++ ppObj o) objects) ++ ")"
   ++ ppInit init
   ++ (concatMap ppWorld worlds) ++ "\n\t"
-  ++ "(:observability" ++ concatMapTail (\o -> "\n\t :observability" ++ ppObs o) obss ++ ")\n\t"
+  ++ "(:observability" ++ concatMapTail ppObs obss ("\n\t :observability" ++) ++ ")\n\t"
   ++ "(:goal\n\t\t" ++ (ppForm goal "\t\t") ++ "\n\t)\n)\n"
 
 ppInit :: [Predicate] -> String

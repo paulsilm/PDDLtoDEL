@@ -9,6 +9,7 @@ import SMCDEL.Internal.Help ((!))
 --TODO Change parsing to allow no worlds be defined.
 --TODO also make sure that it is indeed allowed to not have any agents in an action.
 --TODO allow wider range of formulas in preconditions again
+--TODO check that PredDef only has variables
 
 --Checks whether the input is semantically consistent, if not returns a Just String with
 --an error message
@@ -188,7 +189,7 @@ validForm ps os (Forall vars f) =
       case validForm ps (os ++ [ (obj,objType) | (VTL objs objType) <- vars, obj <- objs]) f of
         (True,_) -> (True,"")
         (False,error) -> (False, "(Forall _ " ++ error ++ ")")
-    objs -> (False, "(Forall ### Redefining variables: " ++ concatMapTail (", " ++) objs ++ "### _)")  
+    objs -> (False, "(Forall ### Redefining variables: " ++ concatMapTail id objs (", " ++) ++ "### _)")  
 validForm ps os (ForallWhen vars f1 f2) = 
   case [ obj | (VTL objs _) <- vars, obj <- objs, obj `elem` map fst os] of
     [] ->
@@ -199,14 +200,14 @@ validForm ps os (ForallWhen vars f1 f2) =
         (False,error1) -> case validForm ps (os ++ [ (obj,objType) | (VTL objs objType) <- vars, obj <- objs]) f2 of
           (True,_) -> (False, "(Forall " ++ error1 ++ " when _ _)")
           (False,error2) -> (False, "(Forall " ++ error1 ++ " " ++ error2 ++ ")")
-    objs -> (False, "(Forall ### Redefining variables: " ++ concatMapTail (", " ++) objs ++ "### when _ _)") 
+    objs -> (False, "(Forall ### Redefining variables: " ++ concatMapTail id objs (", " ++) ++ "### when _ _)") 
 validForm ps os (Exists vars f) = 
   case [ obj | (VTL objs _) <- vars, obj <- objs, obj `elem` map fst os] of
     [] ->
       case validForm ps (os ++ [ (obj,objType) | (VTL objs objType) <- vars, obj <- objs]) f of
         (True,_) -> (True,"")
         (False,error) -> (False, "(Exists _ " ++ error ++ ")")
-    objs -> (False, "(Exists ### Redefining variables: " ++ concatMapTail (", " ++) objs ++ "### _)") 
+    objs -> (False, "(Exists ### Redefining variables: " ++ concatMapTail id objs (", " ++) ++ "### _)") 
 validForm ps os (Knows a f) 
   | a `notElem` map fst os = (False, "### atom " ++ a ++ " is not defined ###")
   | os ! a /= "agent" = (False, "### knows should be about agent, but " ++ a ++ " is of type " ++ os ! a ++ " ###")
