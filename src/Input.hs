@@ -6,8 +6,8 @@ import System.Environment (getArgs,getProgName)
 import System.IO (hPutStrLn, stderr)
 
 
---Arguments (-print, --debug, --nosemantics, -d, -ic)
-type Arguments = (String, Bool,Bool,Int,Bool)
+--Arguments (-pdf, -tex, -print, --debug, --nosemantics, -d, -ic)
+type Arguments = (String,String,String,Bool,Bool,Int,Bool)
 type FileNames = Either String (String,String)
 type InputFormat = (Arguments,FileNames)
 --Returns 
@@ -15,7 +15,7 @@ type InputFormat = (Arguments,FileNames)
 getInput :: IO (InputFormat)
 getInput = do
   args <- getArgs
-  let input = inputFromArgs (("", False, False, 0, False), Left "") args
+  let input = inputFromArgs (("", "", "", False, False, 0, False), Left "") args
   case input of
     Just contents -> do
       return contents
@@ -24,22 +24,18 @@ getInput = do
       mapM_ (hPutStrLn stderr)
         [ infoline
         , "usage: " ++ name ++ " <filename> | <options>\n"
-        --, "  (use filename - for STDIN)\n"
-        , "  -dom <filename>   parse the domain file\n"
-        , "  -prb <filename>   parse the problem file\n" 
-        , "  -print <filename> print the output to file. Use - for stdout\n" 
-        , "  -d   <int>        the maximum depth of solution\n" 
-        , "  -ic               constrain actions to those where the agent knows it will lead to the goal\n" 
-        , "  --debug           print the states being searched through\n" 
-        , "  --nosemantics     ignore the semantic checker (in case it's buggy)\n" 
+        , "  (use filename - for STDIN)\n"
+        , "  -dom <filename>      parse the domain file\n"
+        , "  -prb <filename>      parse the problem file\n" 
+        , "  -print [<filename>]  print the output to file. Use - for stdout.\n" 
+        , "  -tex [<filename>]    print the tex file of the initial model in DEL. Use - for stdout.\n" --TODO print action models?
+        , "  -d   <int>           the maximum depth of solution\n" 
+        , "  -ic                  constrain actions to those where the agent knows it will lead to the goal\n" 
+        , "  --debug              print the states being searched through\n" 
+        , "  --nosemantics        ignore the semantic checker (in case it's buggy)\n" 
         ]
       exitFailure
 
-{- TODO add:
-    '-' for stdin 
-    -tex to generate a tex file with initial state diagram (non-essential)
-    -pdf to generate a pdf file with initial state diagram (non-essential)
--}
 --Returns command line arguments parsed
 inputFromArgs :: InputFormat -> [String] -> Maybe InputFormat
 --End of arguments, check if input was valid
@@ -50,16 +46,20 @@ inputFromArgs i@(_, Right (dom, prb)) []
   | dom /= "" && prb /= "" = Just i
   | otherwise = Nothing
 --read implicit coordination flag
-inputFromArgs ((p,db,nos,d,_), fs) ("-ic":args) = inputFromArgs ((p,db,nos,d,True), fs) args
+inputFromArgs ((pdf,tex,p,db,nos,d,_), fs) ("-ic":args) = inputFromArgs ((pdf,tex,p,db,nos,d,True), fs) args
 --Read maximum depth
-inputFromArgs ((p,db,nos,_,ic), fs) ("-d":i:args) = 
-  inputFromArgs ((p,db,nos, read i::Int, ic), fs) args
+inputFromArgs ((pdf,tex,p,db,nos,_,ic), fs) ("-d":i:args) = 
+  inputFromArgs ((pdf,tex,p,db,nos, read i::Int, ic), fs) args
 --read ignore semantic checker flag
-inputFromArgs ((p,db,_,d,ic), fs) ("--nosemantics":args) = inputFromArgs ((p,db,True,d,ic), fs)args
+inputFromArgs ((pdf,tex,p,db,_,d,ic), fs) ("--nosemantics":args) = inputFromArgs ((pdf,tex,p,db,True,d,ic), fs) args
 --read debug flag
-inputFromArgs ((p,_,nos,d,ic), fs) ("--debug":args) = inputFromArgs ((p,True,nos,d,ic), fs) args
+inputFromArgs ((pdf,tex,p,_,nos,d,ic), fs) ("--debug":args) = inputFromArgs ((pdf,tex,p,True,nos,d,ic), fs) args
 --read print output filename
-inputFromArgs ((_,db,nos,d,ic), fs) ("-print":filename:args) = inputFromArgs ((filename,db,nos,d,ic), fs) args
+inputFromArgs ((pdf,tex,_,db,nos,d,ic), fs) ("-print":filename:args) = inputFromArgs ((pdf,tex,filename,db,nos,d,ic), fs) args
+--read model print filename
+inputFromArgs ((pdf,_,p,db,nos,d,ic), fs) ("-tex":filename:args) = inputFromArgs ((pdf,filename,p,db,nos,d,ic), fs) args
+--read pdf output filename
+inputFromArgs ((_,tex,p,db,nos,d,ic), fs) ("-pdf":filename:args) = inputFromArgs ((filename,tex,p,db,nos,d,ic), fs) args
 --read domain filename
 inputFromArgs (a, Left fn) ("-dom":dom:args) 
   | fn /= "" = Nothing 

@@ -63,8 +63,8 @@
 	(:world-nondesignated w2
 		(key-under-mat)
 	)
-	(:observability full anne
-	 :observability none bob)
+	(:observability full anne)
+	(:observability none bob)
 	(:goal
 		(has-key bob)
 	)

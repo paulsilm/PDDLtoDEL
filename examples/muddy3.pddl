@@ -145,9 +145,9 @@
             (muddy A1)
             (muddy A2)
             (muddy A3))
-    (:observability (partition (cmm mmm) (cmc mmc) (mcm ccm) (mcc ccc)) A1
-    :observability (partition (cmm ccm) (cmc ccc) (mcm mmm) (mmc mcc)) A2
-    :observability (partition (ccm ccc) (cmc cmm) (mmm mmc) (mcm mcc)) A3)
+    (:observability (partition (cmm mmm) (cmc mmc) (mcm ccm) (mcc ccc)) A1)
+    (:observability (partition (cmm ccm) (cmc ccc) (mcm mmm) (mmc mcc)) A2)
+    (:observability (partition (ccm ccc) (cmc cmm) (mmm mmc) (mcm mcc)) A3)
     (:goal
         (forall (?a - agent)
             (or 

@@ -11,6 +11,7 @@ import SMCDEL.Internal.TexDisplay
 import SMCDEL.Other.Planning
 import Plan
 import Data.Char
+import SMCDEL.Explicit.S5 
 
 main :: IO ()
 main = do
@@ -29,36 +30,35 @@ main = do
           Right pddl -> do
             processPDDL args pddl
     Left filename -> do
-      contents <- readFile filename
+      contents <- if filename == "-" then getContents else readFile filename
       case parse $ alexScanTokens $ map toLower contents of
           Left (lin,col) -> error ("Parse error in line " ++ show lin ++ ", column " ++ show col)
           Right pddl -> do
             processPDDL args pddl
-        {- let (actionModelMap,problem) = pddlToDEL pddl
-        disp $ (map snd) actionModelMap
-        pdfTo problem "problem.pdf"
-        putStrLn $ problem
-        putStrLn $ (map snd) actionModelMap
-        print domain
-        print problem -}
 
---A function just for stuff
---Arguments (-print, --debug, --nosemantics, -d, -ic)
+--A function for processing the pddl file according to the requests of the user
+--Arguments (-pdf, -tex, -print, --debug, --nosemantics, -d, -ic)
 processPDDL :: Arguments -> PDDL -> IO ()
-processPDDL (printFile, debug, False, depth, ic) pddl = 
+processPDDL (pdf, texM, printFile, debug, False, depth, ic) pddl = 
   case validInput pddl of
     Just str -> do
-      printParsedPDDL printFile pddl
+      printParsedPDDL printFile pddl --print original file
       putStrLn $ str ++ show pddl -- print error messages
+      case pddlToDEL pddl of
+        (CoopTask problem _ _) -> 
+          printModel pdf texM problem --print the tex file of the model, if desired
     Nothing -> do
       putStrLn "Successful parsing"
       printParsedPDDL printFile pddl
       putStrLn $ findShortestICPlan pddl ic depth debug
-processPDDL (printFile, debug, True, depth, ic) pddl = 
+      case pddlToDEL pddl of
+        (CoopTask problem _ _) -> 
+          printModel pdf texM problem
+processPDDL (pdf, texM, printFile, debug, True, depth, ic) pddl = 
   do
     case pddlToDEL pddl of
       (CoopTask problem _ _) -> 
-        putStrLn $ tex problem
+        printModel pdf texM problem
     printParsedPDDL printFile pddl
     putStrLn $ findShortestICPlan pddl ic depth debug
 
@@ -67,3 +67,10 @@ printParsedPDDL :: String -> PDDL -> IO ()
 printParsedPDDL "" _ = pure ()
 printParsedPDDL "-" pddl = putStrLn $ ppInput pddl
 printParsedPDDL fname pddl = writeFile fname $ ppInput pddl
+
+--Prints the tex file of the model
+printModel :: String -> String -> MultipointedModelS5 -> IO ()
+printModel _ "-" problem = putStrLn $ tex problem 
+printModel _ "" _ = pure ()
+printModel _ fname problem = writeFile fname $ tex problem
+  
