@@ -1,5 +1,5 @@
 # PDDL-DEL
-A translation module from the Multi-Agent Epistemic Planning Language (MAEPL) Symbolic Model Checker for Dynamic Epistemic Logic (SMCDEL) implementation by @m4lvin.
+A translation module from the Multi-Agent Epistemic Planning Language (MAEPL) to the Symbolic Model Checker for Dynamic Epistemic Logic (SMCDEL) implementation by @m4lvin.
 
 ## Usage
 To compile the project, run `stack build` in the project folder. For that, [stack](https://docs.haskellstack.org/en/stable/install_and_upgrade/ "install stack") needs to be installed. 
