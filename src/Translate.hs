@@ -187,7 +187,7 @@ pddlFormToDelForm (ForallWhen [(VTL vars objType)] f1 f2) pmap oMap ojs =
           (pddlFormToDelForm f1 pmap ((var,objName):oMap) ojs) 
           (pddlFormToDelForm f2 pmap ((var,objName):oMap) ojs) 
         | objName <- (getObjNames objType ojs)
-        , var <- vars] --TODO double-check if this is valid
+        , var <- vars] 
 --Permutation cases (Forall, ForallWhen, Exists) e.g. forall (?b1 ?b2 - bricks ?a - agent) ...
 pddlFormToDelForm (PDDL.Forall ((VTL vars objType):vts) f) pmap oMap ojs = 
   Conj [pddlFormToDelForm (PDDL.Forall vts f) pmap ((var,objName):oMap) ojs 
@@ -203,6 +203,8 @@ pddlFormToDelForm (ForallWhen ((VTL vars objType):vts) f1 f2) pmap oMap ojs =
         , var <- vars] --Add the variables to the object map and move to next type
 --Agent knows about something
 pddlFormToDelForm (Knows ag f) pmap oMap ojs = K (oMap ! ag) $ pddlFormToDelForm f pmap oMap ojs
+--something is common knowledge
+pddlFormToDelForm (CommonKnow f) pmap oMap ojs = Ck (getObjNames "agent" ojs) $ pddlFormToDelForm f pmap oMap ojs
 
 -- Takes the list of all variables, and returns the permutation (list of lists) 
 -- of mappings from variable to object names

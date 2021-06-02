@@ -40,6 +40,7 @@ tokens :-
   "domain"                { \ p _ -> TokenDomainName        p }
   "problem"               { \ p _ -> TokenProblemName       p }
   "knows"                 { \ p _ -> TokenKnows             p }
+  "common-knowledge"      { \ p _ -> TokenCommonKnowledge   p }
   "partition"             { \ p _ -> TokenPartition         p }
   "none"                  { \ p _ -> TokenNone              p }
   "full"                  { \ p _ -> TokenFull              p }

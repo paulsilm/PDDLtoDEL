@@ -10,6 +10,7 @@ data Form = Atom Predicate
           | ForallWhen [VarType] Form Form
           | Exists [VarType] Form 
           | Knows String Form
+          | CommonKnow Form
           deriving (Show, Eq)
 
 -- TODO enable subtyping

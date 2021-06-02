@@ -215,6 +215,10 @@ validForm ps os (Knows a f)
     case validForm ps os f of
       (True,_) -> (True,"")
       (False, err) -> (False,"(knows " ++ a ++ " " ++ err ++ ")")
+validForm ps os (CommonKnow f) =
+  case validForm ps os f of
+    (True,_) -> (True,"")
+    (False, err) -> (False,"(common-knowledge " ++ err ++ ")")
 validForm ps os (Atom a) = validPred ps os a
 
 validEffect :: [Predicate] -> [(String,String)] -> Form -> (Bool,String)

@@ -55,6 +55,7 @@ import PDDL
   DOMNAME      { TokenDomainName       _ }
   PROBLEMNAME  { TokenProblemName      _ }
   KNOWS        { TokenKnows            _ }
+  CKNOW        { TokenCommonKnowledge  _ }
   PARTITION    { TokenPartition        _ }
   PARAMS       { TokenParameters       _ }
   TYPES        { TokenTypes            _ }
@@ -200,6 +201,7 @@ Form : '(' Predicate ')' { Atom $2 }
      | '(' 'Forall' '(' VarTypeList ')' WHEN Form Form ')' { ForallWhen $4 $7 $8 } 
      | '(' 'Exists' '(' VarTypeList ')' Form ')' { Exists $4 $6 }
      | '(' KNOWS Name Form ')' { Knows $3 $4 }
+     | '(' CKNOW Form ')' { CommonKnow $3 }
 
 FormList : Form { [$1] } 
          | Form FormList { $1:$2 }

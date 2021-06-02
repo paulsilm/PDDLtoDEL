@@ -17,10 +17,11 @@ A PDDL version created by Thorsten Engesser. MAEPL is an extension of PDDL versi
 
 ### Additional features compared to PDDL
 
-The formula definition is extended by the knowledge statement. The original MAEPL implementation only allows this in goal statement. The similar `common-knowledge` statement was removed as `forall (?a - agent) knows` achieves the same purpose.
+The formula definition is extended by the knowledge statement. The original MAEPL implementation only allows this in goal statement. The similar `common-knowledge` statement applies to all agents, and the difference between them is that common-knowledge is transitively close: i.e. each agent knows that any other agent knows that any other agent knows ... that formula in common-knowledge is true.
 
 ```ebnf
 <Form> ::= (knows <agent> <Form>)
+<Form> ::= (common-knowledge <Form>)
 ```
 Where agent is just a regular type, defined by the user in the domain's `:types` statement.
 
