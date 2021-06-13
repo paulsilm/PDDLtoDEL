@@ -15,7 +15,13 @@ data Form = Atom Predicate
 
 -- TODO enable subtyping
 -- PDDL Domain: name requirements types constants all_predicates actions
-data Domain = Domain String [Req] [String] [TypedObjs] [Predicate] [Action]
+data Domain = Domain 
+               {name :: String, 
+               reqs :: [Req], 
+               types :: [String], 
+               constants :: [TypedObjs], 
+               predDefs :: [Predicate], 
+               actions :: [Action]}
           deriving (Show, Eq)
 
 -- Requirement for PDDL parser (:strips|:typing)
@@ -37,7 +43,12 @@ data VarType = VTL [String] String
           deriving (Show, Eq)
 
 -- PDDL action: name params actor events observabilities
-data Action = Action String [VarType] String [Event] [Obs]
+data Action = Action {
+               aname :: String,
+               params :: [VarType],
+               actor :: String, 
+               events :: [Event], 
+               evobss :: [Obs]}
           deriving (Show, Eq)
 
 -- Action events: designated? name precondition effect
@@ -57,7 +68,14 @@ data ObsType = Full
 
 --PDDL Problem: problem_name domain_name objects initial_true_predicates worlds observabilities goal
 data Problem = 
-     Problem String String [TypedObjs] [Predicate] [World] [Obs] Form
+     Problem 
+     {pname :: String,
+     dname :: String,
+     objects :: [TypedObjs],
+     init :: [Predicate],
+     worlds :: [World],
+     wobss :: [Obs],
+     goal :: Form}
      deriving (Show, Eq)
 
 --Objects with their type: object_names type

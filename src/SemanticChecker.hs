@@ -15,7 +15,7 @@ import SMCDEL.Internal.Help ((!))
 validInput :: PDDL -> Maybe String
 validInput (CheckPDDL
             (Domain domainName _ types conss preds actions)
-            (Problem _ domName objects initPreds worlds obss goal)) =
+            p@(Problem _ domName objects initPreds worlds obss goal)) =
               let
                 allObjects = addConstantsToObjs conss objects
                 allPreds = concatMap (predToProps allObjects) preds
@@ -24,7 +24,7 @@ validInput (CheckPDDL
                           ++ [ p | p@(PredEq {}) <- preds]
                 tests =
                   [ (and [objType `elem` types | (TO _ objType) <- objects], "Object type in problem file is not declared in :types"),
-                    (domainName == domName, "Problem's domain-name does not match domain's name"),
+                    (domainName == domName, "Problem" ++ (pname p) ++ "'s domain-name does not match domain's name"),
                     (allDifferent [name | (World _ name _) <- worlds], "Multiple worlds have the same name"),
                     (allDifferent [name | (Action name _ _ _ _) <- actions], "Multiple actions have the same name"),
                     (allDifferent $ map getPredDefOrAtomName preds, "Multiple predicates have the same name"),
