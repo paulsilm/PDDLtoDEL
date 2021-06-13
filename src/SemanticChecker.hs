@@ -5,10 +5,9 @@ import Translate
 import Lib
 import SMCDEL.Internal.Help ((!))
 
---TODO? check that preconditions are satisfiable for one and only one designated event in each action
 --TODO Change parsing to allow no worlds be defined.
 --TODO also make sure that it is indeed allowed to not have any agents in an action.
---TODO check that PredDef only has variables
+--TODO check that Forall and Exists only have variables defined
 
 --Checks whether the input is semantically consistent, if not returns a Just String with
 --an error message
@@ -28,6 +27,10 @@ validInput (CheckPDDL
                     (allDifferent [name | (World _ name _) <- worlds], "Multiple worlds have the same name"),
                     (allDifferent [name | (Action name _ _ _ _) <- actions], "Multiple actions have the same name"),
                     (allDifferent $ map getPredDefOrAtomName preds, "Multiple predicates have the same name"),
+                    ([ name | (PredDef name vars) <- preds, (VTL names _) <- vars, ('?':_) <- names] /= [],
+                      "Variables of predicates: " 
+                      ++ show [ name | (PredDef name vars) <- preds, (VTL names _) <- vars, ('?':_) <- names] 
+                      ++ " are written as objects (maybe add '?')"),
                     (all (predTypesExist types) preds, "Predicate type is missing"),
                     (and [count objType [objType | (TO _ objType) <- objects] == 1 | (TO _ objType) <- objects],
                       "Multiple definitions of same object type in problem file"),
@@ -120,6 +123,8 @@ checkAction typeList preds objects (Action name params actor events obss) =
                 "There needs to be at least one designated event"),
               (and [paramType `elem` typeList | (VTL _ paramType) <- params], 
                 "Some parameter type is not defined in :types"),
+              ([ name | (VTL vars name) <- params, ('?':_) <- vars] /= [], 
+                "Parameter names are not in the required form: \"?_\""),
               (observabilitiesOnlyForAgents (getObjNames "agent" allObjects) obss, 
                 "Observability can only be defined for agents" ),
               (and [observabilityPartitionCorrect [name | (Event _ name _ _) <- events ] obs | obs <- obss], 
@@ -231,12 +236,12 @@ validEffect _ _ _ = (False, "### effect can###")
 
 {- allowed: 
 Literal
-EffElement -> EffElement
+Form -> EffElement
 -}
 validEffForm :: [Predicate] -> [(String,String)] -> Form -> (Bool,String)
 validEffForm ps os a@(Atom p) = validLiteral ps os a
 validEffForm ps os (Imply a b) = 
-  case validEffElement ps os a of
+  case validForm ps os a of
     (True, _) -> case validEffElement ps os b of
       (True, _) -> (True, "")
       (False, err) -> (False, "((_) -> (" ++ err ++ "))")
@@ -261,6 +266,7 @@ not(Atom)
 -}
 validLiteral :: [Predicate] -> [(String,String)] -> Form -> (Bool,String)
 validLiteral ps os (Atom p) = validPred ps os p
+validLiteral ps os (Not (Not p)) = (False, "### double negation isn't supported ###")
 validLiteral ps os (Not p) = 
   case validLiteral ps os p of 
     (True,_) -> (True,"")

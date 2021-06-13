@@ -40,9 +40,8 @@ translateActions atomMap objs conss (a@(Action name params _ _ _):actions) =
 actionToActionModel :: [(Predicate, Prp)] -> [TypedObjs] -> PDDL.Action -> [(String,String)] -> (String,MultipointedActionModelS5, [String])
 actionToActionModel atomMap objs (Action _ params actor events obss) varMap =
   let
-    convertedEvents = [(b,n,pddlFormToDelForm pre atomMap varMap objs,
-                            formToMap (pddlFormToDelForm eff atomMap varMap objs)) 
-                      | (Event b n pre eff) <- events]
+    convertedEvents = [(b,n,pddlFormToDelForm pre atomMap varMap objs, concatMap formToMap preds) 
+                      | (Event b n pre eff) <- events, (Conj preds) <- [(pddlFormToDelForm eff atomMap varMap objs)]]
     convertedObss = map (translateObs varMap) obss 
     eventMap = zip convertedEvents [0..]
     translateEvent s = head [ i | ((_,name,_,_), i) <- eventMap, name == s ] -- takes name s of event and returns its index (unsafe)
@@ -54,13 +53,15 @@ actionToActionModel atomMap objs (Action _ params actor events obss) varMap =
     (actress, (ActMS5 [(i, (pre, eff)) | ((_,_,pre,eff), i) <- eventMap ] agentRels, actualEvents), [varMap ! p | (VTL ps _) <- params, p <- ps])
 
 --translates the effect formula to a list of predicate tuples
--- TODO: check that no Prp is contained more than once here! also check that in this case implication is only applied to a [conj of] predicate
 formToMap :: SMCDEL.Language.Form -> [(Prp,SMCDEL.Language.Form)]
-formToMap (Conj preds) = concatMap formToMap preds
-formToMap (Neg (PrpF p)) = [(p,Bot)]
-formToMap (PrpF p) = [(p,Top)]
 formToMap (Impl f (     PrpF p )) = [(p, Conj [Impl f Top, Impl (Neg f) $ PrpF p])]
 formToMap (Impl f (Neg (PrpF p))) = [(p, Conj [Impl f Bot, Impl (Neg f) $ PrpF p])]
+formToMap (Impl f (Conj lits)) = [(p, Conj [Impl f t, Impl (Neg f) $ PrpF p]) | (p,t) <- map literalToMap lits]
+
+--translates a literal to a tuple of proposition and its assigned truth value
+literalToMap :: SMCDEL.Language.Form -> (Prp,SMCDEL.Language.Form)
+literalToMap (Neg (PrpF p)) = (p,Bot)
+literalToMap (PrpF p) = (p,Top)
 
 --Adds objects to their suiting types
 addConstantsToObjs :: [TypedObjs] -> [TypedObjs] -> [TypedObjs]
