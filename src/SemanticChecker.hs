@@ -5,10 +5,9 @@ import Translate
 import Lib
 import SMCDEL.Internal.Help ((!))
 
---TODO check that preconditions are satisfiable for one and only one designated event in each action
+--TODO? check that preconditions are satisfiable for one and only one designated event in each action
 --TODO Change parsing to allow no worlds be defined.
 --TODO also make sure that it is indeed allowed to not have any agents in an action.
---TODO allow wider range of formulas in preconditions again
 --TODO check that PredDef only has variables
 
 --Checks whether the input is semantically consistent, if not returns a Just String with
@@ -22,6 +21,7 @@ validInput (CheckPDDL
                 allPreds = concatMap (predToProps allObjects) preds
                 predsTyped = [ PredSpec name $ map snd $ concatMap typify vars | (PredDef name vars) <- preds] 
                           ++ [ a | a@(PredAtom _) <- preds]-- e.g., PredSpec "predicate1" ["agent", "agent", "brick"]
+                          ++ [ p | p@(PredEq {}) <- preds]
                 tests =
                   [ (and [objType `elem` types | (TO _ objType) <- objects], "Object type in problem file is not declared in :types"),
                     (domainName == domName, "Problem's domain-name does not match domain's name"),
@@ -100,6 +100,7 @@ checkAction typeList preds objects (Action name params actor events obss) =
     objMap = [ (obj, objType) | (TO objs objType) <- allObjects, obj <- objs]--Map from object name to its type
     predsTyped = [ PredSpec name $ map snd $ concatMap typify vars | (PredDef name vars) <- preds] 
                   ++ [ a | a@(PredAtom _) <- preds]-- e.g., PredSpec "predicate1" ["agent", "agent", "brick"]
+                  ++ [ p | p@(PredEq {}) <- preds]
     tuples = 
               [ (False, "Precondition format of event " ++ name ++ " is incorrect: " ++ err) 
               | (name,(False,err)) <- 
@@ -150,9 +151,6 @@ predTypesExist _ _ = True
 allDifferent :: Eq a => [a] -> Bool
 allDifferent [] = True
 allDifferent (x:xs) = notElem x xs && allDifferent xs
-
---TODO need to rewrite it with checking types and names of predicates to see if they match the given ones.
---TODO Should And, Or and Imply be restricted to literals as defined in PDDL? If so, the when in forallwhen should too.
 
 --Checks that the formula is in a correct format. Takes formula, a list of defined predicates with their types,
 --e.g., (PredSpec "connected" ["agent", "agent"]) (achieved by using Translate.typify)
@@ -221,10 +219,46 @@ validForm ps os (CommonKnow f) =
     (False, err) -> (False,"(common-knowledge " ++ err ++ ")")
 validForm ps os (Atom a) = validPred ps os a
 
+{-Allowed:
+Conj<EffForm>
+-}
 validEffect :: [Predicate] -> [(String,String)] -> Form -> (Bool,String)
-validEffect ps os f@(And _) = validForm ps os f
-validEffect _ _ _ = (False, "### effect needs to be a conjunction of predicates ###")
+validEffect ps os (And ls) = 
+  case [ err | (False, err) <- map (validEffForm ps os) ls] of
+    [] -> (True, "")
+    errors -> (False, "(and " ++ (concatMap (++ " ") errors) ++ ")")
+validEffect _ _ _ = (False, "### effect can###")
 
+{- allowed: 
+Literal
+EffElement -> EffElement
+-}
+validEffForm :: [Predicate] -> [(String,String)] -> Form -> (Bool,String)
+validEffForm ps os a@(Atom p) = validLiteral ps os a
+validEffForm ps os (Imply a b) = 
+  case validEffElement ps os a of
+    (True, _) -> case validEffElement ps os b of
+      (True, _) -> (True, "")
+      (False, err) -> (False, "((_) -> (" ++ err ++ "))")
+    (False, err1) -> case validEffElement ps os b of
+      (True, _) -> (False, "((" ++ err1 ++ ") -> _ )") 
+      (False, err2) -> (False, "((" ++ err1 ++ ") -> (" ++ err2 ++ "))") 
+
+{-Allowed:
+Literal
+Conj<Literal>
+-}
+validEffElement :: [Predicate] -> [(String,String)] -> Form -> (Bool,String)
+validEffElement ps os a@(Atom _) = validLiteral ps os a
+validEffElement ps os (And ls) = 
+  case [ err | (False, err) <- map (validLiteral ps os) ls] of
+    [] -> (True, "")
+    errors -> (False, "(and " ++ (concatMap (++ " ") errors) ++ ")")
+    
+{-Allowed:
+Atom
+not(Atom)
+-}
 validLiteral :: [Predicate] -> [(String,String)] -> Form -> (Bool,String)
 validLiteral ps os (Atom p) = validPred ps os p
 validLiteral ps os (Not p) = 
@@ -233,6 +267,11 @@ validLiteral ps os (Not p) =
     (False,err) -> (False, "not (" ++ err ++ ")")
 validLiteral _ _ _ = (False, "### should be a literal (atomic proposition or negation thereof) ###")
 
+{-Allowed:
+Predicates that are defined,
+In case of equality only those where both propositions have same type and
+In case of specific instance of a predicate (e.g. not-connected A1 A2) checks the types match the definition
+-}
 validPred :: [Predicate] -> [(String,String)] -> Predicate -> (Bool,String)
 validPred _ _ (PredDef name _) = (False, "### Predicate " ++ name ++ " defined with types. Maybe remove the types? ###")
 validPred _ os (PredEq a b) 
