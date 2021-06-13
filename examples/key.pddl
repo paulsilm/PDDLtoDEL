@@ -8,7 +8,7 @@
 	(:action put-key
 		:parameters (?a - agent)
 		:byagent ?a
-		(:event-nondesignated trivial
+		(:event-designated trivial
 			:precondition 
 				(and)
 			:effect 
@@ -60,7 +60,7 @@
 	(:world-designated w1
 		(has-key anne)
 	)
-	(:world-nondesignated w2
+	(:world-designated w2
 		(key-under-mat)
 	)
 	(:observability full anne)

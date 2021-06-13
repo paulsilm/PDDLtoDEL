@@ -126,14 +126,14 @@
     ; All agents know that other agents know whether they're muddy or not
     (:init)
         (:world-nondesignated ccc)
-        (:world-designated ccm
+        (:world-nondesignated ccm
             (muddy A3))
         (:world-designated cmc
             (muddy A2))
         (:world-nondesignated cmm
             (muddy A2)
             (muddy A3))
-        (:world-designated mcc
+        (:world-nondesignated mcc
             (muddy A1))
         (:world-nondesignated mcm
             (muddy A1)
