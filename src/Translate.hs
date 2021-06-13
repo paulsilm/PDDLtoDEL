@@ -57,6 +57,7 @@ formToMap :: SMCDEL.Language.Form -> [(Prp,SMCDEL.Language.Form)]
 formToMap (Impl f (     PrpF p )) = [(p, Conj [Impl f Top, Impl (Neg f) $ PrpF p])]
 formToMap (Impl f (Neg (PrpF p))) = [(p, Conj [Impl f Bot, Impl (Neg f) $ PrpF p])]
 formToMap (Impl f (Conj lits)) = [(p, Conj [Impl f t, Impl (Neg f) $ PrpF p]) | (p,t) <- map literalToMap lits]
+formToMap a = [literalToMap a]
 
 --translates a literal to a tuple of proposition and its assigned truth value
 literalToMap :: SMCDEL.Language.Form -> (Prp,SMCDEL.Language.Form)

@@ -20,7 +20,6 @@ validInput (CheckPDDL
                 allPreds = concatMap (predToProps allObjects) preds
                 predsTyped = [ PredSpec name $ map snd $ concatMap typify vars | (PredDef name vars) <- preds] 
                           ++ [ a | a@(PredAtom _) <- preds]-- e.g., PredSpec "predicate1" ["agent", "agent", "brick"]
-                          ++ [ p | p@(PredEq {}) <- preds]
                 tests =
                   [ (and [objType `elem` types | (TO _ objType) <- objects], "Object type in problem file is not declared in :types"),
                     (domainName == domName, "Problem" ++ (pname p) ++ "'s domain-name does not match domain's name"),
@@ -54,7 +53,7 @@ validInput (CheckPDDL
                       , "Init has invalid predicate: " ++ show pred)
                       | pred <- initPreds
                     ] ++ 
-                    [([des | (World des _ _) <- worlds, des] == [True], "Either too many or too few designated worlds")
+                    [([des | (World des _ _) <- worlds, des] /= [], "No designated worlds")
                   ] ++ map (checkAction types preds allObjects) actions
                 in
                   case [ error | (False,error) <- tests ] of
@@ -103,7 +102,6 @@ checkAction typeList preds objects (Action name params actor events obss) =
     objMap = [ (obj, objType) | (TO objs objType) <- allObjects, obj <- objs]--Map from object name to its type
     predsTyped = [ PredSpec name $ map snd $ concatMap typify vars | (PredDef name vars) <- preds] 
                   ++ [ a | a@(PredAtom _) <- preds]-- e.g., PredSpec "predicate1" ["agent", "agent", "brick"]
-                  ++ [ p | p@(PredEq {}) <- preds]
     tuples = 
               [ (False, "Precondition format of event " ++ name ++ " is incorrect: " ++ err) 
               | (name,(False,err)) <- 
@@ -252,7 +250,7 @@ validEffForm ps os (Imply a b) =
 {-Allowed:
 Literal
 Conj<Literal>
--}
+-}--TODO CHECK THAT THERE'S NO EQUALITY PREDICATES
 validEffElement :: [Predicate] -> [(String,String)] -> Form -> (Bool,String)
 validEffElement ps os a@(Atom _) = validLiteral ps os a
 validEffElement ps os (And ls) = 
@@ -275,7 +273,7 @@ validLiteral _ _ _ = (False, "### should be a literal (atomic proposition or neg
 
 {-Allowed:
 Predicates that are defined,
-In case of equality only those where both propositions have same type and
+In case of equality only those where both propositions have same typ and
 In case of specific instance of a predicate (e.g. not-connected A1 A2) checks the types match the definition
 -}
 validPred :: [Predicate] -> [(String,String)] -> Predicate -> (Bool,String)
@@ -288,7 +286,7 @@ validPred _ os (PredEq a b)
 validPred ps _ p@(PredAtom a) 
   | p `elem` ps = (True, "")
   | otherwise = (False, "### " ++ a ++ " is not defined ###" ++ show ps )
-validPred ps os (PredSpec name objs) = 
+validPred ps os (PredSpec name objs) = --TODO check that the predicate is defined
   case [ obj | obj <- objs, obj `notElem` map fst os] of
     [] -> case [ err | (False, err) <- zipWith (\a b -> (os ! a == b, "(" ++ a ++ " " ++ b ++ ")" )) objs 
                 $ concat [ types | (PredSpec n types) <- ps, n == name]] of

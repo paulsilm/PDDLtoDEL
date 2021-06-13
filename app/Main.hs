@@ -45,21 +45,24 @@ processPDDL (pdf, texM, printFile, debug, False, depth, ic) pddl =
   case validInput pddl of
     Just str -> do
       printParsedPDDL printFile pddl --print original file
-      putStrLn $ str ++ show pddl -- print error messages
+      putStrLn $ str ++ (if debug then show pddl else "") -- print error messages
       case pddlToDEL pddl of
         (CoopTask problem actions _) -> do
           printModel pdf texM problem actions --print the tex file of the model, if desired
     Nothing -> do
-      putStrLn "Successful parsing"
-      printParsedPDDL printFile pddl
-      putStrLn $ findShortestICPlan pddl ic depth debug
+      putStr $ if debug then "Successful parsing\n" else []
+      putStrLn $ if debug then show pddl else ""
       case pddlToDEL pddl of
         (CoopTask problem actions _) -> do
+          putStrLn $ if debug then show problem else ""
           printModel pdf texM problem actions
+      printParsedPDDL printFile pddl
+      putStrLn $ findShortestICPlan pddl ic depth debug
 processPDDL (pdf, texM, printFile, debug, True, depth, ic) pddl = 
   do
     case pddlToDEL pddl of
       (CoopTask problem actions _) -> do
+        putStrLn $ if debug then show pddl else ""
         printModel pdf texM problem actions
     printParsedPDDL printFile pddl
     putStrLn $ findShortestICPlan pddl ic depth debug

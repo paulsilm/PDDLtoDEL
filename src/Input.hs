@@ -23,16 +23,16 @@ getInput = do
       name <- getProgName
       mapM_ (hPutStrLn stderr)
         [ infoline
-        , "usage: " ++ name ++ " <filename> | <options>\n"
-        , "  (use filename - for STDIN)\n"
-        , "  -dom <filename>      parse the domain file\n"
-        , "  -prb <filename>      parse the problem file\n" 
-        , "  -print [<filename>]  print the output to file. Use - for stdout.\n" 
-        , "  -tex [<filename>]    print the tex file of the initial model in DEL. Use - for stdout.\n" --TODO print action models?
-        , "  -d   <int>           the maximum depth of solution\n" 
-        , "  -ic                  constrain actions to those where the agent knows it will lead to the goal\n" 
-        , "  --debug              print the states being searched through\n" 
-        , "  --nosemantics        ignore the semantic checker (in case it's buggy)\n" 
+        , "usage: " ++ name ++ " <filename> | <options>"
+        , "  (use filename - for STDIN)"
+        , "  -dom <filename>      parse the domain file"
+        , "  -prb <filename>      parse the problem file" 
+        , "  -print [<filename>]  print the output to file. Use - for stdout." 
+        , "  -tex [<filename>]    print the tex file of the initial model and action models in DEL. Use - for stdout."
+        , "  -d   <int>           the maximum depth of solution" 
+        , "  -ic                  constrain actions to those where the agent knows it will lead to the goal" 
+        , "  --debug              print the states being searched through" 
+        , "  --nosemantics        ignore the semantic checker (in case it's buggy)" 
         ]
       exitFailure
 

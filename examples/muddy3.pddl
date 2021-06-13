@@ -122,18 +122,18 @@
 
 (define (problem muddy-3)
     (:domain muddy)
-    (:objects Uselessobj - useless)
+    (:objects Uselessobj - useless); TODO allow empty object list
     ; All agents know that other agents know whether they're muddy or not
     (:init)
         (:world-nondesignated ccc)
-        (:world-nondesignated ccm
+        (:world-designated ccm
             (muddy A3))
         (:world-designated cmc
             (muddy A2))
         (:world-nondesignated cmm
             (muddy A2)
             (muddy A3))
-        (:world-nondesignated mcc
+        (:world-designated mcc
             (muddy A1))
         (:world-nondesignated mcm
             (muddy A1)
