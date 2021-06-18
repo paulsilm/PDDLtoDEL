@@ -76,6 +76,6 @@ printParsedPDDL fname pddl = writeFile fname $ ppInput pddl
 --TODO rename predicates in each action using the atomMap, reformat also to include actionlabels
 --Prints the tex file of the model
 printModel :: String -> String -> MultipointedModelS5 -> [Owned MultipointedActionModelS5] -> IO ()
-printModel _ "-" problem acts = putStrLn $ (tex problem) ++ (unlines $ map (tex.snd.snd) acts)
+printModel _ "-" problem acts = putStrLn $ (tex problem) ++ (unlines $ map (tex.snd.snd) acts) --(show $ length acts)
 printModel _ "" _ _ = pure ()
 printModel _ fname problem acts = writeFile fname $ (tex problem) ++ (unlines $ map (tex.snd.snd) acts)

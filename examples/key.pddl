@@ -8,7 +8,7 @@
 	(:action put-key
 		:parameters (?a - agent)
 		:byagent ?a
-		(:event-designated trivial
+		(:event-nondesignated trivial
 			:precondition 
 				(and)
 			:effect 

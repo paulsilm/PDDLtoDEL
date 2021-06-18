@@ -26,10 +26,8 @@ validInput (CheckPDDL
                     (allDifferent [name | (World _ name _) <- worlds], "Multiple worlds have the same name"),
                     (allDifferent [name | (Action name _ _ _ _) <- actions], "Multiple actions have the same name"),
                     (allDifferent $ map getPredDefOrAtomName preds, "Multiple predicates have the same name"),
-                    ([ name | (PredDef name vars) <- preds, (VTL names _) <- vars, ('?':_) <- names] /= [],
-                      "Variables of predicates: " 
-                      ++ show [ name | (PredDef name vars) <- preds, (VTL names _) <- vars, ('?':_) <- names] 
-                      ++ " are written as objects (maybe add '?')"),
+                    (and [ head var == '?' | (PredDef name params) <- preds, (VTL vars name) <- params, var <- vars, var /= []],
+                      "Variables of predicates are written as objects (maybe add '?')"),
                     (all (predTypesExist types) preds, "Predicate type is missing"),
                     (and [count objType [objType | (TO _ objType) <- objects] == 1 | (TO _ objType) <- objects],
                       "Multiple definitions of same object type in problem file"),
@@ -121,7 +119,7 @@ checkAction typeList preds objects (Action name params actor events obss) =
                 "There needs to be at least one designated event"),
               (and [paramType `elem` typeList | (VTL _ paramType) <- params], 
                 "Some parameter type is not defined in :types"),
-              ([ name | (VTL vars name) <- params, ('?':_) <- vars] /= [], 
+              (and [ head var == '?' | (VTL vars name) <- params, var <- vars, var /= []], 
                 "Parameter names are not in the required form: \"?_\""),
               (observabilitiesOnlyForAgents (getObjNames "agent" allObjects) obss, 
                 "Observability can only be defined for agents" ),

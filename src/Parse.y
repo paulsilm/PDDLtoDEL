@@ -130,7 +130,7 @@ VarType : VarList '-' String { VTL $1 $3 }
 VarList : VarName { [$1] }
         | VarName VarList { $1:$2 }
 
-ByAgent : BYA VarName { $2 }
+ByAgent : BYA Name { $2 }
 
 Event : Precondition Effect { Event True "" $1 $2 }
 
