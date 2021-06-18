@@ -8,6 +8,12 @@
   (:action put-key
     :parameters (?a - agent)
     :byagent ?a
+    (:event-nondesignated trivial
+      :precondition
+        (and)
+      :effect
+        (and)
+    )
     (:event-designated skip
       :precondition
         (key-under-mat)

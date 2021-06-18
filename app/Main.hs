@@ -60,11 +60,10 @@ processPDDL (pdf, texM, printFile, debug, False, depth, ic) pddl =
       putStrLn $ findShortestICPlan pddl ic depth debug
 processPDDL (pdf, texM, printFile, debug, True, depth, ic) pddl = 
   do
-    case pddlToDEL pddl of
-      (CoopTask problem actions _) -> do
-        putStrLn $ if debug then show pddl else ""
-        putStrLn $ if debug then show problem else ""
-        printModel pdf texM problem actions
+    let (CoopTask problem actions _) = pddlToDEL pddl
+    putStrLn $ if debug then show pddl else ""
+    putStrLn $ if debug then show problem else ""
+    printModel pdf texM problem actions
     printParsedPDDL printFile pddl
     putStrLn $ findShortestICPlan pddl ic depth debug
 
