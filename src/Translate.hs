@@ -40,8 +40,13 @@ translateActions atomMap objs conss (a@(Action name params _ _ _):actions) =
 actionToActionModel :: [(Predicate, Prp)] -> [TypedObjs] -> PDDL.Action -> [(String,String)] -> (String,MultipointedActionModelS5, [String])
 actionToActionModel atomMap objs (Action _ params actor events obss) varMap =
   let
+    convertedEvents = [(b,n,pddlFormToDelForm pre atomMap varMap objs, formToMap (pddlFormToDelForm eff atomMap varMap objs)) 
+                      | (Event b n pre eff) <- events]
+    {-
     convertedEvents = [(b,n,pddlFormToDelForm pre atomMap varMap objs, concatMap formToMap preds) 
                       | (Event b n pre eff) <- events, (Conj preds) <- [(pddlFormToDelForm eff atomMap varMap objs)]]
+                      --TODO doesn't work for some reason
+                      -}
     convertedObss = map (translateObs varMap) obss 
     eventMap = zip convertedEvents [0..]
     translateEvent s = head [ i | ((_,name,_,_), i) <- eventMap, name == s ] -- takes name s of event and returns its index (unsafe)
@@ -54,10 +59,17 @@ actionToActionModel atomMap objs (Action _ params actor events obss) varMap =
 
 --translates the effect formula to a list of predicate tuples
 formToMap :: SMCDEL.Language.Form -> [(Prp,SMCDEL.Language.Form)]
+formToMap (Conj preds) = concatMap formToMap preds
+formToMap (Neg (PrpF p)) = [(p,Bot)]
+formToMap (PrpF p) = [(p,Top)]
 formToMap (Impl f (     PrpF p )) = [(p, Conj [Impl f Top, Impl (Neg f) $ PrpF p])]
 formToMap (Impl f (Neg (PrpF p))) = [(p, Conj [Impl f Bot, Impl (Neg f) $ PrpF p])]
-formToMap (Impl f (Conj lits)) = [(p, Conj [Impl f t, Impl (Neg f) $ PrpF p]) | (p,t) <- map literalToMap lits]
-formToMap a = [literalToMap a]
+
+{-
+--translates the effect formula to a list of predicate tuples --TODO broken somehow
+formToMap :: SMCDEL.Language.Form -> [(Prp,SMCDEL.Language.Form)]
+formToMap (Impl f (     PrpF p )) = [(p, Conj [Impl f Top, Impl (Neg f) $ PrpF p])]
+formToMap (Impl f (Neg (PrpF p))) = [(p, Conj [Impl f Bot, Impl (Neg f) $ PrpF p])]-}
 
 --translates a literal to a tuple of proposition and its assigned truth value
 literalToMap :: SMCDEL.Language.Form -> (Prp,SMCDEL.Language.Form)
@@ -133,7 +145,7 @@ predToProps objects (PredDef name vars) =
     allPreds = map (\as -> PredSpec name as) allObjectedVarLists -- [(PredSpec name [L1,A1,A1]), 
                                                                        --  (PredSpec name [L2,A1,A1])...]
   in allPreds
-predToProps _ (PredAtom name) = [PredSpec name []]
+predToProps _ (PredAtom name) = [PredAtom name]
 
 
 --function that augments the existing varListList by all objects
@@ -170,7 +182,7 @@ pddlFormToDelForm (Atom (PredEq n1 n2)) _ objectMap _
 pddlFormToDelForm (Atom (PredSpec name vars)) atomMap objectMap _ = 
   PrpF $ atomMap ! PredSpec name (map (objectMap !) vars)
 pddlFormToDelForm (Atom (PredAtom name)) atomMap _ _ = 
-  PrpF $ atomMap ! PredSpec name []
+  PrpF $ atomMap ! PredAtom name
 pddlFormToDelForm (Not f) pm om os = Neg $ pddlFormToDelForm f pm om os 
 pddlFormToDelForm (And fs) pm om os = Conj $ map (\f -> pddlFormToDelForm f pm om os) fs
 pddlFormToDelForm (Or fs) pm om os = Disj $ map (\f -> pddlFormToDelForm f pm om os) fs

@@ -61,7 +61,6 @@ validInput (CheckPDDL
 --Converts PredAtom to PredSpec. Shoots an error for PredEq or PredDef
 --since it's only used for world's and init's predicates.
 convertPred :: Predicate -> Predicate 
-convertPred (PredAtom name) = PredSpec name []
 convertPred (PredDef name _) = 
   error $ "Error in checking semantics, predicate " ++ name 
   ++ " is defined in problem with the object types. " 

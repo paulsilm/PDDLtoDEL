@@ -63,6 +63,7 @@ processPDDL (pdf, texM, printFile, debug, True, depth, ic) pddl =
     case pddlToDEL pddl of
       (CoopTask problem actions _) -> do
         putStrLn $ if debug then show pddl else ""
+        putStrLn $ if debug then show problem else ""
         printModel pdf texM problem actions
     printParsedPDDL printFile pddl
     putStrLn $ findShortestICPlan pddl ic depth debug

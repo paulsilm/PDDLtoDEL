@@ -2,7 +2,7 @@
 	(:requirements :strips :typing)
 	(:types letter agent)
 	(:predicates
-		(connected ?a1 ?a2 - agent);p2 = connected A1 A2,  p6 = connected A2 A3
+		(connected ?a1 ?a2 - agent);p2 = connected A1 A2, p6 = connected A2 A3
 		(destined ?l - letter ?a - agent);p10 = destined L A1, p11 = destined L A2, p12 = destined L A3
 		(not-destined ?l - letter ?a - agent); p13 = not-destined L A1, p14 = not-destined L A2, p15 = not-destined L A3
 		(at ?l - letter ?a - agent); p16 = at L A1 
