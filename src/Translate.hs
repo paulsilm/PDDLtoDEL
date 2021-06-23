@@ -30,8 +30,8 @@ translateActions atomMap objs conss (a@(Action name params _ _ _):actions) =
     paramMaps = map ([(o,o) | (TO os _) <- conss, o <- os] ++) (parameterMaps params objs)
     actionModels = map (actionToActionModel atomMap objs a) paramMaps 
     actorName actor = if actor == "" then "" else actor ++ ": " 
-    addModel ms = if ms == [] then [actionToActionModel atomMap objs a []] else ms
-    allModels = addModel actionModels
+    addModelIfEmpty ms = if ms == [] then [actionToActionModel atomMap objs a [(o,o) | (TO os _) <- conss, o <- os]] else ms
+    allModels = addModelIfEmpty actionModels
     ownedModels = map (\(actress,model,paramNames) -> (actress, (actorName actress ++ name ++ " " ++ show paramNames,model))) allModels
   in
     ownedModels ++ (translateActions atomMap objs conss actions)

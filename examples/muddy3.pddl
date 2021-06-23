@@ -7,13 +7,10 @@
     )
 
     (:action announce-at-least-one
-        :parameters (?a - agent)
-        :byagent ?a
+        :parameters ()
+        :byagent God
         :precondition
-            (and 
-                (= ?a God)
-                (exists (?b - agent) (muddy ?b))
-            )
+            (exists (?b - agent) (muddy ?b))
         :effect
             (and)
     )
