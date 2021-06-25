@@ -6,9 +6,9 @@ data Form = Atom Predicate
           | Or [Form]
           | Not Form 
           | Imply Form Form
-          | Forall [VarType] Form
-          | ForallWhen [VarType] Form Form
-          | Exists [VarType] Form 
+          | Forall [TypedVars] Form
+          | ForallWhen [TypedVars] Form Form
+          | Exists [TypedVars] Form 
           | Knows String Form
           | CommonKnow Form
           deriving (Show, Eq)
@@ -33,19 +33,19 @@ data Req = Strips
 
 -- Predicate: Atomic name | Definition name typed_variables | Specific name object_names
 data Predicate = PredAtom String
-               | PredDef String [VarType]
+               | PredDef String [TypedVars]
                | PredSpec String [String]
                | PredEq String String
                deriving (Show, Eq)
 
 --Typed variables: variables type
-data VarType = VTL [String] String 
+data TypedVars = TV [String] String 
           deriving (Show, Eq)
 
 -- PDDL action: name params actor events observabilities
 data Action = Action {
                aname :: String,
-               params :: [VarType],
+               params :: [TypedVars],
                actor :: String, 
                events :: [Event], 
                evobss :: [Obs]}
@@ -89,3 +89,16 @@ data World = World Bool String [Predicate]
 --PDDL file: domain problem
 data PDDL = CheckPDDL Domain Problem
                 deriving (Show, Eq)
+
+class TypedData a where
+     getVars :: a -> [String]
+     getType :: a -> String 
+
+instance TypedData TypedObjs where
+     getVars (TO os _) = os
+     getType (TO _ t) = t 
+
+instance TypedData TypedVars where
+     getVars (TV vs _) = vs
+     getType (TV _ t) = t
+

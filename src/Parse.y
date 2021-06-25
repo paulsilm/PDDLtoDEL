@@ -99,7 +99,7 @@ PredicateList : { [] }
 
 Predicate : String { PredAtom $1 }
           | String NameList { PredSpec $1 $2 }
-          | String NameList '-' String opt(VarTypeList) { PredDef $1 ((VTL $2 $4):$5) }
+          | String NameList '-' String opt(VarTypeList) { PredDef $1 ((TV $2 $4):$5) }
           | '=' Name Name { PredEq $2 $3 }
 
 NameList : Name { [$1] }
@@ -125,7 +125,7 @@ OptVarTypeList : { [] }
 VarTypeList : VarType { [$1] } 
             | VarType VarTypeList { $1:$2 } 
 
-VarType : VarList '-' String { VTL $1 $3 } 
+VarType : VarList '-' String { TV $1 $3 } 
 
 VarList : VarName { [$1] }
         | VarName VarList { $1:$2 }

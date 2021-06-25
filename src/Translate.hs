@@ -27,10 +27,10 @@ translateActions :: [(Predicate, Prp)] -> [TypedObjs] -> [TypedObjs] -> [PDDL.Ac
 translateActions _ _ _ [] = []
 translateActions atomMap objs conss (a@(Action name params _ _ _):actions) =
   let 
-    paramMaps = map ([(o,o) | (TO os _) <- conss, o <- os] ++) (parameterMaps params objs)
+    paramMaps = map ([(obj,obj) | obj <- concatMap getVars conss] ++) (parameterMaps params objs)
     actionModels = map (actionToActionModel atomMap objs a) paramMaps 
     actorName actor = if actor == "" then "" else actor ++ ": " 
-    addModelIfEmpty ms = if ms == [] then [actionToActionModel atomMap objs a [(o,o) | (TO os _) <- conss, o <- os]] else ms
+    addModelIfEmpty ms = if ms == [] then [actionToActionModel atomMap objs a [(obj,obj) | obj <- concatMap getVars conss]] else ms
     allModels = addModelIfEmpty actionModels
     ownedModels = map (\(actress,model,paramNames) -> (actress, (actorName actress ++ name ++ " " ++ show paramNames,model))) allModels
   in
@@ -55,7 +55,7 @@ actionToActionModel atomMap objs (Action _ params actor events obss) varMap =
     actualEvents = [i | ((des,_,_,_), i) <- eventMap, des]
     actress = if actor == "" then "" else varMap ! actor
   in
-    (actress, (ActMS5 [(i, (pre, eff)) | ((_,_,pre,eff), i) <- eventMap ] agentRels, actualEvents), [varMap ! p | (VTL ps _) <- params, p <- ps])
+    (actress, (ActMS5 [(i, (pre, eff)) | ((_,_,pre,eff), i) <- eventMap ] agentRels, actualEvents), [varMap ! p | p <- concatMap getVars params])
 
 --translates the effect formula to a list of predicate tuples
 formToMap :: SMCDEL.Language.Form -> [(Prp,SMCDEL.Language.Form)]
@@ -164,10 +164,10 @@ getObjNames :: String -> [TypedObjs] -> [String]
 getObjNames _ [] = []
 getObjNames objType ((TO names objName):objs) = if objType == objName then names else getObjNames objType objs
 
---adds agent variables their type and converts VarType to list
---(VTL "at" ["L1","L2"] - "letter") -> [("L1,"letter"),("L2,"letter")]
-typify :: VarType -> [(String,String)]
-typify (VTL objs objType) = zip objs $ replicate (length objs) objType
+--adds agent variables their type and converts TypedVars to list
+--(TV "at" ["L1","L2"] - "letter") -> [("L1,"letter"),("L2,"letter")]
+typify :: TypedVars -> [(String,String)]
+typify (TV objs objType) = zip objs $ replicate (length objs) objType
 
 --  Function to translate a PDDL Formula to the list of matching SMCDEL Formulas
 --params: 
@@ -189,30 +189,30 @@ pddlFormToDelForm (And fs) pm om os = Conj $ map (\f -> pddlFormToDelForm f pm o
 pddlFormToDelForm (Or fs) pm om os = Disj $ map (\f -> pddlFormToDelForm f pm om os) fs
 pddlFormToDelForm (Imply f1 f2) pm om os = Impl (pddlFormToDelForm f1 pm om os) (pddlFormToDelForm f2 pm om os)
 --Singleton cases (Forall, ForallWhen, Exists) e.g. forall (?b1 ?b2 - bricks) ...
-pddlFormToDelForm (PDDL.Forall [(VTL vars objType)] f) pmap oMap ojs = 
+pddlFormToDelForm (PDDL.Forall [(TV vars objType)] f) pmap oMap ojs = 
   Conj [pddlFormToDelForm f pmap ((var,objName):oMap) ojs 
         | objName <- (getObjNames objType ojs)
         , var <- vars]
-pddlFormToDelForm (PDDL.Exists [(VTL vars objType)] f) pmap oMap ojs = 
+pddlFormToDelForm (PDDL.Exists [(TV vars objType)] f) pmap oMap ojs = 
   Disj [pddlFormToDelForm f pmap ((var,objName):oMap) ojs 
         | objName <- (getObjNames objType ojs)
         , var <- vars]
-pddlFormToDelForm (ForallWhen [(VTL vars objType)] f1 f2) pmap oMap ojs = 
+pddlFormToDelForm (ForallWhen [(TV vars objType)] f1 f2) pmap oMap ojs = 
   Conj [Impl 
           (pddlFormToDelForm f1 pmap ((var,objName):oMap) ojs) 
           (pddlFormToDelForm f2 pmap ((var,objName):oMap) ojs) 
         | objName <- (getObjNames objType ojs)
         , var <- vars] 
 --Permutation cases (Forall, ForallWhen, Exists) e.g. forall (?b1 ?b2 - bricks ?a - agent) ...
-pddlFormToDelForm (PDDL.Forall ((VTL vars objType):vts) f) pmap oMap ojs = 
+pddlFormToDelForm (PDDL.Forall ((TV vars objType):vts) f) pmap oMap ojs = 
   Conj [pddlFormToDelForm (PDDL.Forall vts f) pmap ((var,objName):oMap) ojs 
         | objName <- (getObjNames objType ojs)
         , var <- vars]
-pddlFormToDelForm (PDDL.Exists ((VTL vars objType):vts) f) pmap oMap ojs = 
+pddlFormToDelForm (PDDL.Exists ((TV vars objType):vts) f) pmap oMap ojs = 
   Disj [pddlFormToDelForm (PDDL.Exists vts f) pmap ((var,objName):oMap) ojs 
         | objName <- (getObjNames objType ojs)
         , var <- vars]
-pddlFormToDelForm (ForallWhen ((VTL vars objType):vts) f1 f2) pmap oMap ojs = 
+pddlFormToDelForm (ForallWhen ((TV vars objType):vts) f1 f2) pmap oMap ojs = 
   Conj [pddlFormToDelForm (ForallWhen vts f1 f2) pmap ((var,objName):oMap) ojs 
         | objName <- (getObjNames objType ojs)
         , var <- vars] --Add the variables to the object map and move to next type
@@ -223,11 +223,11 @@ pddlFormToDelForm (CommonKnow f) pmap oMap ojs = Ck (getObjNames "agent" ojs) $ 
 
 -- Takes the list of all variables, and returns the permutation (list of lists) 
 -- of mappings from variable to object names
--- parameterMaps [(VTL ["a1","a2"] "agent")] [(TO ["A1","A2"] "agent"),...] = 
+-- parameterMaps [(TV ["a1","a2"] "agent")] [(TO ["A1","A2"] "agent"),...] = 
 --  [[("a1","A1"),("a2","A1")],
 --   ...
 --   [("a1","A2"),("a2","A2")]]
-parameterMaps :: [VarType] -> [TypedObjs] -> [[(String, String)]]
+parameterMaps :: [TypedVars] -> [TypedObjs] -> [[(String, String)]]
 parameterMaps [] _ = []
 parameterMaps params objList = 
   let 

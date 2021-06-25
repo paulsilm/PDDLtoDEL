@@ -44,8 +44,8 @@ ppPred (PredSpec p vars) = "(" ++ p ++ (concatMap (" " ++) vars) ++ ")"
 ppPred (PredDef p varTypes) = "(" ++ p ++ (concatMap (\v -> " " ++ ppVars v) varTypes) ++ ")"
 ppPred (PredEq p1 p2) = "(= " ++ p1 ++ " " ++ p2 ++ ")"
 
-ppVars :: VarType -> String
-ppVars (VTL vars typedObjs) = concatMapTail id vars (" " ++) ++ " - " ++ typedObjs
+ppVars :: TypedVars -> String
+ppVars (TV vars typedObjs) = concatMapTail id vars (" " ++) ++ " - " ++ typedObjs
 
 ppAction :: Action -> String
 ppAction (Action name params actor events obss) = 
