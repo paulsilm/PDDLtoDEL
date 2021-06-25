@@ -14,14 +14,8 @@
       :effect
         (and)
     )
-    (:event-designated skip
-      :precondition
-        (key-under-mat)
-      :effect
-        (and)
-    )
     (:event-designated actual
-      :precondition (has-key ?a)
+      :precondition (or (has-key ?a) (key-under-mat))
       :effect
         (and
           (key-under-mat)

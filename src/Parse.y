@@ -151,14 +151,16 @@ getInit : INIT PredicateList ')' '(' { $2 }
 getObsList : ObsList { $1 }
 
 Problem : '(' DEF
-                   '(' PROBLEMNAME String ')'
-                   '(' DOM String ')'
-                   '(' OBJ TypedObjsList ')'
-                   '(' opt(getInit)
-                    WorldList 
-                    opt(getObsList) 
-                    GOAL Form ')'
-                ')' { Problem $5 $9 $13 $16 $17 $18 $20 }
+                '(' PROBLEMNAME String ')'
+                '(' DOM String ')'
+                '(' opt(getObjList)
+                opt(getInit)
+                opt(WorldList)
+                opt(getObsList) 
+                GOAL Form ')'
+          ')' { Problem $5 $9 $12 $13 $14 $15 $17 }
+
+getObjList : OBJ TypedObjsList ')' '(' { $2 } 
 
 TypedObjsList : { [] }
               | TypedObjs { [$1] }

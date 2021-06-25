@@ -91,14 +91,15 @@ translateObs _ obs = obs
 problemToKripkeModel :: [(Predicate, Prp)] -> Problem -> MultipointedModelS5
 problemToKripkeModel atomMap (Problem _ _ objects initialPreds parsedWorlds obss _) =
   let
-    worldMap = zip parsedWorlds [0..]
+    initialWorlds = if parsedWorlds == [] then [World True "" []] else parsedWorlds
+    worldMap = zip initialWorlds [0..]
     val = [ (i, [ (P k, elem statement $ trueHere ++ initialPreds) 
                 | (statement, P k) <- atomMap ])
           | (World _ _ trueHere, i)  <- worldMap ]
     worlds = map snd worldMap
     --get all agents alongside their worldpartition, mapped onto worlds::[Int]
     translateWorld s = head [ i | (World _ name _, i) <- worldMap, name == s ] -- takes name s of world and returns its index (unsafe)
-    agentRels = [ (ag, map (map translateWorld) $ worldPart (getObs obss ag) parsedWorlds) -- translate partition (String->Int)
+    agentRels = [ (ag, map (map translateWorld) $ worldPart (getObs obss ag) initialWorlds) -- translate partition (String->Int)
                 | ag <- getObjNames "agent" objects]
     actualWorlds = [i | (World des _ _, i) <- worldMap, des]
   in

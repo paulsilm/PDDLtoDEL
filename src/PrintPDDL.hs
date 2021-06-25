@@ -102,8 +102,8 @@ ppProblem (Problem problemName domainName objects init worlds obss goal) =
   ++ "(:domain " ++ domainName ++ ")\n\t"
   ++ "(:objects" ++ (concatMap (\o -> "\n\t\t" ++ ppObj o) objects) ++ ")"
   ++ ppInit init
-  ++ (concatMap ppWorld worlds) ++ "\n\t"
-  ++ "(:observability" ++ concatMapTail ppObs obss ("\n\t :observability" ++) ++ ")\n\t"
+  ++ (concatMap ppWorld worlds) 
+  ++ (concatMap (\o -> "\n\t(:observability" ++ ppObs o ++ ")") obss) ++ "\n\t"
   ++ "(:goal\n\t\t" ++ (ppForm goal "\t\t") ++ "\n\t)\n)\n"
 
 ppInit :: [Predicate] -> String

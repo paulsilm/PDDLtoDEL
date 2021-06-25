@@ -5,10 +5,6 @@ import Translate
 import Lib
 import SMCDEL.Internal.Help ((!))
 
---TODO Change parsing to allow no worlds be defined.
---TODO also make sure that it is indeed allowed to not have any agents in an action.
---TODO check that Forall and Exists only have variables defined
-
 --Checks whether the input is semantically consistent, if not returns a Just String with
 --an error message
 validInput :: PDDL -> Maybe String
@@ -34,6 +30,7 @@ validInput (CheckPDDL
                     (and [count objType [objType | (TO _ objType) <- conss] == 1 | (TO _ objType) <- conss],
                       "Multiple definitions of same object type in constants"),
                     (and [consType `elem` types | (TO _ consType) <- conss], "Constant type is not declared in :types"),
+                    (not $ worlds == [] && obss /= [], "Observabilities cannot be defined if there are no worlds"),
                     (observabilitiesOnlyForAgents (getObjNames "agent" allObjects) obss, "Observability can only be defined for agents" ),
                     (and [observabilityPartitionCorrect [name | (World _ name _) <- worlds ] obs | obs <- obss], 
                       "Observability partition (of worlds) can only include names of worlds.")
@@ -51,7 +48,7 @@ validInput (CheckPDDL
                       , "Init has invalid predicate: " ++ show pred)
                       | pred <- initPreds
                     ] ++ 
-                    [([des | (World des _ _) <- worlds, des] /= [], "No designated worlds")
+                    [(worlds == [] || or [ True | (World True _ _) <- worlds], "No designated worlds")
                   ] ++ map (checkAction types preds allObjects) actions
                 in
                   case [ error | (False,error) <- tests ] of
@@ -110,7 +107,9 @@ checkAction typeList preds objects (Action name params actor events obss) =
                 [(name,validForm predsTyped objMap eff)  
                 | (Event _ name _ eff) <- events]
               ] ++
-              [(actor == "" || actor `elem` (getObjNames "agent" allObjects), 
+              [(actor /= "", 
+                "Currently global actions are not supported"),
+              (actor `elem` (getObjNames "agent" allObjects), 
                 "Actor needs to be an agent"),
               (allDifferent [name | (Event _ name _ _) <- events], 
                 "Multiple events have the same name"),
@@ -175,7 +174,7 @@ validForm ps os (Imply f1 f2) =
         (True,_) -> (True,"")
         (False,err) -> (False, "(_ -> (" ++ err ++ "))")
     (False,err1) ->
-      case validLiteral ps os f2 of
+      case validForm ps os f2 of
         (True,_) -> (False, "((" ++ err1 ++ ") -> _ )")
         (False,err2) -> (False, "((imply (" ++ err1 ++ ") -> (" ++ err2 ++ ")")
 validForm _ _ (Forall [] _) = (False, "(Forall ### missing typed variables ### _)")
@@ -247,7 +246,7 @@ validEffForm ps os (Imply a b) =
 {-Allowed:
 Literal
 Conj<Literal>
--}--TODO CHECK THAT THERE'S NO EQUALITY PREDICATES
+-}
 validEffElement :: [Predicate] -> [(String,String)] -> Form -> (Bool,String)
 validEffElement ps os a@(Atom _) = validLiteral ps os a
 validEffElement ps os (And ls) = 
@@ -260,7 +259,7 @@ Atom
 not(Atom)
 -}
 validLiteral :: [Predicate] -> [(String,String)] -> Form -> (Bool,String)
-validLiteral ps os (Atom p) = validPred ps os p
+validLiteral ps os (Atom p) = validEffPred ps os p
 validLiteral ps os (Not (Not p)) = (False, "### double negation isn't supported ###")
 validLiteral ps os (Not p) = 
   case validLiteral ps os p of 
@@ -270,24 +269,32 @@ validLiteral _ _ _ = (False, "### should be a literal (atomic proposition or neg
 
 {-Allowed:
 Predicates that are defined,
-In case of equality only those where both propositions have same typ and
+In case of equality only those where both propositions have same type and
 In case of specific instance of a predicate (e.g. not-connected A1 A2) checks the types match the definition
 -}
 validPred :: [Predicate] -> [(String,String)] -> Predicate -> (Bool,String)
-validPred _ _ (PredDef name _) = (False, "### Predicate " ++ name ++ " defined with types. Maybe remove the types? ###")
 validPred _ os (PredEq a b) 
   | a `notElem` map fst os = (False, "### " ++ a ++ " from (= " ++ a ++ " " ++ b ++ ") is not defined ###")
   | b `notElem` map fst os = (False, "### " ++ b ++ " from (= " ++ a ++ " " ++ b ++ ") is not defined ###")
   | os ! a == os ! b = (True, "")
   | otherwise = (False, "### " ++ b ++ " and " ++ a ++ " from (= " ++ a ++ " " ++ b ++ ") have different types ###")
-validPred ps _ p@(PredAtom a) 
+validPred ps os p = validEffPred ps os p
+
+{-Allowed:
+Predicates that are defined,
+In case of specific instance of a predicate (e.g. not-connected A1 A2) checks the types match the definition
+-}
+validEffPred :: [Predicate] -> [(String,String)] -> Predicate -> (Bool,String)
+validEffPred _ _ (PredDef name _) = (False, "### Predicate " ++ name ++ " defined with types. Maybe remove the types? ###")
+validEffPred _ _ (PredEq a b) = (False, "### Can't assign " ++ a ++ " to be equal to " ++ b ++ " ###")
+validEffPred ps _ p@(PredAtom a) 
   | p `elem` ps = (True, "")
   | otherwise = (False, "### " ++ a ++ " is not defined ###" ++ show ps )
-validPred ps os (PredSpec name objs) = --TODO check that the predicate is defined
+validEffPred ps os (PredSpec name objs) =
   case [ obj | obj <- objs, obj `notElem` map fst os] of
     [] -> case [ err | (False, err) <- zipWith (\a b -> (os ! a == b, "(" ++ a ++ " " ++ b ++ ")" )) objs 
                 $ concat [ types | (PredSpec n types) <- ps, n == name]] of
-      [] -> (True, "")
+      [] -> if name `elem` [ n | (PredSpec n _) <- ps] then (True, "") else (False, "### predicate " ++ name ++ " is not defined ###")
       errors -> (False, "### predicate " ++ name ++ " has incorrect types for: " ++ show errors ++ "###") 
     objects -> (False, "### objects " ++ show objects ++ " not defined ###")
   

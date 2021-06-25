@@ -1,0 +1,6 @@
+a list of things to come.
+
+TODO
+subtyping
+enable global actions (in SMCDEL I guess)
+fix translating implications

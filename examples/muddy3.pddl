@@ -1,6 +1,6 @@
 (define (domain muddy)
     (:requirements :strips :typing)
-    (:types agent useless)
+    (:types agent)
     (:constants A1 A2 A3 God - agent)
     (:predicates
         (muddy ?a - agent)
@@ -9,10 +9,18 @@
     (:action announce-at-least-one
         :parameters ()
         :byagent God
-        :precondition
-            (exists (?b - agent) (muddy ?b))
-        :effect
-            (and)
+        (:event-nondesignated trivial 
+            :precondition (and)
+            :effect (and)
+        )
+        (:event-designated actual
+            :precondition
+                (exists (?b - agent) (muddy ?b))
+            :effect
+                (and)
+        )
+        ;:observability full God
+        ;:observability none
     )
 
     (:action round-kkk
@@ -115,7 +123,6 @@
 
 (define (problem muddy-3)
     (:domain muddy)
-    (:objects Uselessobj - useless); TODO allow empty object list
     ; All agents know that other agents know whether they're muddy or not
         (:world-nondesignated ccc)
         (:world-nondesignated ccm
@@ -130,10 +137,10 @@
         (:world-nondesignated mcm
             (muddy A1)
             (muddy A3))
-        (:world-designated mmc
+        (:world-nondesignated mmc
             (muddy A1)
             (muddy A2))
-        (:world-nondesignated mmm
+        (:world-designated mmm
             (muddy A1)
             (muddy A2)
             (muddy A3))

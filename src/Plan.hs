@@ -14,7 +14,7 @@ import Debug.Trace
 findShortestICPlan :: PDDL -> Bool -> Int -> Bool -> String
 findShortestICPlan pddl True d debug
   | planList /= [] = formatSolution $ head planList
-  | otherwise = "No solution within " ++ show maxDepth ++ " actions, with icSolves constraint."
+  | otherwise = "No implicitly coordinated solution within " ++ show maxDepth ++ " actions."
   where maxDepth = if d == 0 then maxBound :: Int else d
         planList = [head plan | plan <- [map ppICPlan plans 
                                    | plans <- [dfs i debug $ pddlToDEL pddl | i <- [1..maxDepth]] -- Iterative DFS
