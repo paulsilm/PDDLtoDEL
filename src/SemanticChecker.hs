@@ -5,38 +5,41 @@ import Translate
 import Lib
 import SMCDEL.Internal.Help ((!))
 
+--TODO if no object matches an action's parameter, the program gives runtime error
+
 --Checks whether the input is semantically consistent, if not returns a Just String with
 --an error message
 validInput :: PDDL -> Maybe String
 validInput (CheckPDDL
             (Domain domainName _ types conss preds actions)
             p@(Problem _ domName objects initPreds worlds obss goal)) =
-              let
-                allObjects = addConstantsToObjs conss objects
-                allPreds = concatMap (predToProps allObjects) preds
+              let --TODO check that types are in correct order (only top to bottom hierarchy)
+                allTypes = getAllSubTypes "object" types
+                allObjects = addConstantsToObjs conss objects--TODO check that object names would be unique
+                allPreds = concatMap (predToProps types allObjects) preds
                 predsTyped = [ PredSpec name $ map snd $ concatMap typify vars | (PredDef name vars) <- preds] 
                           ++ [ a | a@(PredAtom _) <- preds]-- e.g., PredSpec "predicate1" ["agent", "agent", "brick"]
                 tests =
-                  [ (and [objType `elem` types | (TO _ objType) <- objects], "Object type in problem file is not declared in :types"),
+                  [ (and [ objType `elem` allTypes | (TO _ objType) <- objects], "Object type in problem file is not declared in :types"),
                     (domainName == domName, "Problem" ++ (pname p) ++ "'s domain-name does not match domain's name"),
                     (allDifferent [name | (World _ name _) <- worlds], "Multiple worlds have the same name"),
                     (allDifferent [name | (Action name _ _ _ _) <- actions], "Multiple actions have the same name"),
                     (allDifferent $ map getPredDefOrAtomName preds, "Multiple predicates have the same name"),
                     (and [ head var == '?' | (PredDef name params) <- preds, var <- concatMap getVars params, var /= []],
                       "Variables of predicates are written as objects (maybe add '?')"),
-                    (all (predTypesExist types) preds, "Predicate type is missing"),
+                    (all (predTypesExist allTypes) preds, "Predicate type is missing"),
                     (and [count objType [objType | (TO _ objType) <- objects] == 1 | (TO _ objType) <- objects],
                       "Multiple definitions of same object type in problem file"),
                     (and [count objType [objType | (TO _ objType) <- conss] == 1 | (TO _ objType) <- conss],
                       "Multiple definitions of same object type in constants"),
-                    (and [consType `elem` types | (TO _ consType) <- conss], "Constant type is not declared in :types"),
-                    (not $ worlds == [] && obss /= [], "Observabilities cannot be defined if there are no worlds"),
-                    (observabilitiesOnlyForAgents (getObjNames "agent" allObjects) obss, "Observability can only be defined for agents" ),
+                    (and [consType `elem` allTypes | (TO _ consType) <- conss], "Constant type is not declared in :types"),
+                    (not $ null worlds && obss /= [], "Observabilities cannot be defined if there are no worlds"),
+                    (observabilitiesOnlyForAgents (getObjsMatchingType types "agent" allObjects) obss, "Observability can only be defined for agents" ),
                     (and [observabilityPartitionCorrect [name | (World _ name _) <- worlds ] obs | obs <- obss], 
                       "Observability partition (of worlds) can only include names of worlds.")
                     ] ++  
                     [ (False, "Goal format is incorrect: " ++ err)
-                    | (False, err) <- [validForm predsTyped
+                    | (False, err) <- [validForm types predsTyped
                       [ (obj, objType) | (TO objs objType) <- allObjects, obj <- objs] --Map from object name to its type
                       goal]
                     ] ++
@@ -48,7 +51,7 @@ validInput (CheckPDDL
                       , "Init has invalid predicate: " ++ show pred)
                       | pred <- initPreds
                     ] ++ 
-                    [(worlds == [] || or [ True | (World True _ _) <- worlds], "No designated worlds")
+                    [(null worlds || or [ True | (World True _ _) <- worlds], "No designated worlds")
                   ] ++ map (checkAction types preds allObjects) actions
                 in
                   case [ error | (False,error) <- tests ] of
@@ -88,10 +91,11 @@ addParamstoObjs [] objs = objs
 addParamstoObjs ((TV cNames cType):cs) objs =
   addParamstoObjs cs $ (TO ((getObjNames cType objs) ++ cNames) cType):objs
 
---Checks action's validity
-checkAction :: [String] -> [Predicate] -> [TypedObjs] -> Action -> (Bool,String) 
-checkAction typeList preds objects (Action name params actor events obss) =
+--Checks action's validity--TODO refactor
+checkAction :: [TypedTypes] -> [Predicate] -> [TypedObjs] -> Action -> (Bool,String) 
+checkAction types preds objects (Action name params actor events obss) =
   let 
+    typeList = getAllSubTypes "object" types
     allObjects = addParamstoObjs params objects
     objMap = [ (obj, objType) | (TO objs objType) <- allObjects, obj <- objs]--Map from object name to its type
     predsTyped = [ PredSpec name $ map snd $ concatMap typify vars | (PredDef name vars) <- preds] 
@@ -99,17 +103,17 @@ checkAction typeList preds objects (Action name params actor events obss) =
     tuples = 
               [ (False, "Precondition format of event " ++ name ++ " is incorrect: " ++ err) 
               | (name,(False,err)) <- 
-                [(name,validForm predsTyped objMap pre)  
+                [(name,validForm types predsTyped objMap pre)  
                 | (Event _ name pre _) <- events]
               ] ++
               [ (False, "Effect format of event " ++ name ++ " is incorrect: " ++ err) 
               | (name,(False,err)) <- 
-                [(name,validForm predsTyped objMap eff)  
+                [(name,validForm types predsTyped objMap eff)  
                 | (Event _ name _ eff) <- events]
               ] ++
               [(actor /= "", 
                 "Currently global actions are not supported"),
-              (actor `elem` (getObjNames "agent" allObjects), 
+              (actor `elem` (getObjsMatchingType types "agent" allObjects), 
                 "Actor needs to be an agent"),
               (allDifferent [name | (Event _ name _ _) <- events], 
                 "Multiple events have the same name"),
@@ -119,7 +123,7 @@ checkAction typeList preds objects (Action name params actor events obss) =
                 "Some parameter type is not defined in :types"),
               (and [ head var == '?' | var <- concatMap getVars params, var /= []], 
                 "Parameter names are not in the required form: \"?_\""),
-              (observabilitiesOnlyForAgents (getObjNames "agent" allObjects) obss, 
+              (observabilitiesOnlyForAgents (getObjsMatchingType types "agent" allObjects) obss, 
                 "Observability can only be defined for agents" ),
               (and [observabilityPartitionCorrect [name | (Event _ name _ _) <- events ] obs | obs <- obss], 
                 "Observability partition can only include names of events.")
@@ -146,100 +150,95 @@ predTypesExist :: [String] -> Predicate -> Bool
 predTypesExist types (PredDef _ vars) = and [varType `elem` types | (TV _ varType) <- vars]
 predTypesExist _ _ = True
 
---Checks that all elements are different
-allDifferent :: Eq a => [a] -> Bool
-allDifferent [] = True
-allDifferent (x:xs) = notElem x xs && allDifferent xs
-
 --Checks that the formula is in a correct format. Takes formula, a list of defined predicates with their types,
 --e.g., (PredSpec "connected" ["agent", "agent"]) (achieved by using Translate.typify)
 --and a map from variable names to their corresponding type
-validForm :: [Predicate] -> [(String,String)] -> Form -> (Bool,String)
-validForm ps os (And forms) = 
-  case [ err | (False, err) <- map (validForm ps os) forms] of 
+validForm :: [TypedTypes] -> [Predicate] -> [(String,String)] -> Form -> (Bool,String)
+validForm ts ps os (And forms) = 
+  case [ err | (False, err) <- map (validForm ts ps os) forms] of 
     [] -> (True, "")
     errors -> (False, "(and " ++ concatMap (\e -> "(" ++ e ++ ") ") errors ++ ")")
-validForm ps os (Or forms) = 
-  case [ err | (False, err) <- map (validForm ps os) forms] of 
+validForm ts ps os (Or forms) = 
+  case [ err | (False, err) <- map (validForm ts ps os) forms] of 
     [] -> (True, "")
     errors -> (False, "(or " ++ concatMap (\e -> "(" ++ e ++ ") ") errors ++ ")")
-validForm ps os (Not f) = 
-  case validForm ps os f of
+validForm ts ps os (Not f) = 
+  case validForm ts ps os f of
     (True,_) -> (True,"")
     (False, err) -> (False,"not (" ++ err ++ ")")
-validForm ps os (Imply f1 f2) = 
-  case validForm ps os f1 of
+validForm ts ps os (Imply f1 f2) = 
+  case validForm ts ps os f1 of
     (True,_) -> 
-      case validForm ps os f2 of
+      case validForm ts ps os f2 of
         (True,_) -> (True,"")
         (False,err) -> (False, "(_ -> (" ++ err ++ "))")
     (False,err1) ->
-      case validForm ps os f2 of
+      case validForm ts ps os f2 of
         (True,_) -> (False, "((" ++ err1 ++ ") -> _ )")
         (False,err2) -> (False, "((imply (" ++ err1 ++ ") -> (" ++ err2 ++ ")")
-validForm _ _ (Forall [] _) = (False, "(Forall ### missing typed variables ### _)")
-validForm _ _ (Exists [] _) = (False, "(Forall ### missing typed variables ### _)")
-validForm _ _ (ForallWhen [] _ _) = (False, "(Forall ### missing typed variables ### when _ _)")
-validForm ps os (Forall vars f) = 
+validForm _ _ _ (Forall [] _) = (False, "(Forall ### missing typed variables ### _)")
+validForm _ _ _ (Exists [] _) = (False, "(Forall ### missing typed variables ### _)")
+validForm _ _ _ (ForallWhen [] _ _) = (False, "(Forall ### missing typed variables ### when _ _)")
+validForm ts ps os (Forall vars f) = 
   case [ obj | obj <- concatMap getVars vars, obj `elem` map fst os] of
     [] ->
-      case validForm ps (os ++ [ (obj,objType) | (TV objs objType) <- vars, obj <- objs]) f of
+      case validForm ts ps (os ++ [ (obj,objType) | (TV objs objType) <- vars, obj <- objs]) f of
         (True,_) -> (True,"")
         (False,error) -> (False, "(Forall _ " ++ error ++ ")")
     objs -> (False, "(Forall ### Redefining variables: " ++ concatMapTail id objs (", " ++) ++ "### _)")  
-validForm ps os (ForallWhen vars f1 f2) = 
+validForm ts ps os (ForallWhen vars f1 f2) = 
   case [ obj | obj <- concatMap getVars vars, obj `elem` map fst os] of
     [] ->
-      case validForm ps (os ++ [ (obj,objType) | (TV objs objType) <- vars, obj <- objs]) f1 of
-        (True,_) -> case validForm ps (os ++ [ (obj,objType) | (TV objs objType) <- vars, obj <- objs]) f2 of
+      case validForm ts ps (os ++ [ (obj,objType) | (TV objs objType) <- vars, obj <- objs]) f1 of
+        (True,_) -> case validForm ts ps (os ++ [ (obj,objType) | (TV objs objType) <- vars, obj <- objs]) f2 of
           (True,_) -> (True,"")
           (False,error) -> (False, "(Forall _ when _ " ++ error ++ ")")
-        (False,error1) -> case validForm ps (os ++ [ (obj,objType) | (TV objs objType) <- vars, obj <- objs]) f2 of
+        (False,error1) -> case validForm ts ps (os ++ [ (obj,objType) | (TV objs objType) <- vars, obj <- objs]) f2 of
           (True,_) -> (False, "(Forall " ++ error1 ++ " when _ _)")
           (False,error2) -> (False, "(Forall " ++ error1 ++ " " ++ error2 ++ ")")
     objs -> (False, "(Forall ### Redefining variables: " ++ concatMapTail id objs (", " ++) ++ "### when _ _)") 
-validForm ps os (Exists vars f) = 
+validForm ts ps os (Exists vars f) = 
   case [ obj | obj <- concatMap getVars vars, obj `elem` map fst os] of
     [] ->
-      case validForm ps (os ++ [ (obj,objType) | (TV objs objType) <- vars, obj <- objs]) f of
+      case validForm ts ps (os ++ [ (obj,objType) | (TV objs objType) <- vars, obj <- objs]) f of
         (True,_) -> (True,"")
         (False,error) -> (False, "(Exists _ " ++ error ++ ")")
     objs -> (False, "(Exists ### Redefining variables: " ++ concatMapTail id objs (", " ++) ++ "### _)") 
-validForm ps os (Knows a f) 
+validForm ts ps os (Knows a f) 
   | a `notElem` map fst os = (False, "### atom " ++ a ++ " is not defined ###")
-  | os ! a /= "agent" = (False, "### knows should be about agent, but " ++ a ++ " is of type " ++ os ! a ++ " ###")
+  | not $ subType (os ! a) "agent" ts = (False, "### knows should be about agent, but " ++ a ++ " is of type " ++ os ! a ++ " ###") 
   | otherwise = 
-    case validForm ps os f of
+    case validForm ts ps os f of
       (True,_) -> (True,"")
       (False, err) -> (False,"(knows " ++ a ++ " " ++ err ++ ")")
-validForm ps os (CommonKnow f) =
-  case validForm ps os f of
+validForm ts ps os (CommonKnow f) =
+  case validForm ts ps os f of
     (True,_) -> (True,"")
     (False, err) -> (False,"(common-knowledge " ++ err ++ ")")
-validForm ps os (Atom a) = validPred ps os a
+validForm ts ps os (Atom a) = validPred ts ps os a
 
 {-Allowed:
 Conj<EffForm>
 -}
-validEffect :: [Predicate] -> [(String,String)] -> Form -> (Bool,String)
-validEffect ps os (And ls) = 
-  case [ err | (False, err) <- map (validEffForm ps os) ls] of
+validEffect :: [TypedTypes] -> [Predicate] -> [(String,String)] -> Form -> (Bool,String)
+validEffect ts ps os (And ls) = 
+  case [ err | (False, err) <- map (validEffForm ts ps os) ls] of
     [] -> (True, "")
     errors -> (False, "(and " ++ (concatMap (++ " ") errors) ++ ")")
-validEffect _ _ _ = (False, "### effect can###")
+validEffect _ _ _ _ = (False, "### effect can###")
 
 {- allowed: 
 Literal
 Form -> EffElement
 -}
-validEffForm :: [Predicate] -> [(String,String)] -> Form -> (Bool,String)
-validEffForm ps os a@(Atom p) = validLiteral ps os a
-validEffForm ps os (Imply a b) = 
-  case validForm ps os a of
-    (True, _) -> case validEffElement ps os b of
+validEffForm :: [TypedTypes] -> [Predicate] -> [(String,String)] -> Form -> (Bool,String)
+validEffForm ts ps os a@(Atom p) = validLiteral ts ps os a
+validEffForm ts ps os (Imply a b) = 
+  case validForm ts ps os a of
+    (True, _) -> case validEffElement ts ps os b of
       (True, _) -> (True, "")
       (False, err) -> (False, "((_) -> (" ++ err ++ "))")
-    (False, err1) -> case validEffElement ps os b of
+    (False, err1) -> case validEffElement ts ps os b of
       (True, _) -> (False, "((" ++ err1 ++ ") -> _ )") 
       (False, err2) -> (False, "((" ++ err1 ++ ") -> (" ++ err2 ++ "))") 
 
@@ -247,10 +246,10 @@ validEffForm ps os (Imply a b) =
 Literal
 Conj<Literal>
 -}
-validEffElement :: [Predicate] -> [(String,String)] -> Form -> (Bool,String)
-validEffElement ps os a@(Atom _) = validLiteral ps os a
-validEffElement ps os (And ls) = 
-  case [ err | (False, err) <- map (validLiteral ps os) ls] of
+validEffElement :: [TypedTypes] -> [Predicate] -> [(String,String)] -> Form -> (Bool,String)
+validEffElement ts ps os a@(Atom _) = validLiteral ts ps os a
+validEffElement ts ps os (And ls) = 
+  case [ err | (False, err) <- map (validLiteral ts ps os) ls] of
     [] -> (True, "")
     errors -> (False, "(and " ++ (concatMap (++ " ") errors) ++ ")")
     
@@ -258,41 +257,41 @@ validEffElement ps os (And ls) =
 Atom
 not(Atom)
 -}
-validLiteral :: [Predicate] -> [(String,String)] -> Form -> (Bool,String)
-validLiteral ps os (Atom p) = validEffPred ps os p
-validLiteral ps os (Not p) = 
-  case validLiteral ps os p of 
+validLiteral :: [TypedTypes] -> [Predicate] -> [(String,String)] -> Form -> (Bool,String)
+validLiteral ts ps os (Atom p) = validEffPred ts ps os p
+validLiteral ts ps os (Not p) = 
+  case validLiteral ts ps os p of 
     (True,_) -> (True,"")
     (False,err) -> (False, "not (" ++ err ++ ")")
-validLiteral _ _ _ = (False, "### should be a literal (atomic proposition or negation thereof) ###")
+validLiteral _ _ _ _ = (False, "### should be a literal (atomic proposition or negation thereof) ###")
 
 {-Allowed:
 Predicates that are defined,
-In case of equality only those where both propositions have same type and
 In case of specific instance of a predicate (e.g. not-connected A1 A2) checks the types match the definition
 -}
-validPred :: [Predicate] -> [(String,String)] -> Predicate -> (Bool,String)
-validPred _ os (PredEq a b) 
+validPred :: [TypedTypes] -> [Predicate] -> [(String,String)] -> Predicate -> (Bool,String)
+validPred _ _ os (PredEq a b) 
   | a `notElem` map fst os = (False, "### " ++ a ++ " from (= " ++ a ++ " " ++ b ++ ") is not defined ###")
   | b `notElem` map fst os = (False, "### " ++ b ++ " from (= " ++ a ++ " " ++ b ++ ") is not defined ###")
-  | os ! a == os ! b = (True, "")
-  | otherwise = (False, "### " ++ b ++ " and " ++ a ++ " from (= " ++ a ++ " " ++ b ++ ") have different types ###")
-validPred ps os p = validEffPred ps os p
+  | otherwise = (True, "")
+validPred ts ps os p = validEffPred ts ps os p
 
 {-Allowed:
 Predicates that are defined,
 In case of specific instance of a predicate (e.g. not-connected A1 A2) checks the types match the definition
+NotAllowed:
+Equality predicates
 -}
-validEffPred :: [Predicate] -> [(String,String)] -> Predicate -> (Bool,String)
-validEffPred _ _ (PredDef name _) = (False, "### Predicate " ++ name ++ " defined with types. Maybe remove the types? ###")
-validEffPred _ _ (PredEq a b) = (False, "### Can't assign " ++ a ++ " to be equal to " ++ b ++ " ###")
-validEffPred ps _ p@(PredAtom a) 
+validEffPred :: [TypedTypes] -> [Predicate] -> [(String,String)] -> Predicate -> (Bool,String)
+validEffPred _ _ _ (PredDef name _) = (False, "### Predicate " ++ name ++ " defined with types. Maybe remove the types? ###")
+validEffPred _ _ _ (PredEq a b) = (False, "### Can't assign " ++ a ++ " to be equal to " ++ b ++ " ###")
+validEffPred _ ps _ p@(PredAtom a) 
   | p `elem` ps = (True, "")
   | otherwise = (False, "### " ++ a ++ " is not defined ###" ++ show ps )
-validEffPred ps os (PredSpec name objs) =
+validEffPred types ps os (PredSpec name objs) =
   case [ obj | obj <- objs, obj `notElem` map fst os] of
-    [] -> case [ err | (False, err) <- zipWith (\a b -> (os ! a == b, "(" ++ a ++ " " ++ b ++ ")" )) objs 
-                $ concat [ types | (PredSpec n types) <- ps, n == name]] of
+    [] -> case [ err | (False, err) <- zipWith (\a b -> (subType (os ! a) b types, "(" ++ a ++ " " ++ b ++ ")" )) objs 
+                $ concat [ ts | (PredSpec n ts) <- ps, n == name]] of
       [] -> if name `elem` [ n | (PredSpec n _) <- ps] then (True, "") else (False, "### predicate " ++ name ++ " is not defined ###")
       errors -> (False, "### predicate " ++ name ++ " has incorrect types for: " ++ show errors ++ "###") 
     objects -> (False, "### objects " ++ show objects ++ " not defined ###")

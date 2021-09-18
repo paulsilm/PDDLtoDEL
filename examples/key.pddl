@@ -1,5 +1,5 @@
 (define (domain doormat)
-  (:types agent)
+  (:types agent - object)
   (:predicates
     (key-under-mat)
     (has-key ?a - agent)
@@ -58,11 +58,9 @@
   (:objects
      anne bob - agent)
   (:world-designated w1
-    (has-key anne)
-  )
+    (has-key anne))
   (:world-designated w2
-    (key-under-mat)
-  )
+    (key-under-mat))
   (:observability full anne)
   (:observability none bob)
   (:goal

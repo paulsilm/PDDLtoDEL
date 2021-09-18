@@ -76,11 +76,11 @@ getConstants : CONSS TypedObjsList ')' '(' { $2 }
 Domain : '(' DEF 
                  '(' DomainName ')' 
                  '(' opt(getReqs)
-                 TYPES TypeList ')'    
-                 '(' opt(getConstants)
+                 opt(getTypeList)
+                 opt(getConstants)
                  PREDS PredicateList ')' 
                  ActionList         
-             ')'  { Domain $4 $7 $9 $12 $14 $16 }
+             ')'  { Domain $4 $7 $8 $9 $11 $13 }
 
 RequirementList : Requirement { [$1] }
                 | Requirement RequirementList { $1:$2 }
@@ -89,6 +89,16 @@ Requirement : STRIPS { Strips }
             | TYPING { Typing }
             | ADL { Adl }
             | EQUALITY { Equality }
+
+--TODO here
+
+getTypeList : TYPES TypedTypeList ')' '(' { $2 } 
+
+TypedTypeList : { [] }
+              | TypedType { [$1] }
+              | TypedType TypedTypeList { $1:$2 }
+
+TypedType : StringList '-' String { TT $1 $3 }
 
 TypeList : String { [$1] }
          | String StringList { $1:$2 }

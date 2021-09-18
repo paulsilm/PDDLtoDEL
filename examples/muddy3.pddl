@@ -1,9 +1,11 @@
 (define (domain muddy)
     (:requirements :strips :typing)
-    (:types agent)
-    (:constants A1 A2 A3 God - agent)
+    (:types agent - object
+            god child - agent)
+    (:constants A1 A2 A3 - child
+                God - god)
     (:predicates
-        (muddy ?a - agent)
+        (muddy ?a - child)
     )
 
     (:action announce-at-least-one
@@ -15,81 +17,56 @@
         )
         (:event-designated actual
             :precondition
-                (exists (?b - agent) (muddy ?b))
+                (exists (?b - child) (muddy ?b))
             :effect
                 (and)
         )
-        ;:observability full God
-        ;:observability none
     )
 
     (:action round-kkk
-        :parameters (?a1 ?a2 ?a3 - agent)
+        :parameters (?a1 ?a2 ?a3 - child)
         :byagent God
         :precondition
             (and
                 (not (= ?a1 ?a2))
                 (not (= ?a1 ?a3))
                 (not (= ?a2 ?a3))
-                (not (= God ?a1))
-                (not (= God ?a2))
-                (not (= God ?a3))
-                (or 
-                    (knows ?a1 (muddy ?a1))
-                    (knows ?a1 (not (muddy ?a1)))
-                )
-                (or 
-                    (knows ?a2 (muddy ?a2))
-                    (knows ?a2 (not (muddy ?a2)))
-                )
-                (or 
-                    (knows ?a3 (muddy ?a3))
-                    (knows ?a3 (not (muddy ?a3)))
-                )
+                (or (knows ?a1 (muddy ?a1))
+                    (knows ?a1 (not (muddy ?a1))))
+                (or (knows ?a2 (muddy ?a2))
+                    (knows ?a2 (not (muddy ?a2))))
+                (or (knows ?a3 (muddy ?a3))
+                    (knows ?a3 (not (muddy ?a3))))
             )
         :effect (and)
     )
-    
     (:action round-kkn
-        :parameters (?a1 ?a2 ?a3 - agent)
+        :parameters (?a1 ?a2 ?a3 - child)
         :byagent God
         :precondition
             (and
                 (not (= ?a1 ?a2))
                 (not (= ?a1 ?a3))
                 (not (= ?a2 ?a3))
-                (not (= God ?a1))
-                (not (= God ?a2))
-                (not (= God ?a3))
-                (or 
-                    (knows ?a1 (muddy ?a1))
-                    (knows ?a1 (not (muddy ?a1)))
-                )
-                (or 
-                    (knows ?a2 (muddy ?a2))
-                    (knows ?a2 (not (muddy ?a2)))
-                )
+                (or (knows ?a1 (muddy ?a1))
+                    (knows ?a1 (not (muddy ?a1))))
+                (or (knows ?a2 (muddy ?a2))
+                    (knows ?a2 (not (muddy ?a2))))
                 (not (knows ?a3 (muddy ?a3)))
                 (not (knows ?a3 (not (muddy ?a3))))
             )
         :effect (and)
     )
-
     (:action round-knn
-        :parameters (?a1 ?a2 ?a3 - agent)
+        :parameters (?a1 ?a2 ?a3 - child)
         :byagent God
         :precondition
             (and
                 (not (= ?a1 ?a2))
                 (not (= ?a1 ?a3))
                 (not (= ?a2 ?a3))
-                (not (= God ?a1))
-                (not (= God ?a2))
-                (not (= God ?a3))
-                (or 
-                    (knows ?a1 (muddy ?a1))
-                    (knows ?a1 (not (muddy ?a1)))
-                )
+                (or (knows ?a1 (muddy ?a1))
+                    (knows ?a1 (not (muddy ?a1))))
                 (not (knows ?a2 (muddy ?a2)))
                 (not (knows ?a2 (not (muddy ?a2))))
                 (not (knows ?a3 (muddy ?a3)))
@@ -99,16 +76,13 @@
     )
     
     (:action round-nnn
-        :parameters (?a1 ?a2 ?a3 - agent)
+        :parameters (?a1 ?a2 ?a3 - child)
         :byagent God
         :precondition
             (and
                 (not (= ?a1 ?a2))
                 (not (= ?a1 ?a3))
                 (not (= ?a2 ?a3))
-                (not (= God ?a1))
-                (not (= God ?a2))
-                (not (= God ?a3))
                 (not (knows ?a1 (muddy ?a1)))
                 (not (knows ?a1 (not (muddy ?a1))))
                 (not (knows ?a2 (muddy ?a2)))
@@ -123,7 +97,7 @@
 
 (define (problem muddy-3)
     (:domain muddy)
-    ; All agents know that other agents know whether they're muddy or not
+    ; All children know that other children know whether they're muddy or not
         (:world-nondesignated ccc)
         (:world-nondesignated ccm
             (muddy A3))
@@ -148,9 +122,8 @@
     (:observability (partition (cmm ccm) (cmc ccc) (mcm mmm) (mmc mcc)) A2)
     (:observability (partition (ccm ccc) (cmc cmm) (mmm mmc) (mcm mcc)) A3)
     (:goal
-        (forall (?a - agent)
+        (forall (?a - child)
             (or 
-                (= ?a God)
                 (knows ?a (muddy ?a))
                 (knows ?a (not (muddy ?a)))
             )

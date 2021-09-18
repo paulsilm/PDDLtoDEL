@@ -4,3 +4,4 @@ TODO
 subtyping
 enable global actions (in SMCDEL I guess)
 fix translating implications
+check that each proposition only appears once in effect formula

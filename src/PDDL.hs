@@ -18,11 +18,15 @@ data Form = Atom Predicate
 data Domain = Domain 
                {name :: String, 
                reqs :: [Req], 
-               types :: [String], 
+               types :: [TypedTypes], 
                constants :: [TypedObjs], 
                predDefs :: [Predicate], 
                actions :: [Action]}
           deriving (Show, Eq)
+
+-- TypeElement    list of types, supertype
+data TypedTypes = TT [String] String
+                    deriving (Show, Eq)
 
 -- Requirement for PDDL parser (:strips|:typing)
 data Req = Strips
@@ -102,3 +106,33 @@ instance TypedData TypedVars where
      getVars (TV vs _) = vs
      getType (TV _ t) = t
 
+instance TypedData TypedTypes where
+     getVars (TT ts _) = ts
+     getType (TT _ t) = t
+
+
+-- Whether type is a subtype of another type
+subType :: String -- subType
+        -> String -- top level type
+        -> [TypedTypes] -- Typelist
+        -> Bool 
+subType _ _ [] = False
+subType sub sup ((TT subs topt):types)
+  | sub == sup = True
+  | sup == topt = sub `elem` subs || any (\t -> subType sub t types) subs
+  | otherwise = subType sub sup types
+
+-- Returns the list of all subtypes (including the original type)
+getAllSubTypes :: String -> [TypedTypes] -> [String]
+getAllSubTypes t [] = [t]
+getAllSubTypes "object" types = "object" : concatMap getVars types
+getAllSubTypes t ((TT subs topt):types)
+  | t == topt = t : concatMap (`getAllSubTypes` types) subs
+  | otherwise = getAllSubTypes t types
+
+
+{-
+Vaja välja mõelda kuidas types loogika on vaja kirja panna
+kas Agent peab olema alati?
+agent teha eriliseks typeks? et "agent" alati subtypeof "agent" nt
+-}

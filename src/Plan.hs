@@ -30,7 +30,7 @@ findShortestICPlan pddl False d debug
 
 --just a wrapper for dls
 dfs :: (Typeable action, Eq state, Update state action) => Int -> Bool -> CoopTask state action -> [ICPlan action]
-dfs maxDepth debug task = dls 0 maxDepth debug task
+dfs = dls 0
 --Depth Limited Search: Copied and adjusted from SMCDEL.Other.Planning (findSequentialIcPlan)
 dls :: (Typeable action, Eq state, Update state action) => Int -> Int -> Bool -> CoopTask state action -> [ICPlan action]
 dls d maxDepth debug (CoopTask now acts goal)

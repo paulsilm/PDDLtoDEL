@@ -16,7 +16,7 @@ ppDomain :: Domain -> String
 ppDomain (Domain str reqs types conss preds actions) = 
      "(define (domain " ++ str ++ ")\n" 
   ++ ppReqs reqs
-  ++ "\t(:types" ++ (concatMap (" " ++) types) ++ ")\n"
+  ++ "\t(:types" ++ (concatMap (\t -> "\n\t\t" ++ ppTypes t) types) ++ ")\n"
   ++ ppConss conss
   ++ "\t(:predicates" ++ (concatMap (\p -> "\n\t\t" ++ ppPred p) preds) ++ "\n\t)"
   ++ (concatMap (\a -> "\n\n\t" ++ ppAction a) actions) ++ "\n"
@@ -26,6 +26,9 @@ ppReqs :: [Req] -> String
 ppReqs [] = ""
 ppReqs reqs = 
   "\t(:requirements" ++ (concatMap (\r -> " " ++ ppReq r) reqs) ++ ")\n"
+
+ppTypes :: TypedTypes -> String
+ppTypes (TT ts t) = unwords ts ++ " - " ++ t
 
 ppConss :: [TypedObjs] -> String
 ppConss [] = ""
@@ -111,7 +114,7 @@ ppInit [] = ""
 ppInit init = "\n\t(:init" ++ (concatMap (\p -> "\n\t\t" ++ ppPred p) init) ++ ")\n"
 
 ppObj :: TypedObjs -> String 
-ppObj (TO objs typedObjs) = (concatMap (" " ++) objs) ++ " - " ++ typedObjs
+ppObj (TO objs otype) = (concatMap (" " ++) objs) ++ " - " ++ otype
 
 ppWorld :: World -> String
 ppWorld (World des name truePreds) = 
