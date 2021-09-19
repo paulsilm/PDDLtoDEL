@@ -1,6 +1,6 @@
 (define (domain post-simple)
 	(:requirements :strips :typing)
-	(:types letter agent - object)
+	(:types letter agent)
 	(:predicates
 		(connected ?a1 ?a2 - agent);p2 = connected A1 A2, p6 = connected A2 A3
 		(destined ?l - letter ?a - agent);p10 = destined L A1, p11 = destined L A2, p12 = destined L A3

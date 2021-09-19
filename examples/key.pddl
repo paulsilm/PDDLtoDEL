@@ -1,5 +1,5 @@
 (define (domain doormat)
-  (:types agent - object)
+  (:types agent)
   (:predicates
     (key-under-mat)
     (has-key ?a - agent)

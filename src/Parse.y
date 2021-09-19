@@ -90,18 +90,14 @@ Requirement : STRIPS { Strips }
             | ADL { Adl }
             | EQUALITY { Equality }
 
---TODO here
-
 getTypeList : TYPES TypedTypeList ')' '(' { $2 } 
 
 TypedTypeList : { [] }
-              | TypedType { [$1] }
-              | TypedType TypedTypeList { $1:$2 }
+              | StringList { [TT $1 "object"] }
+              | StringList '-' String { [TT $1 $3] }
+              | StringList '-' String TypedTypeList { (TT $1 $3):$4 }
 
 TypedType : StringList '-' String { TT $1 $3 }
-
-TypeList : String { [$1] }
-         | String StringList { $1:$2 }
 
 PredicateList : { [] }
               | '(' Predicate ')' { [$2] }
