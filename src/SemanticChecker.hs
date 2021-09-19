@@ -5,22 +5,23 @@ import Translate
 import Lib
 import SMCDEL.Internal.Help ((!))
 
---TODO if no object matches an action's parameter, the program gives runtime error
-
 --Checks whether the input is semantically consistent, if not returns a Just String with
 --an error message
 validInput :: PDDL -> Maybe String
 validInput (CheckPDDL
             (Domain domainName _ types conss preds actions)
             p@(Problem _ domName objects initPreds worlds obss goal)) =
-              let --TODO check that types are in correct order (only top to bottom hierarchy)
+              let 
                 allTypes = getAllSubTypes "object" types
-                allObjects = addConstantsToObjs conss objects--TODO check that object names would be unique
+                allObjects = addConstantsToObjs conss objects
                 allPreds = concatMap (predToProps types allObjects) preds
                 predsTyped = [ PredSpec name $ map snd $ concatMap typify vars | (PredDef name vars) <- preds] 
                           ++ [ a | a@(PredAtom _) <- preds]-- e.g., PredSpec "predicate1" ["agent", "agent", "brick"]
                 tests =
-                  [ (and [ objType `elem` allTypes | (TO _ objType) <- objects], "Object type in problem file is not declared in :types"),
+                  [ checkTypes types ["object"],
+                    (allDifferent $ map getVars allObjects, "Multiple objects have the same name"),
+                    (and [ objType `elem` allTypes | (TO _ objType) <- objects], "Object type in problem file is not declared in :types"),
+                    (and [ not $ null $ getObjsMatchingType types t allObjects | t <- allTypes ], "Existing type has no matching objects"),
                     (domainName == domName, "Problem" ++ (pname p) ++ "'s domain-name does not match domain's name"),
                     (allDifferent [name | (World _ name _) <- worlds], "Multiple worlds have the same name"),
                     (allDifferent [name | (Action name _ _ _ _) <- actions], "Multiple actions have the same name"),
@@ -91,7 +92,13 @@ addParamstoObjs [] objs = objs
 addParamstoObjs ((TV cNames cType):cs) objs =
   addParamstoObjs cs $ (TO ((getObjNames cType objs) ++ cNames) cType):objs
 
---Checks action's validity--TODO refactor
+checkTypes :: [TypedTypes] -> [String] -> (Bool,String)
+checkTypes [] types = (True,"")
+checkTypes ((TT subs topt):rest) types 
+  | topt `elem` types = checkTypes rest $ types ++ subs
+  | otherwise = (False, "Type " ++ topt ++ " is not declared as a subtype of any other type.")
+
+--Checks action's validity
 checkAction :: [TypedTypes] -> [Predicate] -> [TypedObjs] -> Action -> (Bool,String) 
 checkAction types preds objects (Action name params actor events obss) =
   let 
@@ -121,6 +128,8 @@ checkAction types preds objects (Action name params actor events obss) =
                 "There needs to be at least one designated event"),
               (and [paramType `elem` typeList | paramType <- map getType params], 
                 "Some parameter type is not defined in :types"),
+              --(and [paramType `elem` typeList | paramType <- map getType params], 
+              --  "Some parameter type has no matching objects"),
               (and [ head var == '?' | var <- concatMap getVars params, var /= []], 
                 "Parameter names are not in the required form: \"?_\""),
               (observabilitiesOnlyForAgents (getObjsMatchingType types "agent" allObjects) obss, 

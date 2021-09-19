@@ -231,10 +231,10 @@ pddlFormToDelForm types (CommonKnow f) pmap oMap ojs = Ck (getObjsMatchingType t
 
 -- Takes the list of all variables, and returns the permutation (list of lists) 
 -- of mappings from variable to object names
--- parameterMaps [(TV ["a1","a2"] "agent")] [(TO ["A1","A2"] "agent"),...] = 
---  [[("a1","A1"),("a2","A1")],
---   ...
---   [("a1","A2"),("a2","A2")]]
+-- parameterMaps [(TT ["agent"] "object")] [(TV ["?a1","?a2"] "agent")] [(TO ["A1","A2"] "agent")] = 
+--  [[("?a1","A1"),("?a2","A1")],
+--   ...,
+--   [("?a1","A2"),("?a2","A2")]]
 parameterMaps :: [TypedTypes] -> [TypedVars] -> [TypedObjs] -> [[(String, String)]]
 parameterMaps _ [] _ = []
 parameterMaps types params objList = 
